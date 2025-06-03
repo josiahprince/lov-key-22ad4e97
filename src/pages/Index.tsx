@@ -1,11 +1,42 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from 'react';
+import OnboardingScreen from '../components/OnboardingScreen';
+import MatchesScreen from '../components/MatchesScreen';
+import ChatScreen from '../components/ChatScreen';
+import ProfileScreen from '../components/ProfileScreen';
+import Navigation from '../components/Navigation';
 
 const Index = () => {
+  const [currentScreen, setCurrentScreen] = useState('onboarding');
+  const [userProfile, setUserProfile] = useState(null);
+
+  const handleOnboardingComplete = (profile: any) => {
+    setUserProfile(profile);
+    setCurrentScreen('matches');
+  };
+
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'onboarding':
+        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+      case 'matches':
+        return <MatchesScreen userProfile={userProfile} />;
+      case 'chat':
+        return <ChatScreen />;
+      case 'profile':
+        return <ProfileScreen userProfile={userProfile} />;
+      default:
+        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
+      <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
+        {renderScreen()}
+        {currentScreen !== 'onboarding' && (
+          <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
+        )}
       </div>
     </div>
   );
