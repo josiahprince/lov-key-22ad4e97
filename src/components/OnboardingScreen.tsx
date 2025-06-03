@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Heart, Smile, Meh, Frown } from 'lucide-react';
+import { Heart, Smile, Meh, Frown, Zap, Coffee } from 'lucide-react';
 
 const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }) => {
   const [step, setStep] = useState(1);
@@ -16,6 +15,8 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     { id: 'chill', label: 'Chill', icon: Heart, color: 'bg-green-100 text-green-700 border-green-200' },
     { id: 'anxious', label: 'Anxious', icon: Meh, color: 'bg-blue-100 text-blue-700 border-blue-200' },
     { id: 'deep', label: 'Deep', icon: Frown, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { id: 'energetic', label: 'Energetic', icon: Zap, color: 'bg-orange-100 text-orange-700 border-orange-200' },
+    { id: 'sleepy', label: 'Sleepy', icon: Coffee, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
   ];
 
   const memes = [
