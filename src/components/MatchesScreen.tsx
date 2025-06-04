@@ -4,7 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, X, MessageCircle } from 'lucide-react';
 
-const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
+interface MatchesScreenProps {
+  userProfile: any;
+  onStartChat?: () => void;
+}
+
+const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const [skipsUsed, setSkipsUsed] = useState(0);
   const [skippedProfiles, setSkippedProfiles] = useState<number[]>([]);
   const [matches] = useState([
@@ -41,6 +46,13 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
     if (skipsUsed < 3) {
       setSkipsUsed(skipsUsed + 1);
       setSkippedProfiles(prev => [...prev, profileId]);
+    }
+  };
+
+  const handleStartChat = (matchId: number, matchName: string) => {
+    console.log('Starting chat with:', matchName, 'ID:', matchId);
+    if (onStartChat) {
+      onStartChat();
     }
   };
 
@@ -97,7 +109,10 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
                 <X className="w-4 h-4 mr-2" />
                 Skip
               </Button>
-              <Button className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl">
+              <Button 
+                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl"
+                onClick={() => handleStartChat(match.id, match.name)}
+              >
                 <MessageCircle className="w-4 h-4 mr-2" />
                 Start Chat
               </Button>

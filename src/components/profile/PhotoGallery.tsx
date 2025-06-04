@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,26 +23,54 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
   const handleFileUpload = (photoId: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size should be less than 5MB');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
-        const updatedPhotos = photos.map(photo => 
-          photo.id === photoId ? { ...photo, url: result } : photo
-        );
-        onPhotosChange(updatedPhotos);
+        if (result) {
+          const updatedPhotos = photos.map(photo => 
+            photo.id === photoId ? { ...photo, url: result } : photo
+          );
+          onPhotosChange(updatedPhotos);
+          console.log('Photo uploaded successfully for slot:', photoId);
+        }
+      };
+      reader.onerror = () => {
+        console.error('Error reading file');
+        alert('Error uploading photo. Please try again.');
       };
       reader.readAsDataURL(file);
     }
+    // Reset the input value to allow uploading the same file again
+    event.target.value = '';
   };
 
   const handleSocialUpload = (photoId: number) => {
     if (socialUrl.trim()) {
-      const updatedPhotos = photos.map(photo => 
-        photo.id === photoId ? { ...photo, url: socialUrl } : photo
-      );
-      onPhotosChange(updatedPhotos);
-      setSocialUrl('');
-      setShowSocialOptions(null);
+      // Basic URL validation
+      try {
+        new URL(socialUrl);
+        const updatedPhotos = photos.map(photo => 
+          photo.id === photoId ? { ...photo, url: socialUrl } : photo
+        );
+        onPhotosChange(updatedPhotos);
+        setSocialUrl('');
+        setShowSocialOptions(null);
+        console.log('Social media photo added for slot:', photoId);
+      } catch {
+        alert('Please enter a valid URL');
+      }
     }
   };
 
@@ -51,6 +80,15 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
       isMain: photo.id === photoId
     }));
     onPhotosChange(updatedPhotos);
+    console.log('Main photo set to slot:', photoId);
+  };
+
+  const removePhoto = (photoId: number) => {
+    const updatedPhotos = photos.map(photo => 
+      photo.id === photoId ? { ...photo, url: '' } : photo
+    );
+    onPhotosChange(updatedPhotos);
+    console.log('Photo removed from slot:', photoId);
   };
 
   const mainPhoto = photos.find(photo => photo.isMain);
@@ -66,9 +104,19 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
           <Star className="w-4 h-4 text-yellow-500" />
           <span className="text-sm font-medium text-gray-600">Main Profile Photo</span>
         </div>
-        <div className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors">
+        <div className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors group">
           {mainPhoto?.url ? (
-            <img src={mainPhoto.url} alt="Main profile" className="w-full h-full object-cover rounded-lg" />
+            <>
+              <img src={mainPhoto.url} alt="Main profile" className="w-full h-full object-cover rounded-lg" />
+              <Button
+                size="sm"
+                variant="outline"
+                className="absolute top-1 right-1 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500"
+                onClick={() => removePhoto(mainPhoto.id)}
+              >
+                ×
+              </Button>
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <div className="text-center">
@@ -79,7 +127,7 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
           )}
           
           {/* Upload options for main photo */}
-          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
             <div className="flex space-x-2">
               <label className="cursor-pointer">
                 <input
@@ -139,7 +187,7 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
         <div className="grid grid-cols-3 gap-3">
           {otherPhotos.map((photo) => (
             <div key={photo.id} className="relative">
-              <div className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors">
+              <div className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors group">
                 {photo.url ? (
                   <>
                     <img src={photo.url} alt={`Photo ${photo.id}`} className="w-full h-full object-cover rounded-lg" />
@@ -154,6 +202,17 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                     >
                       <Star className="w-3 h-3 text-yellow-500" />
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="absolute -bottom-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removePhoto(photo.id);
+                      }}
+                    >
+                      ×
+                    </Button>
                   </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
@@ -162,7 +221,7 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                 )}
                 
                 {/* Upload options overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                   <div className="flex flex-col space-y-1">
                     <label className="cursor-pointer">
                       <input

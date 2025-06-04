@@ -15,12 +15,17 @@ const Index = () => {
     setCurrentScreen('matches');
   };
 
+  const handleStartChat = () => {
+    console.log('Navigating to chat screen');
+    setCurrentScreen('chat');
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'onboarding':
         return <OnboardingScreen onComplete={handleOnboardingComplete} />;
       case 'matches':
-        return <MatchesScreen userProfile={userProfile} />;
+        return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
       case 'chat':
         return <ChatScreen />;
       case 'profile':
