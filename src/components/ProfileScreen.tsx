@@ -1,8 +1,10 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Camera, Edit, Save, Heart, Plus, Star } from 'lucide-react';
+import { Camera, Edit, Save, Heart, Plus, Star, Upload, Link } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
@@ -15,6 +17,9 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
     { id: 5, url: '', isMain: false },
     { id: 6, url: '', isMain: false },
   ]);
+  const [showSocialOptions, setShowSocialOptions] = useState<number | null>(null);
+  const [socialUrl, setSocialUrl] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   if (!userProfile) {
     return (
@@ -26,12 +31,31 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
 
   const handleSaveDescription = () => {
     setIsEditingDescription(false);
-    // Here you would typically save to backend
+    console.log('Description saved:', description);
   };
 
-  const handlePhotoUpload = (photoId: number) => {
-    // Placeholder for photo upload functionality
-    console.log(`Upload photo for slot ${photoId}`);
+  const handleFileUpload = (photoId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        setPhotos(photos.map(photo => 
+          photo.id === photoId ? { ...photo, url: result } : photo
+        ));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSocialUpload = (photoId: number) => {
+    if (socialUrl.trim()) {
+      setPhotos(photos.map(photo => 
+        photo.id === photoId ? { ...photo, url: socialUrl } : photo
+      ));
+      setSocialUrl('');
+      setShowSocialOptions(null);
+    }
   };
 
   const setMainPhoto = (photoId: number) => {
@@ -39,6 +63,29 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
       ...photo,
       isMain: photo.id === photoId
     })));
+  };
+
+  const handleUpdateProfile = async () => {
+    setIsUpdating(true);
+    
+    // Simulate API call
+    try {
+      console.log('Updating profile with:', {
+        description,
+        photos: photos.filter(photo => photo.url),
+        userProfile
+      });
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const mainPhoto = photos.find(photo => photo.isMain);
@@ -49,7 +96,11 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
       <div className="text-center space-y-4">
         <div className="relative mx-auto w-24 h-24">
           <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg">
-            <Camera className="w-8 h-8 text-rose-400" />
+            {mainPhoto?.url ? (
+              <img src={mainPhoto.url} alt="Profile" className="w-full h-full object-cover rounded-full" />
+            ) : (
+              <Camera className="w-8 h-8 text-rose-400" />
+            )}
           </div>
           <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center">
             <Edit className="w-4 h-4 text-white" />
@@ -143,19 +194,71 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
             <Star className="w-4 h-4 text-yellow-500" />
             <span className="text-sm font-medium text-gray-600">Main Profile Photo</span>
           </div>
-          <div
-            className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-rose-300 transition-colors"
-            onClick={() => handlePhotoUpload(mainPhoto?.id || 1)}
-          >
+          <div className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors">
             {mainPhoto?.url ? (
               <img src={mainPhoto.url} alt="Main profile" className="w-full h-full object-cover rounded-lg" />
             ) : (
-              <div className="text-center">
-                <Plus className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                <span className="text-xs text-gray-500">Add Main Photo</span>
+              <div className="w-full h-full flex items-center justify-center">
+                <div className="text-center">
+                  <Plus className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                  <span className="text-xs text-gray-500">Add Main Photo</span>
+                </div>
               </div>
             )}
+            
+            {/* Upload options for main photo */}
+            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+              <div className="flex space-x-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(mainPhoto?.id || 1, e)}
+                    className="hidden"
+                  />
+                  <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100">
+                    <Upload className="w-3 h-3 mr-1" />
+                    Upload
+                  </Button>
+                </label>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white hover:bg-gray-100"
+                  onClick={() => setShowSocialOptions(mainPhoto?.id || 1)}
+                >
+                  <Link className="w-3 h-3 mr-1" />
+                  URL
+                </Button>
+              </div>
+            </div>
           </div>
+          
+          {/* Social URL input for main photo */}
+          {showSocialOptions === (mainPhoto?.id || 1) && (
+            <div className="mt-2 flex space-x-2">
+              <Input
+                placeholder="Paste image URL from social media..."
+                value={socialUrl}
+                onChange={(e) => setSocialUrl(e.target.value)}
+                className="flex-1"
+              />
+              <Button 
+                size="sm" 
+                onClick={() => handleSocialUpload(mainPhoto?.id || 1)}
+                className="bg-rose-500 hover:bg-rose-600 text-white"
+              >
+                Add
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline"
+                onClick={() => setShowSocialOptions(null)}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Other Photos */}
@@ -164,10 +267,7 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
           <div className="grid grid-cols-3 gap-3">
             {otherPhotos.map((photo) => (
               <div key={photo.id} className="relative">
-                <div
-                  className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-rose-300 transition-colors"
-                  onClick={() => handlePhotoUpload(photo.id)}
-                >
+                <div className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors">
                   {photo.url ? (
                     <>
                       <img src={photo.url} alt={`Photo ${photo.id}`} className="w-full h-full object-cover rounded-lg" />
@@ -184,9 +284,70 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
                       </Button>
                     </>
                   ) : (
-                    <Plus className="w-4 h-4 text-gray-400" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Plus className="w-4 h-4 text-gray-400" />
+                    </div>
                   )}
+                  
+                  {/* Upload options overlay */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                    <div className="flex flex-col space-y-1">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(photo.id, e)}
+                          className="hidden"
+                        />
+                        <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100 text-xs px-2">
+                          <Upload className="w-2 h-2 mr-1" />
+                          Upload
+                        </Button>
+                      </label>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="bg-white hover:bg-gray-100 text-xs px-2"
+                        onClick={() => setShowSocialOptions(photo.id)}
+                      >
+                        <Link className="w-2 h-2 mr-1" />
+                        URL
+                      </Button>
+                    </div>
+                  </div>
                 </div>
+                
+                {/* Social URL input for additional photos */}
+                {showSocialOptions === photo.id && (
+                  <div className="absolute top-full left-0 right-0 mt-2 z-10 bg-white p-2 rounded-lg shadow-lg border">
+                    <div className="flex flex-col space-y-2">
+                      <Input
+                        placeholder="Image URL..."
+                        value={socialUrl}
+                        onChange={(e) => setSocialUrl(e.target.value)}
+                        className="text-xs"
+                        size={10}
+                      />
+                      <div className="flex space-x-1">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSocialUpload(photo.id)}
+                          className="bg-rose-500 hover:bg-rose-600 text-white text-xs flex-1"
+                        >
+                          Add
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setShowSocialOptions(null)}
+                          className="text-xs flex-1"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -215,8 +376,12 @@ const ProfileScreen = ({ userProfile }: { userProfile: any }) => {
         </div>
       </Card>
 
-      <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl">
-        Update Profile
+      <Button 
+        className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl disabled:opacity-50"
+        onClick={handleUpdateProfile}
+        disabled={isUpdating}
+      >
+        {isUpdating ? 'Updating...' : 'Update Profile'}
       </Button>
     </div>
   );
