@@ -14,7 +14,8 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
       mood: 'chill',
       meme: { emoji: '📚', title: 'Book Worm' },
       promptAnswer: "Perfect Sunday? Coffee shop with a good book, then maybe a walk in Cubbon Park. Simple pleasures!",
-      compatibility: 85
+      compatibility: 85,
+      mainPhoto: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face'
     },
     {
       id: 2,
@@ -22,7 +23,8 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
       mood: 'happy',
       meme: { emoji: '🌱', title: 'Plant Parent' },
       promptAnswer: "Tending to my plants, cooking something new, and maybe a movie night. What about you?",
-      compatibility: 78
+      compatibility: 78,
+      mainPhoto: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face'
     },
     {
       id: 3,
@@ -30,7 +32,8 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
       mood: 'deep',
       meme: { emoji: '🦉', title: 'Night Owl' },
       promptAnswer: "Honestly? Journaling, listening to indie music, and having deep conversations with close friends.",
-      compatibility: 92
+      compatibility: 92,
+      mainPhoto: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face'
     }
   ]);
 
@@ -44,7 +47,7 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
   const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 pb-20">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-gray-800">Today's Matches</h1>
         <p className="text-gray-600">6 thoughtfully curated connections</p>
@@ -58,8 +61,17 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
           <Card key={match.id} className="p-6 space-y-4 border-2 border-gray-100 hover:border-rose-200 transition-all duration-200 animate-fade-in">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center">
-                  <span className="text-xl">{match.meme.emoji}</span>
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
+                    <img 
+                      src={match.mainPhoto} 
+                      alt={match.name}
+                      className="w-full h-full object-cover filter blur-sm"
+                    />
+                  </div>
+                  <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
+                    <span className="text-xl">{match.meme.emoji}</span>
+                  </div>
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{match.name}</h3>

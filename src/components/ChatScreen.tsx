@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Clock, Send } from 'lucide-react';
+import { Clock, Send, Images, Eye } from 'lucide-react';
 
 const ChatScreen = () => {
   const [messages, setMessages] = useState([
@@ -16,6 +16,9 @@ const ChatScreen = () => {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
+  const [messageCount] = useState(15); // Simulate message count
+  const [photoRequestSent, setPhotoRequestSent] = useState(false);
+  const [photosRevealed, setPhotosRevealed] = useState(false);
 
   const conversationStarters = [
     "What's the last book that really moved you?",
@@ -42,18 +45,66 @@ const ChatScreen = () => {
     setTimeout(() => setCanSend(true), 60000);
   };
 
+  const handlePhotoRequest = () => {
+    setPhotoRequestSent(true);
+    const requestMessage = {
+      id: messages.length + 1,
+      text: "Would you like to share more photos?",
+      sender: 'me' as const,
+      timestamp: new Date()
+    };
+    setMessages([...messages, requestMessage]);
+  };
+
+  const canRequestPhotos = messageCount >= 30;
+
   return (
     <div className="flex flex-col h-screen">
       <div className="p-4 bg-white border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center">
-            <span className="text-lg">📚</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
+                <img 
+                  src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=100&h=100&fit=crop&crop=face"
+                  alt="Alex"
+                  className={`w-full h-full object-cover ${messageCount < 30 ? 'filter blur-sm' : ''}`}
+                />
+              </div>
+              {messageCount < 30 && (
+                <div className="absolute inset-0 w-10 h-10 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
+                  <span className="text-sm">📚</span>
+                </div>
+              )}
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800">Alex</h2>
+              <p className="text-sm text-gray-600">Chill • Book Worm</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-gray-800">Alex</h2>
-            <p className="text-sm text-gray-600">Chill • Book Worm</p>
-          </div>
+          
+          {canRequestPhotos && !photosRevealed && (
+            <Button
+              onClick={handlePhotoRequest}
+              disabled={photoRequestSent}
+              size="sm"
+              variant="outline"
+              className="text-rose-600 border-rose-200 hover:bg-rose-50"
+            >
+              <Images className="w-4 h-4 mr-1" />
+              {photoRequestSent ? 'Requested' : 'Request Photos'}
+            </Button>
+          )}
         </div>
+        
+        {messageCount < 30 && (
+          <div className="mt-2 p-2 bg-yellow-50 rounded-lg">
+            <p className="text-xs text-yellow-700">
+              <Eye className="w-3 h-3 inline mr-1" />
+              Photos will be revealed after 30 messages ({30 - messageCount} more to go)
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
