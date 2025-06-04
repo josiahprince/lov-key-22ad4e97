@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { Heart, Smile, Meh, Frown, Zap, Coffee } from 'lucide-react';
 const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }) => {
   const [step, setStep] = useState(1);
   const [mood, setMood] = useState('');
-  const [selectedMeme, setSelectedMeme] = useState('');
+  const [selectedMemes, setSelectedMemes] = useState<string[]>([]);
   const [promptAnswer, setPromptAnswer] = useState('');
 
   const moods = [
@@ -38,10 +37,21 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     { id: 'meme15', title: 'Meme Connoisseur', description: 'Instagram reels are my news source', emoji: '📱' },
   ];
 
+  const handleMemeToggle = (memeId: string) => {
+    setSelectedMemes(prev => {
+      if (prev.includes(memeId)) {
+        return prev.filter(id => id !== memeId);
+      } else if (prev.length < 3) {
+        return [...prev, memeId];
+      }
+      return prev;
+    });
+  };
+
   const handleComplete = () => {
     const profile = {
       mood,
-      meme: selectedMeme,
+      memes: selectedMemes,
       promptAnswer,
       createdAt: new Date(),
     };
@@ -93,27 +103,28 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
 
       case 2:
         return (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-3 animate-fade-in">
             <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold text-gray-800">Pick your vibe</h2>
-              <p className="text-sm text-gray-600">Choose the meme that represents you today</p>
+              <h2 className="text-lg font-bold text-gray-800">Pick your vibes</h2>
+              <p className="text-xs text-gray-600">Choose up to 3 that represent you today</p>
+              <p className="text-xs text-rose-600">{selectedMemes.length}/3 selected</p>
             </div>
             
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+            <div className="space-y-1 max-h-52 overflow-y-auto">
               {memes.map((meme) => (
                 <Card
                   key={meme.id}
                   className={`p-2 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                    selectedMeme === meme.id 
+                    selectedMemes.includes(meme.id)
                       ? 'bg-rose-50 border-rose-200 text-rose-700' 
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
-                  onClick={() => setSelectedMeme(meme.id)}
+                  onClick={() => handleMemeToggle(meme.id)}
                 >
                   <div className="flex items-center space-x-2">
-                    <div className="text-lg">{meme.emoji}</div>
+                    <div className="text-base">{meme.emoji}</div>
                     <div>
-                      <h3 className="text-sm font-medium">{meme.title}</h3>
+                      <h3 className="text-xs font-medium">{meme.title}</h3>
                       <p className="text-xs text-gray-600">{meme.description}</p>
                     </div>
                   </div>
@@ -131,7 +142,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
               </Button>
               <Button 
                 onClick={() => setStep(3)} 
-                disabled={!selectedMeme}
+                disabled={selectedMemes.length === 0}
                 className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
               >
                 Next

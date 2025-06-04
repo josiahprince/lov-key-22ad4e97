@@ -6,6 +6,7 @@ import { Heart, X, MessageCircle } from 'lucide-react';
 
 const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
   const [skipsUsed, setSkipsUsed] = useState(0);
+  const [skippedProfiles, setSkippedProfiles] = useState<number[]>([]);
   const [matches] = useState([
     {
       id: 1,
@@ -33,11 +34,14 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
     }
   ]);
 
-  const handleSkip = () => {
+  const handleSkip = (profileId: number) => {
     if (skipsUsed < 3) {
       setSkipsUsed(skipsUsed + 1);
+      setSkippedProfiles(prev => [...prev, profileId]);
     }
   };
+
+  const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
 
   return (
     <div className="p-6 space-y-6">
@@ -50,7 +54,7 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
       </div>
 
       <div className="space-y-4">
-        {matches.map((match) => (
+        {visibleMatches.map((match) => (
           <Card key={match.id} className="p-6 space-y-4 border-2 border-gray-100 hover:border-rose-200 transition-all duration-200 animate-fade-in">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -73,7 +77,7 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
 
             <div className="flex space-x-3">
               <Button
-                onClick={handleSkip}
+                onClick={() => handleSkip(match.id)}
                 disabled={skipsUsed >= 3}
                 variant="outline"
                 className="flex-1 py-3 rounded-xl border-gray-200 hover:border-gray-300"
@@ -89,6 +93,13 @@ const MatchesScreen = ({ userProfile }: { userProfile: any }) => {
           </Card>
         ))}
       </div>
+
+      {visibleMatches.length === 0 && (
+        <Card className="p-6 text-center space-y-2">
+          <p className="text-gray-600">No more matches for today</p>
+          <p className="text-sm text-gray-500">New matches arrive daily at 9 AM</p>
+        </Card>
+      )}
 
       <Card className="p-4 bg-gradient-to-r from-rose-50 to-pink-50 border-rose-200">
         <div className="text-center space-y-2">
