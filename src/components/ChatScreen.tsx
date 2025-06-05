@@ -69,6 +69,7 @@ const ChatScreen = () => {
 
   return (
     <div className="flex flex-col h-screen">
+      {/* Header */}
       <div className="p-4 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
@@ -116,6 +117,7 @@ const ChatScreen = () => {
         )}
       </div>
 
+      {/* Messages */}
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {messages.map((message) => (
           <div
@@ -125,8 +127,8 @@ const ChatScreen = () => {
             <div
               className={`max-w-[80%] p-3 rounded-2xl ${
                 message.sender === 'me'
-                  ? 'bg-rose-500 text-white'
-                  : 'bg-gray-100 text-gray-800'
+                  ? 'bg-rose-500 text-white rounded-br-sm'
+                  : 'bg-blue-100 text-gray-800 rounded-bl-sm'
               }`}
             >
               <p className="text-sm">{message.text}</p>
@@ -146,7 +148,27 @@ const ChatScreen = () => {
         )}
       </div>
 
+      {/* Input and Controls */}
       <div className="p-4 space-y-4 bg-white border-t border-gray-200">
+        {/* Message Input */}
+        <div className="flex space-x-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1 rounded-full border-gray-300 focus:border-rose-400 focus:ring-rose-200"
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!canSend || !newMessage.trim()}
+            className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-3 disabled:bg-gray-300"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        {/* Conversation Starters */}
         <div className="space-y-2">
           <p className="text-sm text-gray-600">Conversation starters:</p>
           <div className="flex flex-wrap gap-2">
@@ -175,23 +197,6 @@ const ChatScreen = () => {
               </Button>
             ))}
           </div>
-        </div>
-        
-        <div className="flex space-x-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 rounded-full border-gray-200 focus:border-rose-300"
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!canSend || !newMessage.trim()}
-            className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-3"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
         </div>
       </div>
     </div>
