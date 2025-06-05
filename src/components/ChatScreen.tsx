@@ -1,8 +1,9 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, Send, Images, Eye } from 'lucide-react';
 
 const ChatScreen = () => {
@@ -19,8 +20,9 @@ const ChatScreen = () => {
   const [messageCount] = useState(15); // Simulate message count
   const [photoRequestSent, setPhotoRequestSent] = useState(false);
   const [photosRevealed, setPhotosRevealed] = useState(false);
+  const [shuffledStarters, setShuffledStarters] = useState<string[]>([]);
 
-  const conversationStarters = [
+  const allConversationStarters = [
     "What's the last book that really moved you?",
     "If you could have coffee with anyone, who would it be?",
     "What's a small thing that made you smile today?",
@@ -29,8 +31,25 @@ const ChatScreen = () => {
     "If you could travel anywhere right now, where would you go?",
     "What's a hobby you've always wanted to try?",
     "What song always puts you in a good mood?",
-    "What's the best advice someone has given you recently?"
+    "What's the best advice someone has given you recently?",
+    "What's your idea of a perfect weekend?",
+    "If you could learn any skill instantly, what would it be?",
+    "What's the most interesting documentary you've watched?",
+    "Do you prefer sunrise or sunset? Why?",
+    "What's a childhood memory that still makes you laugh?",
+    "If you could have dinner with any fictional character, who would it be?",
+    "What's something you're really passionate about?",
+    "What's the best gift you've ever received?",
+    "Do you have any hidden talents?",
+    "What's your favorite way to unwind after a long day?",
+    "If you could live in any era, which would you choose?"
   ];
+
+  // Shuffle conversation starters on component mount
+  useEffect(() => {
+    const shuffled = [...allConversationStarters].sort(() => Math.random() - 0.5);
+    setShuffledStarters(shuffled.slice(0, 12)); // Show 12 random starters
+  }, []);
 
   const handleSendMessage = () => {
     if (!newMessage.trim() || !canSend) return;
@@ -171,32 +190,36 @@ const ChatScreen = () => {
         {/* Conversation Starters */}
         <div className="space-y-2">
           <p className="text-sm text-gray-600">Conversation starters:</p>
-          <div className="flex flex-wrap gap-2">
-            {conversationStarters.slice(0, 3).map((starter, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                size="sm"
-                onClick={() => handleStarterClick(starter)}
-                className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50"
-              >
-                {starter}
-              </Button>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {conversationStarters.slice(3, 6).map((starter, index) => (
-              <Button
-                key={index + 3}
-                variant="outline"
-                size="sm"
-                onClick={() => handleStarterClick(starter)}
-                className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50"
-              >
-                {starter}
-              </Button>
-            ))}
-          </div>
+          <ScrollArea className="h-32 w-full">
+            <div className="space-y-2 pr-4">
+              <div className="flex flex-wrap gap-2">
+                {shuffledStarters.slice(0, 6).map((starter, index) => (
+                  <Button
+                    key={index}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStarterClick(starter)}
+                    className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50"
+                  >
+                    {starter}
+                  </Button>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {shuffledStarters.slice(6, 12).map((starter, index) => (
+                  <Button
+                    key={index + 6}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStarterClick(starter)}
+                    className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50"
+                  >
+                    {starter}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </ScrollArea>
         </div>
       </div>
     </div>
