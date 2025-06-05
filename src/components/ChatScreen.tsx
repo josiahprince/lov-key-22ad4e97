@@ -25,6 +25,11 @@ const ChatScreen = () => {
     "If you could have coffee with anyone, who would it be?",
     "What's a small thing that made you smile today?",
     "Do you have a favorite spot in Bangalore?",
+    "What's your go-to comfort food when you're feeling down?",
+    "If you could travel anywhere right now, where would you go?",
+    "What's a hobby you've always wanted to try?",
+    "What song always puts you in a good mood?",
+    "What's the best advice someone has given you recently?"
   ];
 
   const handleSendMessage = () => {
@@ -54,6 +59,10 @@ const ChatScreen = () => {
       timestamp: new Date()
     };
     setMessages([...messages, requestMessage]);
+  };
+
+  const handleStarterClick = (starter: string) => {
+    setNewMessage(starter);
   };
 
   const canRequestPhotos = messageCount >= 30;
@@ -141,12 +150,25 @@ const ChatScreen = () => {
         <div className="space-y-2">
           <p className="text-sm text-gray-600">Conversation starters:</p>
           <div className="flex flex-wrap gap-2">
-            {conversationStarters.slice(0, 2).map((starter, index) => (
+            {conversationStarters.slice(0, 3).map((starter, index) => (
               <Button
                 key={index}
                 variant="outline"
                 size="sm"
-                onClick={() => setNewMessage(starter)}
+                onClick={() => handleStarterClick(starter)}
+                className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50"
+              >
+                {starter}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {conversationStarters.slice(3, 6).map((starter, index) => (
+              <Button
+                key={index + 3}
+                variant="outline"
+                size="sm"
+                onClick={() => handleStarterClick(starter)}
                 className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50"
               >
                 {starter}
