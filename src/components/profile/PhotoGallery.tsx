@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Star, Upload, Link } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Photo {
   id: number;
@@ -19,8 +20,65 @@ interface PhotoGalleryProps {
 const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
   const [showSocialOptions, setShowSocialOptions] = useState<number | null>(null);
   const [socialUrl, setSocialUrl] = useState('');
+  const [uploading, setUploading] = useState<number | null>(null);
 
-  const handleFileUpload = (photoId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadToSupabase = async (file: File, photoId: number) => {
+    try {
+      setUploading(photoId);
+      
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('User not authenticated:', userError);
+        alert('Please log in to upload photos');
+        return;
+      }
+
+      // Create unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/${photoId}-${Date.now()}.${fileExt}`;
+
+      console.log('Uploading file:', fileName);
+
+      // Upload file to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('profile-photos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) {
+        console.error('Upload error:', error);
+        alert(`Upload failed: ${error.message}`);
+        return;
+      }
+
+      console.log('Upload successful:', data);
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(fileName);
+
+      console.log('Public URL:', publicUrl);
+
+      // Update photos array
+      const updatedPhotos = photos.map(photo => 
+        photo.id === photoId ? { ...photo, url: publicUrl } : photo
+      );
+      onPhotosChange(updatedPhotos);
+
+      console.log('Photo uploaded successfully for slot:', photoId);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      alert('Unexpected error occurred. Please try again.');
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const handleFileUpload = async (photoId: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // Validate file type
@@ -35,23 +93,9 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        if (result) {
-          const updatedPhotos = photos.map(photo => 
-            photo.id === photoId ? { ...photo, url: result } : photo
-          );
-          onPhotosChange(updatedPhotos);
-          console.log('Photo uploaded successfully for slot:', photoId);
-        }
-      };
-      reader.onerror = () => {
-        console.error('Error reading file');
-        alert('Error uploading photo. Please try again.');
-      };
-      reader.readAsDataURL(file);
+      await uploadToSupabase(file, photoId);
     }
+    
     // Reset the input value to allow uploading the same file again
     event.target.value = '';
   };
@@ -83,7 +127,34 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
     console.log('Main photo set to slot:', photoId);
   };
 
-  const removePhoto = (photoId: number) => {
+  const removePhoto = async (photoId: number) => {
+    const photoToRemove = photos.find(photo => photo.id === photoId);
+    
+    // If it's a Supabase-hosted photo, delete from storage
+    if (photoToRemove?.url && photoToRemove.url.includes('supabase')) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // Extract filename from URL
+          const urlParts = photoToRemove.url.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const fullPath = `${user.id}/${fileName}`;
+          
+          const { error } = await supabase.storage
+            .from('profile-photos')
+            .remove([fullPath]);
+          
+          if (error) {
+            console.error('Error deleting file from storage:', error);
+          } else {
+            console.log('File deleted from storage successfully');
+          }
+        }
+      } catch (error) {
+        console.error('Error during file deletion:', error);
+      }
+    }
+
     const updatedPhotos = photos.map(photo => 
       photo.id === photoId ? { ...photo, url: '' } : photo
     );
@@ -113,45 +184,56 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                 variant="outline"
                 className="absolute top-1 right-1 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500"
                 onClick={() => removePhoto(mainPhoto.id)}
+                disabled={uploading === mainPhoto.id}
               >
                 ×
               </Button>
             </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <div className="text-center">
-                <Plus className="w-6 h-6 text-gray-400 mx-auto mb-1" />
-                <span className="text-xs text-gray-500">Add Main Photo</span>
-              </div>
+              {uploading === (mainPhoto?.id || 1) ? (
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-rose-500 mx-auto mb-1"></div>
+                  <span className="text-xs text-gray-500">Uploading...</span>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <Plus className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                  <span className="text-xs text-gray-500">Add Main Photo</span>
+                </div>
+              )}
             </div>
           )}
           
           {/* Upload options for main photo */}
-          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-            <div className="flex space-x-2">
-              <label className="cursor-pointer">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(mainPhoto?.id || 1, e)}
-                  className="hidden"
-                />
-                <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100">
-                  <Upload className="w-3 h-3 mr-1" />
-                  Upload
+          {!uploading && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+              <div className="flex space-x-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileUpload(mainPhoto?.id || 1, e)}
+                    className="hidden"
+                    disabled={uploading === (mainPhoto?.id || 1)}
+                  />
+                  <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100">
+                    <Upload className="w-3 h-3 mr-1" />
+                    Upload
+                  </Button>
+                </label>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white hover:bg-gray-100"
+                  onClick={() => setShowSocialOptions(mainPhoto?.id || 1)}
+                >
+                  <Link className="w-3 h-3 mr-1" />
+                  URL
                 </Button>
-              </label>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="bg-white hover:bg-gray-100"
-                onClick={() => setShowSocialOptions(mainPhoto?.id || 1)}
-              >
-                <Link className="w-3 h-3 mr-1" />
-                URL
-              </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         
         {/* Social URL input for main photo */}
@@ -199,6 +281,7 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                         e.stopPropagation();
                         setMainPhoto(photo.id);
                       }}
+                      disabled={uploading === photo.id}
                     >
                       <Star className="w-3 h-3 text-yellow-500" />
                     </Button>
@@ -210,42 +293,50 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                         e.stopPropagation();
                         removePhoto(photo.id);
                       }}
+                      disabled={uploading === photo.id}
                     >
                       ×
                     </Button>
                   </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Plus className="w-4 h-4 text-gray-400" />
+                    {uploading === photo.id ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-rose-500"></div>
+                    ) : (
+                      <Plus className="w-4 h-4 text-gray-400" />
+                    )}
                   </div>
                 )}
                 
                 {/* Upload options overlay */}
-                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                  <div className="flex flex-col space-y-1">
-                    <label className="cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleFileUpload(photo.id, e)}
-                        className="hidden"
-                      />
-                      <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100 text-xs px-2">
-                        <Upload className="w-2 h-2 mr-1" />
-                        Upload
+                {!uploading && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                    <div className="flex flex-col space-y-1">
+                      <label className="cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleFileUpload(photo.id, e)}
+                          className="hidden"
+                          disabled={uploading === photo.id}
+                        />
+                        <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100 text-xs px-2">
+                          <Upload className="w-2 h-2 mr-1" />
+                          Upload
+                        </Button>
+                      </label>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="bg-white hover:bg-gray-100 text-xs px-2"
+                        onClick={() => setShowSocialOptions(photo.id)}
+                      >
+                        <Link className="w-2 h-2 mr-1" />
+                        URL
                       </Button>
-                    </label>
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="bg-white hover:bg-gray-100 text-xs px-2"
-                      onClick={() => setShowSocialOptions(photo.id)}
-                    >
-                      <Link className="w-2 h-2 mr-1" />
-                      URL
-                    </Button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               
               {/* Social URL input for additional photos */}
