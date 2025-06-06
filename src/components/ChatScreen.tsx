@@ -136,39 +136,8 @@ const ChatScreen = () => {
         )}
       </div>
 
-      {/* Messages - More compact */}
-      <div className="flex-1 p-3 space-y-2 overflow-y-auto">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[80%] p-2 rounded-xl text-sm ${
-                message.sender === 'me'
-                  ? 'bg-rose-500 text-white rounded-br-sm'
-                  : 'bg-blue-100 text-gray-800 rounded-bl-sm'
-              }`}
-            >
-              <p>{message.text}</p>
-            </div>
-          </div>
-        ))}
-        
-        {!canSend && (
-          <div className="text-center">
-            <Card className="inline-flex items-center space-x-2 p-2 bg-yellow-50 border-yellow-200">
-              <Clock className="w-3 h-3 text-yellow-600" />
-              <span className="text-xs text-yellow-700">
-                Take your time... next message unlocks soon
-              </span>
-            </Card>
-          </div>
-        )}
-      </div>
-
-      {/* Input and Controls - More compact */}
-      <div className="p-3 space-y-3 bg-white border-t border-gray-200">
+      {/* Input and Controls - Moved up */}
+      <div className="p-3 space-y-2 bg-white border-b border-gray-200">
         {/* Message Input */}
         <div className="flex space-x-2">
           <Input
@@ -187,10 +156,10 @@ const ChatScreen = () => {
           </Button>
         </div>
         
-        {/* Conversation Starters - More compact */}
+        {/* Conversation Starters */}
         <div className="space-y-1">
           <p className="text-xs text-gray-600">Conversation starters:</p>
-          <ScrollArea className="h-24 w-full">
+          <ScrollArea className="h-20 w-full">
             <div className="space-y-1 pr-2">
               <div className="flex flex-wrap gap-1">
                 {shuffledStarters.slice(0, 6).map((starter, index) => (
@@ -221,6 +190,37 @@ const ChatScreen = () => {
             </div>
           </ScrollArea>
         </div>
+      </div>
+
+      {/* Messages - Now takes remaining space */}
+      <div className="flex-1 p-3 space-y-2 overflow-y-auto">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[80%] p-2 rounded-xl text-sm ${
+                message.sender === 'me'
+                  ? 'bg-rose-500 text-white rounded-br-sm'
+                  : 'bg-blue-100 text-gray-800 rounded-bl-sm'
+              }`}
+            >
+              <p>{message.text}</p>
+            </div>
+          </div>
+        ))}
+        
+        {!canSend && (
+          <div className="text-center">
+            <Card className="inline-flex items-center space-x-2 p-2 bg-yellow-50 border-yellow-200">
+              <Clock className="w-3 h-3 text-yellow-600" />
+              <span className="text-xs text-yellow-700">
+                Take your time... next message unlocks soon
+              </span>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

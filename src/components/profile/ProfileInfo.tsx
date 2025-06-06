@@ -24,13 +24,6 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
             <span className="text-gray-600">Book Worm</span>
           </div>
         </div>
-
-        <div>
-          <h3 className="font-medium text-gray-700">About You</h3>
-          <p className="text-gray-600 text-sm mt-1 leading-relaxed">
-            {userProfile.promptAnswer}
-          </p>
-        </div>
       </div>
     </Card>
   );
