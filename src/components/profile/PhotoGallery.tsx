@@ -105,6 +105,16 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
     event.target.value = '';
   };
 
+  const triggerFileInput = (photoId: number) => {
+    console.log('Triggering file input for photo:', photoId);
+    const fileInput = document.getElementById(`file-input-${photoId}`) as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    } else {
+      console.error('File input not found for photo:', photoId);
+    }
+  };
+
   const handleSocialUpload = (photoId: number) => {
     if (socialUrl.trim()) {
       // Basic URL validation
@@ -172,6 +182,18 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
     <Card className="p-6 space-y-4">
       <h3 className="font-medium text-gray-700">Photo Gallery</h3>
       
+      {/* Hidden file inputs for each photo slot */}
+      {photos.map((photo) => (
+        <input
+          key={photo.id}
+          id={`file-input-${photo.id}`}
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileUpload(photo.id, e)}
+          className="hidden"
+        />
+      ))}
+      
       {/* Main Photo */}
       <div>
         <div className="flex items-center space-x-2 mb-2">
@@ -212,30 +234,21 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
           {!uploading && (
             <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
               <div className="flex space-x-2">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileUpload(mainPhoto?.id || 1, e)}
-                    className="hidden"
-                    disabled={uploading === (mainPhoto?.id || 1)}
-                  />
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    className="bg-white hover:bg-gray-100 text-black border-gray-300"
-                    type="button"
-                  >
-                    <Upload className="w-3 h-3 mr-1" />
-                    Upload
-                  </Button>
-                </label>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="bg-white hover:bg-gray-100 text-black border-gray-300"
+                  onClick={() => triggerFileInput(mainPhoto?.id || 1)}
+                  disabled={uploading === (mainPhoto?.id || 1)}
+                >
+                  <Upload className="w-3 h-3 mr-1" />
+                  Upload
+                </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   className="bg-white hover:bg-gray-100 text-black border-gray-300"
                   onClick={() => setShowSocialOptions(mainPhoto?.id || 1)}
-                  type="button"
                 >
                   <Link className="w-3 h-3 mr-1" />
                   URL
@@ -321,30 +334,21 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                 {!uploading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                     <div className="flex flex-col space-y-1">
-                      <label className="cursor-pointer">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleFileUpload(photo.id, e)}
-                          className="hidden"
-                          disabled={uploading === photo.id}
-                        />
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
-                          type="button"
-                        >
-                          <Upload className="w-2 h-2 mr-1" />
-                          Upload
-                        </Button>
-                      </label>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
+                        onClick={() => triggerFileInput(photo.id)}
+                        disabled={uploading === photo.id}
+                      >
+                        <Upload className="w-2 h-2 mr-1" />
+                        Upload
+                      </Button>
                       <Button 
                         size="sm" 
                         variant="outline" 
                         className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
                         onClick={() => setShowSocialOptions(photo.id)}
-                        type="button"
                       >
                         <Link className="w-2 h-2 mr-1" />
                         URL
