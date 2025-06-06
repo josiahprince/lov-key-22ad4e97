@@ -25,18 +25,15 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
   const uploadToSupabase = async (file: File, photoId: number) => {
     try {
       setUploading(photoId);
+      console.log('Starting upload for photo slot:', photoId);
       
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) {
-        console.error('User not authenticated:', userError);
-        alert('Please log in to upload photos');
-        return;
-      }
-
+      // For demo purposes, we'll create a mock user ID
+      // In a real app, you'd get this from authentication
+      const mockUserId = 'demo-user-123';
+      
       // Create unique filename
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${photoId}-${Date.now()}.${fileExt}`;
+      const fileName = `${mockUserId}/${photoId}-${Date.now()}.${fileExt}`;
 
       console.log('Uploading file:', fileName);
 
@@ -70,6 +67,7 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
       onPhotosChange(updatedPhotos);
 
       console.log('Photo uploaded successfully for slot:', photoId);
+      alert('Photo uploaded successfully!');
     } catch (error) {
       console.error('Unexpected error:', error);
       alert('Unexpected error occurred. Please try again.');
@@ -79,22 +77,29 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
   };
 
   const handleFileUpload = async (photoId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('File upload triggered for photo slot:', photoId);
     const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('File size should be less than 5MB');
-        return;
-      }
-
-      await uploadToSupabase(file, photoId);
+    
+    if (!file) {
+      console.log('No file selected');
+      return;
     }
+
+    console.log('File selected:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size should be less than 5MB');
+      return;
+    }
+
+    await uploadToSupabase(file, photoId);
     
     // Reset the input value to allow uploading the same file again
     event.target.value = '';
@@ -130,25 +135,23 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
   const removePhoto = async (photoId: number) => {
     const photoToRemove = photos.find(photo => photo.id === photoId);
     
-    // If it's a Supabase-hosted photo, delete from storage
+    // If it's a Supabase-hosted photo, attempt to delete from storage
     if (photoToRemove?.url && photoToRemove.url.includes('supabase')) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Extract filename from URL
-          const urlParts = photoToRemove.url.split('/');
-          const fileName = urlParts[urlParts.length - 1];
-          const fullPath = `${user.id}/${fileName}`;
-          
-          const { error } = await supabase.storage
-            .from('profile-photos')
-            .remove([fullPath]);
-          
-          if (error) {
-            console.error('Error deleting file from storage:', error);
-          } else {
-            console.log('File deleted from storage successfully');
-          }
+        const mockUserId = 'demo-user-123';
+        // Extract filename from URL - this is a simplified approach
+        const urlParts = photoToRemove.url.split('/');
+        const fileName = urlParts[urlParts.length - 1];
+        const fullPath = `${mockUserId}/${fileName}`;
+        
+        const { error } = await supabase.storage
+          .from('profile-photos')
+          .remove([fullPath]);
+        
+        if (error) {
+          console.error('Error deleting file from storage:', error);
+        } else {
+          console.log('File deleted from storage successfully');
         }
       } catch (error) {
         console.error('Error during file deletion:', error);
@@ -217,7 +220,12 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                     className="hidden"
                     disabled={uploading === (mainPhoto?.id || 1)}
                   />
-                  <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100">
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="bg-white hover:bg-gray-100 text-black border-gray-300"
+                    type="button"
+                  >
                     <Upload className="w-3 h-3 mr-1" />
                     Upload
                   </Button>
@@ -225,8 +233,9 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="bg-white hover:bg-gray-100"
+                  className="bg-white hover:bg-gray-100 text-black border-gray-300"
                   onClick={() => setShowSocialOptions(mainPhoto?.id || 1)}
+                  type="button"
                 >
                   <Link className="w-3 h-3 mr-1" />
                   URL
@@ -320,7 +329,12 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                           className="hidden"
                           disabled={uploading === photo.id}
                         />
-                        <Button size="sm" variant="outline" className="bg-white hover:bg-gray-100 text-xs px-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
+                          type="button"
+                        >
                           <Upload className="w-2 h-2 mr-1" />
                           Upload
                         </Button>
@@ -328,8 +342,9 @@ const PhotoGallery = ({ photos, onPhotosChange }: PhotoGalleryProps) => {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="bg-white hover:bg-gray-100 text-xs px-2"
+                        className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
                         onClick={() => setShowSocialOptions(photo.id)}
+                        type="button"
                       >
                         <Link className="w-2 h-2 mr-1" />
                         URL
