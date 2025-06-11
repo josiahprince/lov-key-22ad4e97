@@ -4,12 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
-import { Heart } from 'lucide-react';
+import { Heart, Eye, EyeOff } from 'lucide-react';
 
 const AuthScreen = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -45,67 +46,108 @@ const AuthScreen = ({ onAuthSuccess }: { onAuthSuccess: () => void }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl">
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
-            <Heart className="w-12 h-12 text-rose-500" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-800">Heartconnect</h1>
-          <p className="text-sm text-gray-600 mt-2">
-            {isLogin ? 'Welcome back!' : 'Create your account'}
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-pink-400 via-rose-400 to-red-500 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-br from-white/10 to-transparent rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-tr from-white/10 to-transparent rounded-full blur-3xl"></div>
+      </div>
 
-        <form onSubmit={handleAuth} className="space-y-4">
-          <div>
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200"
-            />
-          </div>
-          
-          <div>
-            <Input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200"
-            />
-          </div>
-
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">
-              {error}
+      <Card className="w-full max-w-sm relative z-10 bg-white/95 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
+        <div className="p-8">
+          {/* Logo and branding */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full flex items-center justify-center shadow-lg">
+                <Heart className="w-8 h-8 text-white fill-current" />
+              </div>
             </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent mb-2">
+              Heartconnect
+            </h1>
+            <p className="text-gray-600 text-sm">
+              {isLogin ? 'Welcome back!' : 'Find your perfect match'}
+            </p>
+          </div>
+
+          {/* Auth form */}
+          <form onSubmit={handleAuth} className="space-y-6">
+            <div className="space-y-4">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-pink-300 focus:ring-pink-200 transition-all duration-200 text-base"
+                />
+              </div>
+              
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-pink-300 focus:ring-pink-200 transition-all duration-200 text-base pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-4 rounded-2xl border border-red-100">
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:transform-none"
+            >
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Please wait...</span>
+                </div>
+              ) : (
+                isLogin ? 'Sign In' : 'Create Account'
+              )}
+            </Button>
+          </form>
+
+          {/* Toggle between login/signup */}
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+              }}
+              className="text-sm font-medium text-gray-600 hover:text-pink-600 transition-colors"
+            >
+              {isLogin 
+                ? "New here? Create an account" 
+                : "Already have an account? Sign in"
+              }
+            </button>
+          </div>
+
+          {/* Terms text for signup */}
+          {!isLogin && (
+            <p className="text-xs text-gray-500 text-center mt-6 leading-relaxed">
+              By creating an account, you agree to our Terms of Service and Privacy Policy
+            </p>
           )}
-
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl transition-all duration-200"
-          >
-            {loading ? 'Loading...' : (isLogin ? 'Sign In' : 'Sign Up')}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-sm text-rose-600 hover:text-rose-700 transition-colors"
-          >
-            {isLogin 
-              ? "Don't have an account? Sign up" 
-              : "Already have an account? Sign in"
-            }
-          </button>
         </div>
       </Card>
     </div>
