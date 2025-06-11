@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,14 +9,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import type { Database } from '@/integrations/supabase/types';
+
+type GenderType = Database['public']['Enums']['gender_type'];
+type OrientationType = Database['public']['Enums']['orientation_type'];
+type InterestedInType = Database['public']['Enums']['interested_in_type'];
 
 interface ProfileData {
   firstName: string;
   lastName: string;
   dateOfBirth: Date | undefined;
-  gender: string;
-  sexualOrientation: string;
-  interestedIn: string;
+  gender: GenderType | '';
+  sexualOrientation: OrientationType | '';
+  interestedIn: InterestedInType | '';
 }
 
 const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => {
@@ -37,27 +41,27 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
   const totalSteps = 5;
 
   const genderOptions = [
-    { value: 'male', label: 'Man' },
-    { value: 'female', label: 'Woman' },
-    { value: 'non_binary', label: 'Non-binary' },
-    { value: 'other', label: 'Other' },
+    { value: 'male' as const, label: 'Man' },
+    { value: 'female' as const, label: 'Woman' },
+    { value: 'non_binary' as const, label: 'Non-binary' },
+    { value: 'other' as const, label: 'Other' },
   ];
 
   const orientationOptions = [
-    { value: 'straight', label: 'Straight' },
-    { value: 'gay', label: 'Gay' },
-    { value: 'lesbian', label: 'Lesbian' },
-    { value: 'bisexual', label: 'Bisexual' },
-    { value: 'pansexual', label: 'Pansexual' },
-    { value: 'asexual', label: 'Asexual' },
-    { value: 'other', label: 'Other' },
+    { value: 'straight' as const, label: 'Straight' },
+    { value: 'gay' as const, label: 'Gay' },
+    { value: 'lesbian' as const, label: 'Lesbian' },
+    { value: 'bisexual' as const, label: 'Bisexual' },
+    { value: 'pansexual' as const, label: 'Pansexual' },
+    { value: 'asexual' as const, label: 'Asexual' },
+    { value: 'other' as const, label: 'Other' },
   ];
 
   const interestedInOptions = [
-    { value: 'men', label: 'Men' },
-    { value: 'women', label: 'Women' },
-    { value: 'non_binary', label: 'Non-binary people' },
-    { value: 'everyone', label: 'Everyone' },
+    { value: 'men' as const, label: 'Men' },
+    { value: 'women' as const, label: 'Women' },
+    { value: 'non_binary' as const, label: 'Non-binary people' },
+    { value: 'everyone' as const, label: 'Everyone' },
   ];
 
   const updateProfileData = (field: keyof ProfileData, value: any) => {
@@ -90,9 +94,9 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
           first_name: profileData.firstName,
           last_name: profileData.lastName,
           date_of_birth: profileData.dateOfBirth?.toISOString().split('T')[0],
-          gender: profileData.gender,
-          sexual_orientation: profileData.sexualOrientation,
-          interested_in: profileData.interestedIn,
+          gender: profileData.gender || null,
+          sexual_orientation: profileData.sexualOrientation || null,
+          interested_in: profileData.interestedIn || null,
           is_profile_complete: true,
         })
         .eq('id', user.id);
