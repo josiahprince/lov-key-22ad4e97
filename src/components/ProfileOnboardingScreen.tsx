@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -94,9 +95,9 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
           first_name: profileData.firstName,
           last_name: profileData.lastName,
           date_of_birth: profileData.dateOfBirth?.toISOString().split('T')[0],
-          gender: profileData.gender || null,
-          sexual_orientation: profileData.sexualOrientation || null,
-          interested_in: profileData.interestedIn || null,
+          gender: profileData.gender === '' ? null : profileData.gender,
+          sexual_orientation: profileData.sexualOrientation === '' ? null : profileData.sexualOrientation,
+          interested_in: profileData.interestedIn === '' ? null : profileData.interestedIn,
           is_profile_complete: true,
         })
         .eq('id', user.id);
