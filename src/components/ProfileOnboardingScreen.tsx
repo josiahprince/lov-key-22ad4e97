@@ -187,6 +187,7 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
                       date > new Date() || date < new Date("1900-01-01")
                     }
                     initialFocus
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
