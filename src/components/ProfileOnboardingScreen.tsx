@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +61,7 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
           sexual_orientation: profileData.sexualOrientation,
           interested_in: profileData.interestedIn,
           is_profile_complete: true,
-        } as const)
+        })
         .eq('id', user.id);
 
       if (updateError) throw updateError;
