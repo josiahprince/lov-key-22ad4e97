@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +59,7 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
           gender: profileData.gender,
           sexual_orientation: profileData.sexualOrientation,
           interested_in: profileData.interestedIn,
-          is_profile_complete: true,
+          is_profile_complete: true as boolean,
         })
         .eq('id', user.id);
 
