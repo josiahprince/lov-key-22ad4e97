@@ -60,7 +60,7 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
           gender: profileData.gender,
           sexual_orientation: profileData.sexualOrientation,
           interested_in: profileData.interestedIn,
-          is_profile_complete: true,
+          is_profile_complete: Boolean(true),
         })
         .eq('id', user.id);
 
