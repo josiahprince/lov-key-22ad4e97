@@ -1,29 +1,15 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import type { Database } from '@/integrations/supabase/types';
-
-type GenderType = Database['public']['Enums']['gender_type'];
-type OrientationType = Database['public']['Enums']['orientation_type'];
-type InterestedInType = Database['public']['Enums']['interested_in_type'];
-
-interface ProfileData {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: Date | undefined;
-  gender: GenderType | null;
-  sexualOrientation: OrientationType | null;
-  interestedIn: InterestedInType | null;
-}
+import { ProfileData } from './profile-onboarding/types';
+import NameStep from './profile-onboarding/NameStep';
+import DateOfBirthStep from './profile-onboarding/DateOfBirthStep';
+import GenderStep from './profile-onboarding/GenderStep';
+import OrientationStep from './profile-onboarding/OrientationStep';
+import InterestedInStep from './profile-onboarding/InterestedInStep';
+import ProgressBar from './profile-onboarding/ProgressBar';
+import NavigationButtons from './profile-onboarding/NavigationButtons';
 
 const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [step, setStep] = useState(1);
@@ -40,30 +26,6 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
   });
 
   const totalSteps = 5;
-
-  const genderOptions = [
-    { value: 'male' as const, label: 'Man' },
-    { value: 'female' as const, label: 'Woman' },
-    { value: 'non_binary' as const, label: 'Non-binary' },
-    { value: 'other' as const, label: 'Other' },
-  ];
-
-  const orientationOptions = [
-    { value: 'straight' as const, label: 'Straight' },
-    { value: 'gay' as const, label: 'Gay' },
-    { value: 'lesbian' as const, label: 'Lesbian' },
-    { value: 'bisexual' as const, label: 'Bisexual' },
-    { value: 'pansexual' as const, label: 'Pansexual' },
-    { value: 'asexual' as const, label: 'Asexual' },
-    { value: 'other' as const, label: 'Other' },
-  ];
-
-  const interestedInOptions = [
-    { value: 'men' as const, label: 'Men' },
-    { value: 'women' as const, label: 'Women' },
-    { value: 'non_binary' as const, label: 'Non-binary people' },
-    { value: 'everyone' as const, label: 'Everyone' },
-  ];
 
   const updateProfileData = (field: keyof ProfileData, value: any) => {
     setProfileData(prev => ({ ...prev, [field]: value }));
@@ -130,155 +92,19 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
   };
 
   const renderStep = () => {
+    const stepProps = { profileData, updateProfileData };
+    
     switch (step) {
       case 1:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">What's your name?</h2>
-              <p className="text-sm text-gray-600">This is how you'll appear to others</p>
-            </div>
-            
-            <div className="space-y-4">
-              <Input
-                placeholder="First name"
-                value={profileData.firstName}
-                onChange={(e) => updateProfileData('firstName', e.target.value)}
-                className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-pink-300 focus:ring-pink-200 transition-all duration-200 text-base"
-              />
-              <Input
-                placeholder="Last name"
-                value={profileData.lastName}
-                onChange={(e) => updateProfileData('lastName', e.target.value)}
-                className="h-12 rounded-2xl border-gray-200 bg-gray-50/50 focus:bg-white focus:border-pink-300 focus:ring-pink-200 transition-all duration-200 text-base"
-              />
-            </div>
-          </div>
-        );
-
+        return <NameStep {...stepProps} />;
       case 2:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">When's your birthday?</h2>
-              <p className="text-sm text-gray-600">Your age will be shown on your profile</p>
-            </div>
-            
-            <div className="flex justify-center">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full h-12 rounded-2xl border-gray-200 bg-gray-50/50 hover:bg-white justify-start text-left font-normal text-base",
-                      !profileData.dateOfBirth && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {profileData.dateOfBirth ? format(profileData.dateOfBirth, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={profileData.dateOfBirth}
-                    onSelect={(date) => updateProfileData('dateOfBirth', date)}
-                    disabled={(date) =>
-                      date > new Date() || date < new Date("1900-01-01")
-                    }
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-        );
-
+        return <DateOfBirthStep {...stepProps} />;
       case 3:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">What's your gender?</h2>
-              <p className="text-sm text-gray-600">This helps us show you to the right people</p>
-            </div>
-            
-            <div className="space-y-3">
-              {genderOptions.map((option) => (
-                <Card
-                  key={option.value}
-                  className={`p-4 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                    profileData.gender === option.value
-                      ? 'bg-pink-50 border-pink-200 text-pink-700'
-                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                  }`}
-                  onClick={() => updateProfileData('gender', option.value)}
-                >
-                  <div className="text-center">
-                    <p className="font-medium">{option.label}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
+        return <GenderStep {...stepProps} />;
       case 4:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">Sexual Orientation</h2>
-              <p className="text-sm text-gray-600">This helps us understand your preferences</p>
-            </div>
-            
-            <div className="space-y-3">
-              {orientationOptions.map((option) => (
-                <Card
-                  key={option.value}
-                  className={`p-4 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                    profileData.sexualOrientation === option.value
-                      ? 'bg-pink-50 border-pink-200 text-pink-700'
-                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                  }`}
-                  onClick={() => updateProfileData('sexualOrientation', option.value)}
-                >
-                  <div className="text-center">
-                    <p className="font-medium">{option.label}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
+        return <OrientationStep {...stepProps} />;
       case 5:
-        return (
-          <div className="space-y-6 animate-fade-in">
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-bold text-gray-800">Who are you interested in?</h2>
-              <p className="text-sm text-gray-600">This helps us show you relevant matches</p>
-            </div>
-            
-            <div className="space-y-3">
-              {interestedInOptions.map((option) => (
-                <Card
-                  key={option.value}
-                  className={`p-4 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                    profileData.interestedIn === option.value
-                      ? 'bg-pink-50 border-pink-200 text-pink-700'
-                      : 'bg-gray-50 hover:bg-gray-100 border-gray-200'
-                  }`}
-                  onClick={() => updateProfileData('interestedIn', option.value)}
-                >
-                  <div className="text-center">
-                    <p className="font-medium">{option.label}</p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        );
-
+        return <InterestedInStep {...stepProps} />;
       default:
         return null;
     }
@@ -288,21 +114,8 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
     <div className="min-h-screen bg-gradient-to-br from-pink-400 via-rose-400 to-red-500 flex items-center justify-center p-4">
       <Card className="w-full max-w-md bg-white/95 backdrop-blur-xl shadow-2xl border-0 rounded-3xl overflow-hidden">
         <div className="p-8">
-          {/* Progress bar */}
-          <div className="mb-8">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-gray-600">Step {step} of {totalSteps}</span>
-              <span className="text-sm font-medium text-gray-600">{Math.round((step / totalSteps) * 100)}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-pink-500 to-rose-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(step / totalSteps) * 100}%` }}
-              />
-            </div>
-          </div>
+          <ProgressBar step={step} totalSteps={totalSteps} />
 
-          {/* Step content */}
           {renderStep()}
 
           {error && (
@@ -311,37 +124,15 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
             </div>
           )}
 
-          {/* Navigation buttons */}
-          <div className="flex space-x-3 mt-8">
-            {step > 1 && (
-              <Button
-                onClick={handleBack}
-                variant="outline"
-                className="flex-1 h-12 rounded-2xl border-gray-200 hover:bg-gray-50"
-              >
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-            
-            <Button
-              onClick={step === totalSteps ? handleComplete : handleNext}
-              disabled={!canProceed() || loading}
-              className="flex-1 h-12 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold rounded-2xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl disabled:opacity-50 disabled:transform-none"
-            >
-              {loading ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Saving...</span>
-                </div>
-              ) : (
-                <>
-                  {step === totalSteps ? 'Complete Profile' : 'Next'}
-                  {step < totalSteps && <ChevronRight className="w-4 h-4 ml-2" />}
-                </>
-              )}
-            </Button>
-          </div>
+          <NavigationButtons
+            step={step}
+            totalSteps={totalSteps}
+            canProceed={canProceed()}
+            loading={loading}
+            onBack={handleBack}
+            onNext={handleNext}
+            onComplete={handleComplete}
+          />
         </div>
       </Card>
     </div>
