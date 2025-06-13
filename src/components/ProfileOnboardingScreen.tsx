@@ -59,8 +59,8 @@ const ProfileOnboardingScreen = ({ onComplete }: { onComplete: () => void }) => 
           gender: profileData.gender,
           sexual_orientation: profileData.sexualOrientation,
           interested_in: profileData.interestedIn,
-          is_profile_complete: true as boolean,
-        })
+          is_profile_complete: true,
+        } as const)
         .eq('id', user.id);
 
       if (updateError) throw updateError;
