@@ -9,60 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
-        Row: {
-          created_at: string | null
-          date_of_birth: string | null
-          first_name: string | null
-          gender: Database["public"]["Enums"]["gender_type"] | null
-          id: string
-          interested_in:
-            | Database["public"]["Enums"]["interested_in_type"]
-            | null
-          is_profile_complete: boolean | null
-          last_name: string | null
-          phone_number: string | null
-          sexual_orientation:
-            | Database["public"]["Enums"]["orientation_type"]
-            | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          date_of_birth?: string | null
-          first_name?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          id: string
-          interested_in?:
-            | Database["public"]["Enums"]["interested_in_type"]
-            | null
-          is_profile_complete?: boolean | null
-          last_name?: string | null
-          phone_number?: string | null
-          sexual_orientation?:
-            | Database["public"]["Enums"]["orientation_type"]
-            | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          date_of_birth?: string | null
-          first_name?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
-          id?: string
-          interested_in?:
-            | Database["public"]["Enums"]["interested_in_type"]
-            | null
-          is_profile_complete?: boolean | null
-          last_name?: string | null
-          phone_number?: string | null
-          sexual_orientation?:
-            | Database["public"]["Enums"]["orientation_type"]
-            | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
@@ -71,16 +18,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      gender_type: "male" | "female" | "non_binary" | "other"
-      interested_in_type: "men" | "women" | "non_binary" | "everyone"
-      orientation_type:
-        | "straight"
-        | "gay"
-        | "lesbian"
-        | "bisexual"
-        | "pansexual"
-        | "asexual"
-        | "other"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -195,18 +133,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      gender_type: ["male", "female", "non_binary", "other"],
-      interested_in_type: ["men", "women", "non_binary", "everyone"],
-      orientation_type: [
-        "straight",
-        "gay",
-        "lesbian",
-        "bisexual",
-        "pansexual",
-        "asexual",
-        "other",
-      ],
-    },
+    Enums: {},
   },
 } as const

@@ -4,7 +4,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import AuthScreen from '../components/AuthScreen';
 import OnboardingScreen from '../components/OnboardingScreen';
-import ProfileOnboardingScreen from '../components/ProfileOnboardingScreen';
 import MatchesScreen from '../components/MatchesScreen';
 import ChatScreen from '../components/ChatScreen';
 import ProfileScreen from '../components/ProfileScreen';
@@ -16,68 +15,21 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState('onboarding');
   const [userProfile, setUserProfile] = useState(null);
-  const [profileComplete, setProfileComplete] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Check if user has completed their profile
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (profile) {
-            setUserProfile(profile);
-            setProfileComplete(profile.is_profile_complete || false);
-            
-            if (profile.is_profile_complete) {
-              setCurrentScreen('matches');
-            } else {
-              setCurrentScreen('profile-onboarding');
-            }
-          } else {
-            setCurrentScreen('profile-onboarding');
-          }
-        }
-        
         setLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Check if user has completed their profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (profile) {
-          setUserProfile(profile);
-          setProfileComplete(profile.is_profile_complete || false);
-          
-          if (profile.is_profile_complete) {
-            setCurrentScreen('matches');
-          } else {
-            setCurrentScreen('profile-onboarding');
-          }
-        } else {
-          setCurrentScreen('profile-onboarding');
-        }
-      }
-      
       setLoading(false);
     });
 
@@ -86,16 +38,11 @@ const Index = () => {
 
   const handleAuthSuccess = () => {
     // Auth state will be updated by the listener
-    // The listener will determine the correct screen based on profile completion
+    setCurrentScreen('onboarding');
   };
 
   const handleOnboardingComplete = (profile: any) => {
     setUserProfile(profile);
-    setCurrentScreen('profile-onboarding');
-  };
-
-  const handleProfileOnboardingComplete = () => {
-    setProfileComplete(true);
     setCurrentScreen('matches');
   };
 
@@ -108,7 +55,6 @@ const Index = () => {
     await supabase.auth.signOut();
     setCurrentScreen('onboarding');
     setUserProfile(null);
-    setProfileComplete(false);
   };
 
   if (loading) {
@@ -131,8 +77,6 @@ const Index = () => {
     switch (currentScreen) {
       case 'onboarding':
         return <OnboardingScreen onComplete={handleOnboardingComplete} />;
-      case 'profile-onboarding':
-        return <ProfileOnboardingScreen onComplete={handleProfileOnboardingComplete} />;
       case 'matches':
         return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
       case 'chat':
@@ -148,7 +92,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
       <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
         {renderScreen()}
-        {currentScreen !== 'onboarding' && currentScreen !== 'profile-onboarding' && (
+        {currentScreen !== 'onboarding' && (
           <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
         )}
       </div>
