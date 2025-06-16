@@ -1,6 +1,8 @@
 
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect } from 'react';
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileInfo from './profile/ProfileInfo';
 import PhotoGallery from './profile/PhotoGallery';
@@ -11,6 +13,16 @@ const ProfileScreen = ({ userProfile, onSignOut }: {
   userProfile: any; 
   onSignOut: () => void;
 }) => {
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id);
+    };
+    getCurrentUser();
+  }, []);
+
   // If userProfile is not available, show loading
   if (!userProfile) {
     return (
@@ -52,7 +64,7 @@ const ProfileScreen = ({ userProfile, onSignOut }: {
 
       <ProfileHeader />
       <ProfileInfo userProfile={userProfile} />
-      <PhotoGallery photos={[]} onPhotosChange={() => {}} />
+      <PhotoGallery userId={currentUserId} />
       <DescriptionSection onSave={() => {}} />
       <PrivacyCards />
     </div>
