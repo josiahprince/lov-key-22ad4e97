@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export interface UserPhoto {
   id: string;
@@ -37,7 +37,8 @@ export const useUserPhotos = (userId: string | undefined) => {
     }
 
     try {
-      const { data, error } = await supabase
+      // Use type assertion since user_photos table is not in the generated types yet
+      const { data, error } = await (supabase as any)
         .from('user_photos')
         .select('*')
         .eq('user_id', userId)
@@ -82,8 +83,8 @@ export const useUserPhotos = (userId: string | undefined) => {
         .from('profile-photos')
         .getPublicUrl(fileName);
 
-      // Save to database
-      const { data, error: dbError } = await supabase
+      // Save to database using type assertion
+      const { data, error: dbError } = await (supabase as any)
         .from('user_photos')
         .upsert({
           user_id: userId,
@@ -124,7 +125,7 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_photos')
         .upsert({
           user_id: userId,
@@ -165,7 +166,7 @@ export const useUserPhotos = (userId: string | undefined) => {
 
     try {
       // Delete from database
-      const { error: dbError } = await supabase
+      const { error: dbError } = await (supabase as any)
         .from('user_photos')
         .delete()
         .eq('user_id', userId)
@@ -209,7 +210,7 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('user_photos')
         .update({ is_main: true })
         .eq('user_id', userId)
