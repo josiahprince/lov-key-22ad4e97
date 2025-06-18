@@ -96,11 +96,14 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${slot}-${Date.now()}.${fileExt}`;
+      
+      // Determine which bucket to use based on slot
+      const bucketName = slot === 1 ? 'main-profile-photos' : 'additional-profile-photos';
 
-      console.log('Uploading to storage with filename:', fileName);
+      console.log('Uploading to bucket:', bucketName, 'with filename:', fileName);
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('profile-photos')
+        .from(bucketName)
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
@@ -114,7 +117,7 @@ export const useUserPhotos = (userId: string | undefined) => {
       console.log('Upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
-        .from('profile-photos')
+        .from(bucketName)
         .getPublicUrl(fileName);
 
       console.log('Generated public URL:', publicUrl);
@@ -138,7 +141,7 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       console.log('Database save successful:', data);
 
-      // Update local state
+      // Update local state immediately
       setPhotos(prev => prev.map(photo => 
         photo.photo_slot === slot 
           ? { ...data, id: data.id }
@@ -225,8 +228,11 @@ export const useUserPhotos = (userId: string | undefined) => {
         const fileName = urlParts[urlParts.length - 1];
         const fullPath = `${userId}/${fileName}`;
         
+        // Determine which bucket to delete from
+        const bucketName = slot === 1 ? 'main-profile-photos' : 'additional-profile-photos';
+        
         await supabase.storage
-          .from('profile-photos')
+          .from(bucketName)
           .remove([fullPath]);
       }
 
