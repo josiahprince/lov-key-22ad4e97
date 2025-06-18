@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -65,7 +64,7 @@ const ProfileScreen = ({ userProfile, onSignOut }: {
       <ProfileHeader />
       <ProfileInfo userProfile={userProfile} />
       <PhotoGallery userId={currentUserId} />
-      <DescriptionSection onSave={() => {}} />
+      <DescriptionSection />
       <PrivacyCards />
     </div>
   );

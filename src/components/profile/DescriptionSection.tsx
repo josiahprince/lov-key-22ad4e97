@@ -1,68 +1,82 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Edit, Save } from 'lucide-react';
+import { useUserDescription } from '@/hooks/useUserDescription';
+import { supabase } from '@/integrations/supabase/client';
 
 interface DescriptionSectionProps {
   initialDescription?: string;
-  onSave: (description: string) => void;
+  onSave?: (description: string) => void;
 }
 
-const DescriptionSection = ({ initialDescription = "Tell others about yourself...", onSave }: DescriptionSectionProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [description, setDescription] = useState(initialDescription);
+const DescriptionSection = ({ initialDescription, onSave }: DescriptionSectionProps) => {
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [localDescription, setLocalDescription] = useState('');
+  const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  
+  const { description, loading, saving, saveDescription } = useUserDescription(currentUserId);
 
-  const handleSave = () => {
-    setIsEditing(false);
-    onSave(description);
-    console.log('Description saved:', description);
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUserId(user?.id);
+    };
+    getCurrentUser();
+  }, []);
+
+  useEffect(() => {
+    setLocalDescription(description);
+  }, [description]);
+
+  const handleDescriptionChange = (newDescription: string) => {
+    setLocalDescription(newDescription);
+    
+    // Clear existing timeout
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    // Set new timeout to save after 1 second of no typing
+    const timeout = setTimeout(() => {
+      saveDescription(newDescription);
+      if (onSave) {
+        onSave(newDescription);
+      }
+    }, 1000);
+    
+    setSaveTimeout(timeout);
   };
+
+  if (loading) {
+    return (
+      <Card className="p-6 space-y-4">
+        <h3 className="font-medium text-gray-700">Description</h3>
+        <div className="animate-pulse">
+          <div className="h-20 bg-gray-200 rounded"></div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-medium text-gray-700">Description</h3>
-        {!isEditing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            className="text-rose-600 border-rose-200 hover:bg-rose-50"
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            onClick={handleSave}
-            className="bg-rose-500 hover:bg-rose-600 text-white"
-          >
-            <Save className="w-4 h-4 mr-1" />
-            Save
-          </Button>
+        {saving && (
+          <span className="text-xs text-gray-500">Saving...</span>
         )}
       </div>
       
-      {isEditing ? (
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Tell others about yourself..."
-          className="min-h-[100px] resize-none"
-          maxLength={500}
-        />
-      ) : (
-        <p className="text-gray-600 text-sm leading-relaxed">
-          {description}
-        </p>
-      )}
+      <Textarea
+        value={localDescription}
+        onChange={(e) => handleDescriptionChange(e.target.value)}
+        placeholder="Tell others about yourself..."
+        className="min-h-[100px] resize-none border-gray-200 focus:border-rose-300 focus:ring-rose-200"
+        maxLength={500}
+      />
       
-      {isEditing && (
-        <p className="text-xs text-gray-500">{description.length}/500 characters</p>
-      )}
+      <p className="text-xs text-gray-500">{localDescription.length}/500 characters</p>
     </Card>
   );
 };
