@@ -37,8 +37,9 @@ export const useUserPhotos = (userId: string | undefined) => {
     }
 
     try {
-      // Use type assertion since user_photos table is not in the generated types yet
-      const { data, error } = await (supabase as any)
+      console.log('Fetching photos for user:', userId);
+      
+      const { data, error } = await supabase
         .from('user_photos')
         .select('*')
         .eq('user_id', userId)
@@ -54,6 +55,7 @@ export const useUserPhotos = (userId: string | undefined) => {
         return;
       }
 
+      console.log('Fetched photos:', data);
       const photoSlots = initializePhotoSlots(data || []);
       setPhotos(photoSlots);
     } catch (error) {
@@ -64,11 +66,38 @@ export const useUserPhotos = (userId: string | undefined) => {
   };
 
   const uploadPhoto = async (file: File, slot: number) => {
-    if (!userId) return null;
+    if (!userId) {
+      console.error('No user ID available for upload');
+      return null;
+    }
 
     try {
+      console.log('Starting upload for slot:', slot, 'file:', file.name);
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Please select an image file",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "File size should be less than 5MB",
+          variant: "destructive"
+        });
+        return null;
+      }
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${slot}-${Date.now()}.${fileExt}`;
+
+      console.log('Uploading to storage with filename:', fileName);
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('profile-photos')
@@ -77,14 +106,21 @@ export const useUserPhotos = (userId: string | undefined) => {
           upsert: true
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('Upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from('profile-photos')
         .getPublicUrl(fileName);
 
-      // Save to database using type assertion
-      const { data, error: dbError } = await (supabase as any)
+      console.log('Generated public URL:', publicUrl);
+
+      // Save to database
+      const { data, error: dbError } = await supabase
         .from('user_photos')
         .upsert({
           user_id: userId,
@@ -95,7 +131,12 @@ export const useUserPhotos = (userId: string | undefined) => {
         .select()
         .single();
 
-      if (dbError) throw dbError;
+      if (dbError) {
+        console.error('Database error:', dbError);
+        throw dbError;
+      }
+
+      console.log('Database save successful:', data);
 
       // Update local state
       setPhotos(prev => prev.map(photo => 
@@ -125,7 +166,9 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      const { data, error } = await (supabase as any)
+      console.log('Adding photo from URL:', url, 'to slot:', slot);
+      
+      const { data, error } = await supabase
         .from('user_photos')
         .upsert({
           user_id: userId,
@@ -165,8 +208,10 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!photo || !photo.photo_url) return;
 
     try {
+      console.log('Removing photo from slot:', slot);
+      
       // Delete from database
-      const { error: dbError } = await (supabase as any)
+      const { error: dbError } = await supabase
         .from('user_photos')
         .delete()
         .eq('user_id', userId)
@@ -210,7 +255,9 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      const { error } = await (supabase as any)
+      console.log('Setting main photo to slot:', slot);
+      
+      const { error } = await supabase
         .from('user_photos')
         .update({ is_main: true })
         .eq('user_id', userId)
