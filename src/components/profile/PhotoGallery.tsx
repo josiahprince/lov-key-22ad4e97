@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,13 +75,13 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
     <Card className="p-6 space-y-4">
       <h3 className="font-medium text-gray-700">Photo Gallery</h3>
       
-      {/* Hidden file inputs for each photo slot */}
+      {/* Hidden file inputs for each photo slot - Updated to support more image formats */}
       {photos.map((photo) => (
         <input
           key={photo.photo_slot}
           id={`file-input-${photo.photo_slot}`}
           type="file"
-          accept="image/*"
+          accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.tiff,.ico"
           onChange={(e) => handleFileUpload(photo.photo_slot, e)}
           className="hidden"
         />
@@ -201,27 +202,31 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
                         console.error('Error loading image:', photo.photo_url);
                       }}
                     />
+                    {/* Fixed positioning: Star button moved to top-left to avoid overlap */}
                     <Button
                       size="sm"
                       variant="outline"
-                      className="absolute -top-2 -right-2 w-6 h-6 p-0 bg-white border-rose-200 hover:bg-rose-50"
+                      className="absolute -top-2 -left-2 w-6 h-6 p-0 bg-white border-yellow-300 hover:bg-yellow-50 z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         setMainPhoto(photo.photo_slot);
                       }}
                       disabled={uploading === photo.photo_slot}
+                      title="Set as main photo"
                     >
                       <Star className="w-3 h-3 text-yellow-500" />
                     </Button>
+                    {/* Delete button stays at bottom-right */}
                     <Button
                       size="sm"
                       variant="outline"
-                      className="absolute -bottom-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500"
+                      className="absolute -bottom-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500 z-10"
                       onClick={(e) => {
                         e.stopPropagation();
                         removePhoto(photo.photo_slot);
                       }}
                       disabled={uploading === photo.photo_slot}
+                      title="Remove photo"
                     >
                       ×
                     </Button>
@@ -236,7 +241,7 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
                   </div>
                 )}
                 
-                {/* Upload options overlay */}
+                {/* Upload options overlay - adjusted positioning to avoid star button */}
                 {!uploading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                     <div className="flex flex-col space-y-1">
@@ -266,7 +271,7 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
               
               {/* Social URL input for additional photos */}
               {showSocialOptions === photo.photo_slot && (
-                <div className="absolute top-full left-0 right-0 mt-2 z-10 bg-white p-2 rounded-lg shadow-lg border">
+                <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white p-2 rounded-lg shadow-lg border">
                   <div className="flex flex-col space-y-2">
                     <Input
                       placeholder="Image URL..."

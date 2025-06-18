@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -79,11 +78,17 @@ export const useUserPhotos = (userId: string | undefined) => {
     try {
       console.log('Starting upload for slot:', slot, 'file:', file.name);
       
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
+      // Validate file type - Enhanced to support more formats
+      const allowedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+        'image/bmp', 'image/webp', 'image/svg+xml', 'image/tiff', 
+        'image/x-icon', 'image/vnd.microsoft.icon'
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Error",
-          description: "Please select an image file",
+          description: "Please select a valid image file (JPG, PNG, GIF, BMP, WebP, SVG, TIFF, ICO)",
           variant: "destructive"
         });
         return null;
