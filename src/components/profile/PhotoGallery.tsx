@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Star, Upload, Link } from 'lucide-react';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
-import { supabase } from '@/integrations/supabase/client';
 
 interface PhotoGalleryProps {
   userId?: string;
@@ -16,29 +15,24 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
   const [socialUrl, setSocialUrl] = useState('');
   const [uploading, setUploading] = useState<number | null>(null);
 
+  console.log('PhotoGallery - userId:', userId);
+  console.log('PhotoGallery - photos:', photos);
+
   const handleFileUpload = async (slot: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
-      return;
-    }
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size should be less than 5MB');
-      return;
-    }
+    console.log('File selected for upload:', file.name, 'to slot:', slot);
 
     setUploading(slot);
-    await uploadPhoto(file, slot);
+    const result = await uploadPhoto(file, slot);
     setUploading(null);
     
     // Reset the input value
     event.target.value = '';
+    
+    console.log('Upload result:', result);
   };
 
   const triggerFileInput = (slot: number) => {
@@ -101,7 +95,14 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
         <div className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors group">
           {mainPhoto?.photo_url ? (
             <>
-              <img src={mainPhoto.photo_url} alt="Main profile" className="w-full h-full object-cover rounded-lg" />
+              <img 
+                src={mainPhoto.photo_url} 
+                alt="Main profile" 
+                className="w-full h-full object-cover rounded-lg" 
+                onError={(e) => {
+                  console.error('Error loading image:', mainPhoto.photo_url);
+                }}
+              />
               <Button
                 size="sm"
                 variant="outline"
@@ -192,7 +193,14 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
               <div className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 hover:border-rose-300 transition-colors group">
                 {photo.photo_url ? (
                   <>
-                    <img src={photo.photo_url} alt={`Photo ${photo.photo_slot}`} className="w-full h-full object-cover rounded-lg" />
+                    <img 
+                      src={photo.photo_url} 
+                      alt={`Photo ${photo.photo_slot}`} 
+                      className="w-full h-full object-cover rounded-lg" 
+                      onError={(e) => {
+                        console.error('Error loading image:', photo.photo_url);
+                      }}
+                    />
                     <Button
                       size="sm"
                       variant="outline"

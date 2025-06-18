@@ -55,7 +55,7 @@ export const useUserPhotos = (userId: string | undefined) => {
         return;
       }
 
-      console.log('Fetched photos:', data);
+      console.log('Fetched photos from DB:', data);
       const photoSlots = initializePhotoSlots(data || []);
       setPhotos(photoSlots);
     } catch (error) {
@@ -68,6 +68,11 @@ export const useUserPhotos = (userId: string | undefined) => {
   const uploadPhoto = async (file: File, slot: number) => {
     if (!userId) {
       console.error('No user ID available for upload');
+      toast({
+        title: "Error",
+        description: "Please sign in to upload photos",
+        variant: "destructive"
+      });
       return null;
     }
 
@@ -101,6 +106,12 @@ export const useUserPhotos = (userId: string | undefined) => {
       const bucketName = slot === 1 ? 'main-profile-photos' : 'additional-profile-photos';
 
       console.log('Uploading to bucket:', bucketName, 'with filename:', fileName);
+
+      // Delete existing photo in this slot first
+      const existingPhoto = photos.find(p => p.photo_slot === slot && p.photo_url);
+      if (existingPhoto && existingPhoto.photo_url.includes('supabase')) {
+        await removePhoto(slot);
+      }
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(bucketName)
@@ -141,12 +152,8 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       console.log('Database save successful:', data);
 
-      // Update local state immediately
-      setPhotos(prev => prev.map(photo => 
-        photo.photo_slot === slot 
-          ? { ...data, id: data.id }
-          : photo
-      ));
+      // Refresh photos after successful upload
+      await fetchPhotos();
 
       toast({
         title: "Success",
@@ -158,7 +165,7 @@ export const useUserPhotos = (userId: string | undefined) => {
       console.error('Upload error:', error);
       toast({
         title: "Error",
-        description: "Failed to upload photo",
+        description: "Failed to upload photo. Please try again.",
         variant: "destructive"
       });
       return null;
@@ -166,7 +173,14 @@ export const useUserPhotos = (userId: string | undefined) => {
   };
 
   const addPhotoFromUrl = async (url: string, slot: number) => {
-    if (!userId) return;
+    if (!userId) {
+      toast({
+        title: "Error",
+        description: "Please sign in to add photos",
+        variant: "destructive"
+      });
+      return;
+    }
 
     try {
       console.log('Adding photo from URL:', url, 'to slot:', slot);
@@ -184,11 +198,10 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       if (error) throw error;
 
-      setPhotos(prev => prev.map(photo => 
-        photo.photo_slot === slot 
-          ? { ...data, id: data.id }
-          : photo
-      ));
+      console.log('Photo from URL added successfully:', data);
+
+      // Refresh photos after successful addition
+      await fetchPhotos();
 
       toast({
         title: "Success",
@@ -213,7 +226,7 @@ export const useUserPhotos = (userId: string | undefined) => {
     try {
       console.log('Removing photo from slot:', slot);
       
-      // Delete from database
+      // Delete from database first
       const { error: dbError } = await supabase
         .from('user_photos')
         .delete()
@@ -231,17 +244,17 @@ export const useUserPhotos = (userId: string | undefined) => {
         // Determine which bucket to delete from
         const bucketName = slot === 1 ? 'main-profile-photos' : 'additional-profile-photos';
         
-        await supabase.storage
+        const { error: storageError } = await supabase.storage
           .from(bucketName)
           .remove([fullPath]);
+
+        if (storageError) {
+          console.error('Storage deletion error:', storageError);
+        }
       }
 
-      // Update local state
-      setPhotos(prev => prev.map(p => 
-        p.photo_slot === slot 
-          ? { id: `slot-${slot}`, photo_url: '', photo_slot: slot, is_main: false }
-          : p
-      ));
+      // Refresh photos after successful removal
+      await fetchPhotos();
 
       toast({
         title: "Success",
@@ -263,18 +276,25 @@ export const useUserPhotos = (userId: string | undefined) => {
     try {
       console.log('Setting main photo to slot:', slot);
       
-      const { error } = await supabase
+      // First, set all photos to not main
+      const { error: resetError } = await supabase
+        .from('user_photos')
+        .update({ is_main: false })
+        .eq('user_id', userId);
+
+      if (resetError) throw resetError;
+
+      // Then set the selected photo as main
+      const { error: setError } = await supabase
         .from('user_photos')
         .update({ is_main: true })
         .eq('user_id', userId)
         .eq('photo_slot', slot);
 
-      if (error) throw error;
+      if (setError) throw setError;
 
-      setPhotos(prev => prev.map(photo => ({
-        ...photo,
-        is_main: photo.photo_slot === slot
-      })));
+      // Refresh photos after successful update
+      await fetchPhotos();
 
       toast({
         title: "Success",
