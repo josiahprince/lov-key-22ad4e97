@@ -7,6 +7,7 @@ export const useUserDescription = (userId: string | undefined) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [existingRecordId, setExistingRecordId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchDescription = async () => {
@@ -20,7 +21,7 @@ export const useUserDescription = (userId: string | undefined) => {
       
       const { data, error } = await supabase
         .from('user_descriptions')
-        .select('description')
+        .select('id, description')
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -35,7 +36,13 @@ export const useUserDescription = (userId: string | undefined) => {
       }
 
       console.log('Fetched description:', data);
-      setDescription(data?.description || '');
+      if (data) {
+        setDescription(data.description || '');
+        setExistingRecordId(data.id);
+      } else {
+        setDescription('');
+        setExistingRecordId(null);
+      }
     } catch (error) {
       console.error('Unexpected error fetching description:', error);
     } finally {
@@ -57,16 +64,34 @@ export const useUserDescription = (userId: string | undefined) => {
     try {
       setSaving(true);
       console.log('Saving description:', newDescription);
+      console.log('Existing record ID:', existingRecordId);
       
-      const { data, error } = await supabase
-        .from('user_descriptions')
-        .upsert({
-          user_id: userId,
-          description: newDescription,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      let result;
+      
+      if (existingRecordId) {
+        // Update existing record
+        result = await supabase
+          .from('user_descriptions')
+          .update({
+            description: newDescription,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRecordId)
+          .select()
+          .single();
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('user_descriptions')
+          .insert({
+            user_id: userId,
+            description: newDescription
+          })
+          .select()
+          .single();
+      }
+
+      const { data, error } = result;
 
       if (error) {
         console.error('Error saving description:', error);
@@ -75,6 +100,11 @@ export const useUserDescription = (userId: string | undefined) => {
 
       console.log('Description saved successfully:', data);
       setDescription(newDescription);
+      
+      // Update the existing record ID if we just created a new record
+      if (!existingRecordId && data) {
+        setExistingRecordId(data.id);
+      }
       
       toast({
         title: "Success",

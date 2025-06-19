@@ -48,6 +48,15 @@ const DescriptionSection = ({ initialDescription, onSave }: DescriptionSectionPr
     setSaveTimeout(timeout);
   };
 
+  // Clear timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+    };
+  }, [saveTimeout]);
+
   if (loading) {
     return (
       <Card className="p-6 space-y-4">
