@@ -8,6 +8,7 @@ import ChatScreen from '../components/ChatScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import Navigation from '../components/Navigation';
 import { Heart, Sparkles } from 'lucide-react';
+
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -38,23 +39,28 @@ const Index = () => {
     });
     return () => subscription.unsubscribe();
   }, []);
+
   const handleAuthSuccess = () => {
     // Auth state will be updated by the listener
     setCurrentScreen('onboarding');
   };
+
   const handleOnboardingComplete = (profile: any) => {
     setUserProfile(profile);
     setCurrentScreen('matches');
   };
+
   const handleStartChat = () => {
     console.log('Navigating to chat screen');
     setCurrentScreen('chat');
   };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setCurrentScreen('onboarding');
     setUserProfile(null);
   };
+
   if (loading) {
     return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
@@ -68,25 +74,24 @@ const Index = () => {
   if (!user) {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
   }
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'onboarding':
         return <div className="min-h-screen flex flex-col items-center justify-center p-6">
             {/* Hero Section */}
-            <div className="text-center mb-12 space-y-6">
-              <div className="flex items-center justify-center mb-6">
-                <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-24 h-24" />
+            <div className="text-center mb-6 space-y-3">
+              <div className="flex items-center justify-center mb-4">
+                <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-20 h-20" />
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text -bottom-0 ">
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
                 Welcome to LovKey
               </h1>
               
               <p className="text-xl not-italic font-semibold text-red-900 md:font-bold">
                 Low-key matching minds — before photos.
               </p>
-              
-              
             </div>
 
             <OnboardingScreen onComplete={handleOnboardingComplete} />
@@ -99,9 +104,9 @@ const Index = () => {
         return <ProfileScreen userProfile={userProfile} onSignOut={handleSignOut} />;
       default:
         return <div className="min-h-screen flex flex-col items-center justify-center p-6">
-            <div className="text-center mb-12 space-y-6">
-              <div className="flex items-center justify-center mb-6">
-                <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-24 h-24" />
+            <div className="text-center mb-6 space-y-3">
+              <div className="flex items-center justify-center mb-4">
+                <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-20 h-20" />
               </div>
               
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
@@ -119,6 +124,7 @@ const Index = () => {
           </div>;
     }
   };
+
   return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
       <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
         {renderScreen()}
@@ -126,4 +132,5 @@ const Index = () => {
       </div>
     </div>;
 };
+
 export default Index;
