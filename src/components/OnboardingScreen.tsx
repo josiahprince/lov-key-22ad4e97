@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -62,12 +63,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     switch (step) {
       case 1:
         return (
-          <div className="space-y-4 animate-fade-in">
-            <div className="text-center space-y-1">
-              <h1 className="text-xl font-bold text-gray-800">Welcome to Heartconnect</h1>
-              <p className="text-sm text-gray-600">Let's start by understanding how you're feeling today</p>
-            </div>
-            
+          <div className="space-y-3 animate-fade-in">
             <div className="space-y-2">
               <h2 className="text-base font-medium text-gray-700">What's your current mood?</h2>
               <div className="grid grid-cols-3 gap-2">
@@ -197,8 +193,8 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
   };
 
   return (
-    <div className="p-4 min-h-screen flex flex-col justify-center">
-      <div className="mb-4">
+    <div className="px-4 flex flex-col justify-center">
+      <div className="mb-3">
         <div className="flex space-x-1">
           {[1, 2, 3].map((i) => (
             <div
