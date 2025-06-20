@@ -78,26 +78,26 @@ const Index = () => {
     switch (currentScreen) {
       case 'onboarding':
         return (
-          <div className="min-h-screen flex flex-col items-center justify-center p-6">
+          <div className="min-h-screen flex flex-col items-center justify-center p-4">
             {/* Hero Section */}
-            <div className="text-center mb-12 space-y-6">
-              <div className="flex items-center justify-center mb-6">
+            <div className="text-center mb-6 space-y-3">
+              <div className="flex items-center justify-center mb-3">
                 <img 
                   src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
                   alt="LovKey Logo" 
-                  className="w-24 h-24"
+                  className="w-16 h-16"
                 />
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
                 Welcome to LovKey
               </h1>
               
-              <p className="text-xl md:text-2xl text-gray-700 font-medium italic">
+              <p className="text-lg md:text-xl text-gray-700 font-medium italic">
                 Low-key matching minds — before photos.
               </p>
               
-              <div className="w-24 h-1 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
+              <div className="w-16 h-0.5 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
             </div>
 
             <OnboardingScreen onComplete={handleOnboardingComplete} />
@@ -111,25 +111,25 @@ const Index = () => {
         return <ProfileScreen userProfile={userProfile} onSignOut={handleSignOut} />;
       default:
         return (
-          <div className="min-h-screen flex flex-col items-center justify-center p-6">
-            <div className="text-center mb-12 space-y-6">
-              <div className="flex items-center justify-center mb-6">
+          <div className="min-h-screen flex flex-col items-center justify-center p-4">
+            <div className="text-center mb-6 space-y-3">
+              <div className="flex items-center justify-center mb-3">
                 <img 
                   src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
                   alt="LovKey Logo" 
-                  className="w-24 h-24"
+                  className="w-16 h-16"
                 />
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
                 Welcome to LovKey
               </h1>
               
-              <p className="text-xl md:text-2xl text-gray-700 font-medium italic">
+              <p className="text-lg md:text-xl text-gray-700 font-medium italic">
                 Low-key matching minds — before photos.
               </p>
               
-              <div className="w-24 h-1 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
+              <div className="w-16 h-0.5 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
             </div>
 
             <OnboardingScreen onComplete={handleOnboardingComplete} />
