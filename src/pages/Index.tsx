@@ -8,6 +8,7 @@ import MatchesScreen from '../components/MatchesScreen';
 import ChatScreen from '../components/ChatScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import Navigation from '../components/Navigation';
+import { Heart, Sparkles } from 'lucide-react';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -76,7 +77,29 @@ const Index = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'onboarding':
-        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center p-6">
+            {/* Hero Section */}
+            <div className="text-center mb-12 space-y-6">
+              <div className="flex items-center justify-center space-x-3 mb-6">
+                <Heart className="w-12 h-12 text-rose-500" />
+                <Sparkles className="w-8 h-8 text-orange-400" />
+              </div>
+              
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                Welcome to LovKey
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-gray-700 font-medium italic">
+                Low-key matching minds — before photos.
+              </p>
+              
+              <div className="w-24 h-1 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
+            </div>
+
+            <OnboardingScreen onComplete={handleOnboardingComplete} />
+          </div>
+        );
       case 'matches':
         return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
       case 'chat':
@@ -84,7 +107,28 @@ const Index = () => {
       case 'profile':
         return <ProfileScreen userProfile={userProfile} onSignOut={handleSignOut} />;
       default:
-        return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center p-6">
+            <div className="text-center mb-12 space-y-6">
+              <div className="flex items-center justify-center space-x-3 mb-6">
+                <Heart className="w-12 h-12 text-rose-500" />
+                <Sparkles className="w-8 h-8 text-orange-400" />
+              </div>
+              
+              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                Welcome to LovKey
+              </h1>
+              
+              <p className="text-xl md:text-2xl text-gray-700 font-medium italic">
+                Low-key matching minds — before photos.
+              </p>
+              
+              <div className="w-24 h-1 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
+            </div>
+
+            <OnboardingScreen onComplete={handleOnboardingComplete} />
+          </div>
+        );
     }
   };
 
