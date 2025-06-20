@@ -81,9 +81,12 @@ const Index = () => {
           <div className="min-h-screen flex flex-col items-center justify-center p-6">
             {/* Hero Section */}
             <div className="text-center mb-12 space-y-6">
-              <div className="flex items-center justify-center space-x-3 mb-6">
-                <Heart className="w-12 h-12 text-rose-500" />
-                <Sparkles className="w-8 h-8 text-orange-400" />
+              <div className="flex items-center justify-center mb-6">
+                <img 
+                  src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
+                  alt="LovKey Logo" 
+                  className="w-24 h-24"
+                />
               </div>
               
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
@@ -110,9 +113,12 @@ const Index = () => {
         return (
           <div className="min-h-screen flex flex-col items-center justify-center p-6">
             <div className="text-center mb-12 space-y-6">
-              <div className="flex items-center justify-center space-x-3 mb-6">
-                <Heart className="w-12 h-12 text-rose-500" />
-                <Sparkles className="w-8 h-8 text-orange-400" />
+              <div className="flex items-center justify-center mb-6">
+                <img 
+                  src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
+                  alt="LovKey Logo" 
+                  className="w-24 h-24"
+                />
               </div>
               
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
