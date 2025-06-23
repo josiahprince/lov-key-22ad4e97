@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,8 +64,8 @@ const ChatScreen = () => {
     setNewMessage('');
     setCanSend(false);
     
-    // Simulate 1-minute delay for next message
-    setTimeout(() => setCanSend(true), 60000);
+    // Simulate 7-second delay for next message
+    setTimeout(() => setCanSend(true), 7000);
   };
 
   const handlePhotoRequest = () => {
