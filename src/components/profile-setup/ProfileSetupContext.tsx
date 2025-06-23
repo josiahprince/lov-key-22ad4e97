@@ -65,18 +65,18 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     }));
   };
 
-  const validateStep = (step: number) => {
+  const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return formData.first_name && formData.last_name && formData.nickname && formData.age;
+        return !!(formData.first_name && formData.last_name && formData.nickname && formData.age);
       case 2:
-        return formData.gender && formData.sexual_orientation && formData.interested_in;
+        return !!(formData.gender && formData.sexual_orientation && formData.interested_in);
       case 3:
-        return formData.location;
+        return !!formData.location;
       case 4:
         return formData.interests.length > 0;
       case 5:
-        return formData.religion;
+        return !!formData.religion;
       case 6:
         return formData.languages.length > 0;
       default:
