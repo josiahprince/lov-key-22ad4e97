@@ -33,10 +33,6 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
     { id: 'meme15', title: 'Meme Connoisseur', emoji: '📱' },
   ];
 
-  const firstSelectedMeme = selectedMemes.length > 0 
-    ? memes.find(meme => meme.id === selectedMemes[0])
-    : memes[1]; // Default to Book Worm
-
   const selectedMemesData = selectedMemes.map(memeId => 
     memes.find(meme => meme.id === memeId)
   ).filter(Boolean);
@@ -77,8 +73,8 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
               ))
             ) : (
               <div className="flex items-center space-x-2">
-                <span className="text-lg">{firstSelectedMeme?.emoji || '📚'}</span>
-                <span className="text-gray-600">{firstSelectedMeme?.title || 'Book Worm'}</span>
+                <span className="text-lg">📚</span>
+                <span className="text-gray-600">Book Worm</span>
               </div>
             )}
           </div>
