@@ -1,14 +1,19 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Heart, Smile, Meh, Frown, Zap, Coffee } from 'lucide-react';
+import { useOnboardingData } from '@/hooks/useOnboardingData';
 
 const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }) => {
   const [step, setStep] = useState(1);
   const [mood, setMood] = useState('');
   const [selectedMemes, setSelectedMemes] = useState<string[]>([]);
   const [promptAnswer, setPromptAnswer] = useState('');
+  const [showExistingData, setShowExistingData] = useState(false);
+
+  const { onboardingData, loading, saveOnboardingData } = useOnboardingData();
 
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -37,6 +42,16 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     { id: 'meme15', title: 'Meme Connoisseur', description: 'Instagram reels are my news source', emoji: '📱' },
   ];
 
+  // Load existing data when component mounts
+  useEffect(() => {
+    if (!loading && onboardingData) {
+      setMood(onboardingData.mood);
+      setSelectedMemes(onboardingData.selectedMemes);
+      setPromptAnswer(onboardingData.perfectSunday);
+      setShowExistingData(true);
+    }
+  }, [loading, onboardingData]);
+
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
       if (prev.includes(memeId)) {
@@ -48,15 +63,119 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     });
   };
 
-  const handleComplete = () => {
-    const profile = {
-      mood,
-      memes: selectedMemes,
-      promptAnswer,
-      createdAt: new Date(),
-    };
-    onComplete(profile);
+  const handleComplete = async () => {
+    try {
+      const profileData = {
+        mood,
+        memes: selectedMemes,
+        promptAnswer,
+        createdAt: new Date(),
+      };
+
+      // Save to database
+      await saveOnboardingData({
+        mood,
+        selectedMemes,
+        perfectSunday: promptAnswer,
+      });
+
+      onComplete(profileData);
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+    }
   };
+
+  const handleProceedWithExisting = () => {
+    if (onboardingData) {
+      const profileData = {
+        mood: onboardingData.mood,
+        memes: onboardingData.selectedMemes,
+        promptAnswer: onboardingData.perfectSunday,
+        createdAt: new Date(),
+      };
+      onComplete(profileData);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="px-4 flex flex-col justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
+        <p className="mt-4 text-gray-600">Loading your preferences...</p>
+      </div>
+    );
+  }
+
+  // Show existing data confirmation screen
+  if (showExistingData && step === 1) {
+    const currentMoodData = moods.find(m => m.id === mood);
+    const currentMemesData = memes.filter(m => selectedMemes.includes(m.id));
+
+    return (
+      <div className="px-4 flex flex-col justify-center">
+        <div className="space-y-4 animate-fade-in">
+          <div className="text-center space-y-2">
+            <h2 className="text-lg font-bold text-gray-800">Welcome back!</h2>
+            <p className="text-sm text-gray-600">Here are your current preferences:</p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Current Mood</h3>
+              {currentMoodData && (
+                <Card className={`p-2 ${currentMoodData.color}`}>
+                  <div className="text-center space-y-1">
+                    <currentMoodData.icon className="w-5 h-5 mx-auto" />
+                    <p className="text-xs font-medium">{currentMoodData.label}</p>
+                  </div>
+                </Card>
+              )}
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Your Vibes</h3>
+              <div className="space-y-1">
+                {currentMemesData.map((meme) => (
+                  <Card key={meme.id} className="p-2 bg-rose-50 border-rose-200">
+                    <div className="flex items-center space-x-2">
+                      <div className="text-base">{meme.emoji}</div>
+                      <div>
+                        <h4 className="text-xs font-medium">{meme.title}</h4>
+                        <p className="text-xs text-gray-600">{meme.description}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Perfect Sunday</h3>
+              <Card className="p-3 bg-gray-50">
+                <p className="text-sm text-gray-700">{promptAnswer}</p>
+              </Card>
+            </div>
+          </div>
+
+          <div className="flex space-x-2">
+            <Button 
+              onClick={handleProceedWithExisting}
+              className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
+            >
+              Continue with these
+            </Button>
+            <Button 
+              onClick={() => setShowExistingData(false)}
+              variant="outline"
+              className="flex-1 py-2 rounded-xl"
+            >
+              Update preferences
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     switch (step) {
