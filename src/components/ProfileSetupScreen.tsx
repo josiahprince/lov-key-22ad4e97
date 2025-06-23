@@ -1,116 +1,34 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import { ProfileSetupProvider, useProfileSetup } from './profile-setup/ProfileSetupContext';
+import BasicInfoStep from './profile-setup/BasicInfoStep';
+import GenderOrientationStep from './profile-setup/GenderOrientationStep';
+import LocationStep from './profile-setup/LocationStep';
+import InterestsStep from './profile-setup/InterestsStep';
+import ReligionStep from './profile-setup/ReligionStep';
+import LanguagesStep from './profile-setup/LanguagesStep';
 
 type GenderType = Database['public']['Enums']['gender_type'];
 type OrientationType = Database['public']['Enums']['orientation_type'];
 type InterestedInType = Database['public']['Enums']['interested_in_type'];
 
-const INTERESTS_OPTIONS = [
-  'Music', 'Travel', 'Memes', 'Pets', 'Sports', 'Reading', 'Movies', 'Gaming',
-  'Cooking', 'Art', 'Photography', 'Dancing', 'Fitness', 'Technology', 'Nature',
-  'Fashion', 'Food', 'Adventure', 'Comedy', 'Science'
-];
-
-const RELIGION_OPTIONS = [
-  'Christianity', 'Islam', 'Judaism', 'Hinduism', 'Buddhism', 'Sikhism',
-  'Atheist', 'Agnostic', 'Spiritual', 'Other', 'Prefer not to say'
-];
-
-const LANGUAGES_OPTIONS = [
-  'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Russian',
-  'Chinese (Mandarin)', 'Japanese', 'Korean', 'Arabic', 'Hindi', 'Dutch',
-  'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Polish', 'Czech', 'Hungarian'
-];
-
-const GENDER_OPTIONS: { value: GenderType; label: string }[] = [
-  { value: 'male', label: 'Male' },
-  { value: 'female', label: 'Female' },
-  { value: 'non_binary', label: 'Non-binary' },
-  { value: 'other', label: 'Other' }
-];
-
-const ORIENTATION_OPTIONS: { value: OrientationType; label: string }[] = [
-  { value: 'straight', label: 'Straight' },
-  { value: 'gay', label: 'Gay' },
-  { value: 'lesbian', label: 'Lesbian' },
-  { value: 'bisexual', label: 'Bisexual' },
-  { value: 'pansexual', label: 'Pansexual' },
-  { value: 'asexual', label: 'Asexual' },
-  { value: 'other', label: 'Other' }
-];
-
-const INTERESTED_IN_OPTIONS: { value: InterestedInType; label: string }[] = [
-  { value: 'men', label: 'Men' },
-  { value: 'women', label: 'Women' },
-  { value: 'non_binary', label: 'Non-binary' },
-  { value: 'everyone', label: 'Everyone' }
-];
-
 interface ProfileSetupScreenProps {
   onComplete: (profile: any) => void;
 }
 
-const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
+const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-
-  // Form state with proper typing
-  const [formData, setFormData] = useState({
-    first_name: '',
-    last_name: '',
-    nickname: '',
-    age: '',
-    gender: '' as GenderType | '',
-    sexual_orientation: '' as OrientationType | '',
-    interested_in: '' as InterestedInType | '',
-    location: '',
-    interests: [] as string[],
-    religion: '',
-    languages: [] as string[]
-  });
-
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleArrayToggle = (field: 'interests' | 'languages', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
-        : [...prev[field], value]
-    }));
-  };
-
-  const validateStep = () => {
-    switch (currentStep) {
-      case 1:
-        return formData.first_name && formData.last_name && formData.nickname && formData.age;
-      case 2:
-        return formData.gender && formData.sexual_orientation && formData.interested_in;
-      case 3:
-        return formData.location;
-      case 4:
-        return formData.interests.length > 0;
-      case 5:
-        return formData.religion;
-      case 6:
-        return formData.languages.length > 0;
-      default:
-        return false;
-    }
-  };
+  const { formData, validateStep } = useProfileSetup();
 
   const handleNext = () => {
-    if (validateStep()) {
+    if (validateStep(currentStep)) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -120,7 +38,7 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
   };
 
   const handleSubmit = async () => {
-    if (!validateStep()) return;
+    if (!validateStep(currentStep)) return;
 
     setLoading(true);
     try {
@@ -170,178 +88,17 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center mb-6">Basic Information</h2>
-            <div>
-              <Label htmlFor="first_name">First Name *</Label>
-              <Input
-                id="first_name"
-                value={formData.first_name}
-                onChange={(e) => handleInputChange('first_name', e.target.value)}
-                placeholder="Enter your first name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="last_name">Last Name *</Label>
-              <Input
-                id="last_name"
-                value={formData.last_name}
-                onChange={(e) => handleInputChange('last_name', e.target.value)}
-                placeholder="Enter your last name"
-              />
-            </div>
-            <div>
-              <Label htmlFor="nickname">Nickname *</Label>
-              <Input
-                id="nickname"
-                value={formData.nickname}
-                onChange={(e) => handleInputChange('nickname', e.target.value)}
-                placeholder="What should people call you?"
-              />
-            </div>
-            <div>
-              <Label htmlFor="age">Age *</Label>
-              <Input
-                id="age"
-                type="number"
-                min="18"
-                max="100"
-                value={formData.age}
-                onChange={(e) => handleInputChange('age', e.target.value)}
-                placeholder="Enter your age"
-              />
-            </div>
-          </div>
-        );
-
+        return <BasicInfoStep />;
       case 2:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-center mb-6">Gender & Orientation</h2>
-            <div>
-              <Label>Gender *</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {GENDER_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={formData.gender === option.value ? "default" : "outline"}
-                    onClick={() => handleInputChange('gender', option.value)}
-                    className="justify-start"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>Sexual Orientation *</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {ORIENTATION_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={formData.sexual_orientation === option.value ? "default" : "outline"}
-                    onClick={() => handleInputChange('sexual_orientation', option.value)}
-                    className="justify-start text-sm"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <Label>Interested In *</Label>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                {INTERESTED_IN_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={formData.interested_in === option.value ? "default" : "outline"}
-                    onClick={() => handleInputChange('interested_in', option.value)}
-                    className="justify-start"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-
+        return <GenderOrientationStep />;
       case 3:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center mb-6">Location</h2>
-            <div>
-              <Label htmlFor="location">Where are you located? *</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="City, State/Country"
-              />
-            </div>
-          </div>
-        );
-
+        return <LocationStep />;
       case 4:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center mb-6">Interests & Hobbies</h2>
-            <p className="text-center text-gray-600 mb-4">Select all that apply *</p>
-            <div className="grid grid-cols-2 gap-3">
-              {INTERESTS_OPTIONS.map((interest) => (
-                <div key={interest} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={interest}
-                    checked={formData.interests.includes(interest)}
-                    onCheckedChange={() => handleArrayToggle('interests', interest)}
-                  />
-                  <Label htmlFor={interest} className="text-sm">{interest}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
+        return <InterestsStep />;
       case 5:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center mb-6">Religion & Beliefs</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {RELIGION_OPTIONS.map((religion) => (
-                <Button
-                  key={religion}
-                  variant={formData.religion === religion ? "default" : "outline"}
-                  onClick={() => handleInputChange('religion', religion)}
-                  className="justify-start text-sm"
-                >
-                  {religion}
-                </Button>
-              ))}
-            </div>
-          </div>
-        );
-
+        return <ReligionStep />;
       case 6:
-        return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center mb-6">Languages Spoken</h2>
-            <p className="text-center text-gray-600 mb-4">Select all languages you speak *</p>
-            <div className="grid grid-cols-2 gap-3">
-              {LANGUAGES_OPTIONS.map((language) => (
-                <div key={language} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={language}
-                    checked={formData.languages.includes(language)}
-                    onCheckedChange={() => handleArrayToggle('languages', language)}
-                  />
-                  <Label htmlFor={language} className="text-sm">{language}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-
+        return <LanguagesStep />;
       default:
         return null;
     }
@@ -386,7 +143,7 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
           {currentStep < 6 ? (
             <Button
               onClick={handleNext}
-              disabled={!validateStep()}
+              disabled={!validateStep(currentStep)}
               className="flex-1 bg-rose-500 hover:bg-rose-600"
             >
               Next
@@ -394,7 +151,7 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
           ) : (
             <Button
               onClick={handleSubmit}
-              disabled={!validateStep() || loading}
+              disabled={!validateStep(currentStep) || loading}
               className="flex-1 bg-rose-500 hover:bg-rose-600"
             >
               {loading ? 'Saving...' : 'Complete Profile'}
@@ -403,6 +160,14 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
         </div>
       </Card>
     </div>
+  );
+};
+
+const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
+  return (
+    <ProfileSetupProvider>
+      <ProfileSetupForm onComplete={onComplete} />
+    </ProfileSetupProvider>
   );
 };
 
