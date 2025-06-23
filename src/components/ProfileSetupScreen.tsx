@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,11 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
+
+type GenderType = Database['public']['Enums']['gender_type'];
+type OrientationType = Database['public']['Enums']['orientation_type'];
+type InterestedInType = Database['public']['Enums']['interested_in_type'];
 
 const INTERESTS_OPTIONS = [
   'Music', 'Travel', 'Memes', 'Pets', 'Sports', 'Reading', 'Movies', 'Gaming',
@@ -25,14 +29,14 @@ const LANGUAGES_OPTIONS = [
   'Swedish', 'Norwegian', 'Danish', 'Finnish', 'Polish', 'Czech', 'Hungarian'
 ];
 
-const GENDER_OPTIONS = [
+const GENDER_OPTIONS: { value: GenderType; label: string }[] = [
   { value: 'male', label: 'Male' },
   { value: 'female', label: 'Female' },
   { value: 'non_binary', label: 'Non-binary' },
   { value: 'other', label: 'Other' }
 ];
 
-const ORIENTATION_OPTIONS = [
+const ORIENTATION_OPTIONS: { value: OrientationType; label: string }[] = [
   { value: 'straight', label: 'Straight' },
   { value: 'gay', label: 'Gay' },
   { value: 'lesbian', label: 'Lesbian' },
@@ -42,7 +46,7 @@ const ORIENTATION_OPTIONS = [
   { value: 'other', label: 'Other' }
 ];
 
-const INTERESTED_IN_OPTIONS = [
+const INTERESTED_IN_OPTIONS: { value: InterestedInType; label: string }[] = [
   { value: 'men', label: 'Men' },
   { value: 'women', label: 'Women' },
   { value: 'non_binary', label: 'Non-binary' },
@@ -58,15 +62,15 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  // Form state
+  // Form state with proper typing
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     nickname: '',
     age: '',
-    gender: '',
-    sexual_orientation: '',
-    interested_in: '',
+    gender: '' as GenderType | '',
+    sexual_orientation: '' as OrientationType | '',
+    interested_in: '' as InterestedInType | '',
     location: '',
     interests: [] as string[],
     religion: '',
@@ -129,9 +133,9 @@ const ProfileSetupScreen = ({ onComplete }: ProfileSetupScreenProps) => {
         last_name: formData.last_name,
         nickname: formData.nickname,
         age: parseInt(formData.age),
-        gender: formData.gender,
-        sexual_orientation: formData.sexual_orientation,
-        interested_in: formData.interested_in,
+        gender: formData.gender as GenderType,
+        sexual_orientation: formData.sexual_orientation as OrientationType,
+        interested_in: formData.interested_in as InterestedInType,
         location: formData.location,
         interests: formData.interests,
         religion: formData.religion,
