@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       profiles: {
         Row: {
+          age: number | null
           created_at: string | null
           date_of_birth: string | null
           first_name: string | null
@@ -19,15 +20,21 @@ export type Database = {
           interested_in:
             | Database["public"]["Enums"]["interested_in_type"]
             | null
+          interests: string[] | null
           is_profile_complete: boolean | null
+          languages: string[] | null
           last_name: string | null
+          location: string | null
+          nickname: string | null
           phone_number: string | null
+          religion: string | null
           sexual_orientation:
             | Database["public"]["Enums"]["orientation_type"]
             | null
           updated_at: string | null
         }
         Insert: {
+          age?: number | null
           created_at?: string | null
           date_of_birth?: string | null
           first_name?: string | null
@@ -36,15 +43,21 @@ export type Database = {
           interested_in?:
             | Database["public"]["Enums"]["interested_in_type"]
             | null
+          interests?: string[] | null
           is_profile_complete?: boolean | null
+          languages?: string[] | null
           last_name?: string | null
+          location?: string | null
+          nickname?: string | null
           phone_number?: string | null
+          religion?: string | null
           sexual_orientation?:
             | Database["public"]["Enums"]["orientation_type"]
             | null
           updated_at?: string | null
         }
         Update: {
+          age?: number | null
           created_at?: string | null
           date_of_birth?: string | null
           first_name?: string | null
@@ -53,9 +66,14 @@ export type Database = {
           interested_in?:
             | Database["public"]["Enums"]["interested_in_type"]
             | null
+          interests?: string[] | null
           is_profile_complete?: boolean | null
+          languages?: string[] | null
           last_name?: string | null
+          location?: string | null
+          nickname?: string | null
           phone_number?: string | null
+          religion?: string | null
           sexual_orientation?:
             | Database["public"]["Enums"]["orientation_type"]
             | null

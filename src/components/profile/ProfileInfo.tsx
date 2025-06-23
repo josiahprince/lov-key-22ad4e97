@@ -1,90 +1,123 @@
 
 import { Card } from '@/components/ui/card';
-import { useOnboardingData } from '@/hooks/useOnboardingData';
+import { MapPin, Calendar, Heart, Globe, Users, Book } from 'lucide-react';
 
 interface ProfileInfoProps {
   userProfile: any;
 }
 
 const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
-  const { onboardingData, loading } = useOnboardingData();
-
-  // Use data from database if available, otherwise fall back to userProfile
-  const mood = onboardingData?.mood || userProfile?.mood || 'happy';
-  const selectedMemes = onboardingData?.selectedMemes || userProfile?.memes || [];
-  const perfectSunday = onboardingData?.perfectSunday || userProfile?.promptAnswer || '';
-  
-  // Meme definitions
-  const memes = [
-    { id: 'meme1', title: 'Coffee Lover', emoji: '☕' },
-    { id: 'meme2', title: 'Book Worm', emoji: '📚' },
-    { id: 'meme3', title: 'Plant Parent', emoji: '🌱' },
-    { id: 'meme4', title: 'Night Owl', emoji: '🦉' },
-    { id: 'meme5', title: 'Foodie', emoji: '🍜' },
-    { id: 'meme6', title: 'Cricket Fanatic', emoji: '🏏' },
-    { id: 'meme7', title: 'Monsoon Mood', emoji: '🌧️' },
-    { id: 'meme8', title: 'Metro Survivor', emoji: '🚇' },
-    { id: 'meme9', title: 'Street Food Explorer', emoji: '🥟' },
-    { id: 'meme10', title: 'Bollywood Buff', emoji: '🎬' },
-    { id: 'meme11', title: 'Traffic Philosopher', emoji: '🚗' },
-    { id: 'meme12', title: 'Festival Enthusiast', emoji: '🎉' },
-    { id: 'meme13', title: 'IPL Loyalist', emoji: '🏆' },
-    { id: 'meme14', title: 'Startup Dreamer', emoji: '🦄' },
-    { id: 'meme15', title: 'Meme Connoisseur', emoji: '📱' },
-  ];
-
-  const selectedMemesData = selectedMemes.map(memeId => 
-    memes.find(meme => meme.id === memeId)
-  ).filter(Boolean);
-
-  if (loading) {
+  if (!userProfile) {
     return (
-      <Card className="p-6 space-y-4">
-        <div className="animate-pulse space-y-3">
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-8 bg-gray-200 rounded"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-8 bg-gray-200 rounded"></div>
-        </div>
+      <Card className="p-4">
+        <p className="text-gray-600 text-center">Loading profile information...</p>
       </Card>
     );
   }
 
+  const formatInterests = (interests: string[]) => {
+    if (!interests || interests.length === 0) return 'Not specified';
+    return interests.join(', ');
+  };
+
+  const formatLanguages = (languages: string[]) => {
+    if (!languages || languages.length === 0) return 'Not specified';
+    return languages.join(', ');
+  };
+
+  const formatGender = (gender: string) => {
+    if (!gender) return 'Not specified';
+    return gender.charAt(0).toUpperCase() + gender.slice(1).replace('_', ' ');
+  };
+
+  const formatOrientation = (orientation: string) => {
+    if (!orientation) return 'Not specified';
+    return orientation.charAt(0).toUpperCase() + orientation.slice(1).replace('_', ' ');
+  };
+
+  const formatInterestedIn = (interestedIn: string) => {
+    if (!interestedIn) return 'Not specified';
+    return interestedIn.charAt(0).toUpperCase() + interestedIn.slice(1).replace('_', ' ');
+  };
+
   return (
-    <Card className="p-6 space-y-4">
-      <div className="space-y-4">
-        <div>
-          <h3 className="font-medium text-gray-700 mb-2">Current Mood</h3>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-            <span className="text-gray-600 capitalize">{mood}</span>
+    <Card className="p-4 space-y-4">
+      <div className="text-center border-b pb-4">
+        <h2 className="text-2xl font-bold">
+          {userProfile.nickname || userProfile.first_name || 'User'}
+        </h2>
+        <p className="text-gray-600">
+          {userProfile.first_name} {userProfile.last_name}
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {/* Age */}
+        {userProfile.age && (
+          <div className="flex items-center space-x-3">
+            <Calendar className="w-5 h-5 text-rose-500" />
+            <span className="text-gray-700">{userProfile.age} years old</span>
           </div>
+        )}
+
+        {/* Location */}
+        {userProfile.location && (
+          <div className="flex items-center space-x-3">
+            <MapPin className="w-5 h-5 text-rose-500" />
+            <span className="text-gray-700">{userProfile.location}</span>
+          </div>
+        )}
+
+        {/* Gender & Orientation */}
+        <div className="flex items-center space-x-3">
+          <Heart className="w-5 h-5 text-rose-500" />
+          <span className="text-gray-700">
+            {formatGender(userProfile.gender)} • {formatOrientation(userProfile.sexual_orientation)}
+          </span>
         </div>
 
-        <div>
-          <h3 className="font-medium text-gray-700 mb-2">Today's Vibes</h3>
+        {/* Interested In */}
+        {userProfile.interested_in && (
+          <div className="flex items-center space-x-3">
+            <Users className="w-5 h-5 text-rose-500" />
+            <span className="text-gray-700">
+              Looking for: {formatInterestedIn(userProfile.interested_in)}
+            </span>
+          </div>
+        )}
+
+        {/* Religion */}
+        {userProfile.religion && (
+          <div className="flex items-center space-x-3">
+            <Book className="w-5 h-5 text-rose-500" />
+            <span className="text-gray-700">{userProfile.religion}</span>
+          </div>
+        )}
+
+        {/* Languages */}
+        {userProfile.languages && userProfile.languages.length > 0 && (
+          <div className="flex items-start space-x-3">
+            <Globe className="w-5 h-5 text-rose-500 mt-0.5" />
+            <div>
+              <p className="text-gray-700 font-medium">Languages:</p>
+              <p className="text-gray-600 text-sm">{formatLanguages(userProfile.languages)}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Interests */}
+        {userProfile.interests && userProfile.interests.length > 0 && (
           <div className="space-y-2">
-            {selectedMemesData.length > 0 ? (
-              selectedMemesData.map((meme) => (
-                <div key={meme.id} className="flex items-center space-x-2">
-                  <span className="text-lg">{meme.emoji}</span>
-                  <span className="text-gray-600">{meme.title}</span>
-                </div>
-              ))
-            ) : (
-              <div className="flex items-center space-x-2">
-                <span className="text-lg">📚</span>
-                <span className="text-gray-600">Book Worm</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {perfectSunday && (
-          <div>
-            <h3 className="font-medium text-gray-700 mb-2">Perfect Sunday</h3>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-gray-600 text-sm leading-relaxed">{perfectSunday}</p>
+            <p className="text-gray-700 font-medium">Interests & Hobbies:</p>
+            <div className="flex flex-wrap gap-2">
+              {userProfile.interests.map((interest: string, index: number) => (
+                <span
+                  key={index}
+                  className="px-3 py-1 bg-rose-100 text-rose-700 rounded-full text-sm"
+                >
+                  {interest}
+                </span>
+              ))}
             </div>
           </div>
         )}

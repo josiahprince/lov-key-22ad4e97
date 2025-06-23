@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import AuthScreen from '../components/AuthScreen';
 import OnboardingScreen from '../components/OnboardingScreen';
+import ProfileSetupScreen from '../components/ProfileSetupScreen';
 import MatchesScreen from '../components/MatchesScreen';
 import ChatScreen from '../components/ChatScreen';
 import ProfileScreen from '../components/ProfileScreen';
@@ -15,6 +16,7 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState('onboarding');
   const [userProfile, setUserProfile] = useState(null);
+  const [profileComplete, setProfileComplete] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -22,37 +24,73 @@ const Index = () => {
       data: {
         subscription
       }
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
       
-      // Always show onboarding when user logs in
       if (session?.user) {
-        setCurrentScreen('onboarding');
+        // Check if user has completed their profile
+        await checkProfileStatus(session.user.id);
+      } else {
+        setProfileComplete(false);
+        setUserProfile(null);
       }
+      
+      setLoading(false);
     });
 
     // Check for existing session
-    supabase.auth.getSession().then(({
+    supabase.auth.getSession().then(async ({
       data: {
         session
       }
     }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      setLoading(false);
       
-      // Always show onboarding when app loads with existing session
       if (session?.user) {
-        setCurrentScreen('onboarding');
+        await checkProfileStatus(session.user.id);
       }
+      
+      setLoading(false);
     });
+    
     return () => subscription.unsubscribe();
   }, []);
 
+  const checkProfileStatus = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking profile status:', error);
+        return;
+      }
+
+      if (profile && profile.is_profile_complete) {
+        setUserProfile(profile);
+        setProfileComplete(true);
+        setCurrentScreen('onboarding');
+      } else {
+        setProfileComplete(false);
+        setCurrentScreen('profile-setup');
+      }
+    } catch (error) {
+      console.error('Error checking profile status:', error);
+    }
+  };
+
   const handleAuthSuccess = () => {
     // Auth state will be updated by the listener
+  };
+
+  const handleProfileSetupComplete = (profile: any) => {
+    setUserProfile(profile);
+    setProfileComplete(true);
     setCurrentScreen('onboarding');
   };
 
@@ -70,6 +108,7 @@ const Index = () => {
     await supabase.auth.signOut();
     setCurrentScreen('onboarding');
     setUserProfile(null);
+    setProfileComplete(false);
   };
 
   if (loading) {
@@ -84,6 +123,11 @@ const Index = () => {
   // Show auth screen if user is not authenticated
   if (!user) {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
+  }
+
+  // Show profile setup if user hasn't completed their profile
+  if (!profileComplete) {
+    return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
   }
 
   const renderScreen = () => {
@@ -139,7 +183,7 @@ const Index = () => {
   return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
       <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
         {renderScreen()}
-        {currentScreen !== 'onboarding' && <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />}
+        {currentScreen !== 'onboarding' && currentScreen !== 'profile-setup' && <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />}
       </div>
     </div>;
 };
