@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -150,20 +149,17 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
       case 3:
         return (
           <div className="space-y-4 animate-fade-in">
-            <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold text-gray-800">Tell us about yourself</h2>
-              <p className="text-sm text-gray-600">This helps us find your perfect matches</p>
-            </div>
-            
             <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-700">Describe your perfect Sunday</h3>
+              <h3 className="text-lg font-bold text-gray-800 text-center bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+                Describe your perfect Sunday
+              </h3>
               <Textarea
                 placeholder="Maybe sleeping in, reading a book, trying a new recipe, or exploring a local market..."
                 value={promptAnswer}
                 onChange={(e) => setPromptAnswer(e.target.value)}
                 className="min-h-[80px] rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200 text-sm"
               />
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 text-center">
                 Be yourself! There's no wrong answer here.
               </p>
             </div>
