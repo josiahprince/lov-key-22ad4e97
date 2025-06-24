@@ -19,46 +19,67 @@ const Index = () => {
   const [profileComplete, setProfileComplete] = useState(false);
 
   useEffect(() => {
+    console.log('Index component mounted, setting up auth listener...');
+    
     // Set up auth state listener
     const {
       data: {
         subscription
       }
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Check if user has completed their profile
+        console.log('User found, checking profile status...');
         await checkProfileStatus(session.user.id);
       } else {
+        console.log('No user, resetting profile state');
         setProfileComplete(false);
         setUserProfile(null);
       }
       
+      console.log('Setting loading to false');
       setLoading(false);
     });
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({
-      data: {
-        session
+    const initializeAuth = async () => {
+      console.log('Checking for existing session...');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+          setLoading(false);
+          return;
+        }
+
+        console.log('Session check result:', session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await checkProfileStatus(session.user.id);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        setLoading(false);
       }
-    }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await checkProfileStatus(session.user.id);
-      }
-      
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
     
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('Cleaning up auth subscription');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkProfileStatus = async (userId: string) => {
+    console.log('Checking profile status for user:', userId);
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -71,11 +92,15 @@ const Index = () => {
         return;
       }
 
+      console.log('Profile data:', profile);
+
       if (profile && profile.is_profile_complete) {
+        console.log('Profile is complete, setting up user profile');
         setUserProfile(profile);
         setProfileComplete(true);
         setCurrentScreen('onboarding');
       } else {
+        console.log('Profile incomplete or not found, showing profile setup');
         setProfileComplete(false);
         setCurrentScreen('profile-setup');
       }
@@ -85,16 +110,19 @@ const Index = () => {
   };
 
   const handleAuthSuccess = () => {
+    console.log('Auth success callback triggered');
     // Auth state will be updated by the listener
   };
 
   const handleProfileSetupComplete = (profile: any) => {
+    console.log('Profile setup completed:', profile);
     setUserProfile(profile);
     setProfileComplete(true);
     setCurrentScreen('onboarding');
   };
 
   const handleOnboardingComplete = (profile: any) => {
+    console.log('Onboarding completed:', profile);
     setUserProfile(profile);
     setCurrentScreen('matches');
   };
@@ -105,11 +133,14 @@ const Index = () => {
   };
 
   const handleSignOut = async () => {
+    console.log('Signing out user');
     await supabase.auth.signOut();
     setCurrentScreen('onboarding');
     setUserProfile(null);
     setProfileComplete(false);
   };
+
+  console.log('Current state:', { loading, user: !!user, profileComplete, currentScreen });
 
   if (loading) {
     return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center">
@@ -122,15 +153,18 @@ const Index = () => {
 
   // Show auth screen if user is not authenticated
   if (!user) {
+    console.log('Rendering auth screen');
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
   }
 
   // Show profile setup if user hasn't completed their profile
   if (!profileComplete) {
+    console.log('Rendering profile setup screen');
     return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
   }
 
   const renderScreen = () => {
+    console.log('Rendering screen:', currentScreen);
     switch (currentScreen) {
       case 'onboarding':
         return <div className="min-h-screen flex flex-col items-center justify-center p-6">
