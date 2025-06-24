@@ -33,15 +33,16 @@ const Index = () => {
       
       if (session?.user) {
         console.log('User found, checking profile status...');
-        await checkProfileStatus(session.user.id);
+        // Use setTimeout to prevent blocking the auth state change
+        setTimeout(() => {
+          checkProfileStatus(session.user.id);
+        }, 0);
       } else {
         console.log('No user, resetting profile state');
         setProfileComplete(false);
         setUserProfile(null);
+        setLoading(false);
       }
-      
-      console.log('Setting loading to false');
-      setLoading(false);
     });
 
     // Check for existing session
@@ -56,14 +57,16 @@ const Index = () => {
         }
 
         console.log('Session check result:', session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
         
         if (session?.user) {
+          setSession(session);
+          setUser(session.user);
           await checkProfileStatus(session.user.id);
+        } else {
+          setSession(null);
+          setUser(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       } catch (error) {
         console.error('Error initializing auth:', error);
         setLoading(false);
@@ -80,6 +83,7 @@ const Index = () => {
 
   const checkProfileStatus = async (userId: string) => {
     console.log('Checking profile status for user:', userId);
+    
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -87,25 +91,45 @@ const Index = () => {
         .eq('id', userId)
         .maybeSingle();
 
+      console.log('Profile query result:', { profile, error });
+
       if (error) {
         console.error('Error checking profile status:', error);
+        // If there's an error fetching profile, assume incomplete
+        setProfileComplete(false);
+        setCurrentScreen('profile-setup');
+        setLoading(false);
         return;
       }
 
-      console.log('Profile data:', profile);
-
-      if (profile && profile.is_profile_complete) {
-        console.log('Profile is complete, setting up user profile');
-        setUserProfile(profile);
-        setProfileComplete(true);
-        setCurrentScreen('onboarding');
+      if (profile) {
+        console.log('Profile found:', profile);
+        
+        // Check if profile is complete
+        const isComplete = profile.is_profile_complete === true;
+        console.log('Profile complete status:', isComplete);
+        
+        if (isComplete) {
+          setUserProfile(profile);
+          setProfileComplete(true);
+          setCurrentScreen('onboarding');
+        } else {
+          setProfileComplete(false);
+          setCurrentScreen('profile-setup');
+        }
       } else {
-        console.log('Profile incomplete or not found, showing profile setup');
+        console.log('No profile found, showing profile setup');
         setProfileComplete(false);
         setCurrentScreen('profile-setup');
       }
     } catch (error) {
-      console.error('Error checking profile status:', error);
+      console.error('Unexpected error checking profile status:', error);
+      // On unexpected error, show profile setup to be safe
+      setProfileComplete(false);
+      setCurrentScreen('profile-setup');
+    } finally {
+      console.log('Setting loading to false');
+      setLoading(false);
     }
   };
 
@@ -134,21 +158,25 @@ const Index = () => {
 
   const handleSignOut = async () => {
     console.log('Signing out user');
+    setLoading(true);
     await supabase.auth.signOut();
     setCurrentScreen('onboarding');
     setUserProfile(null);
     setProfileComplete(false);
+    setLoading(false);
   };
 
-  console.log('Current state:', { loading, user: !!user, profileComplete, currentScreen });
+  console.log('Current render state:', { loading, user: !!user, profileComplete, currentScreen });
 
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
 
   // Show auth screen if user is not authenticated
@@ -167,7 +195,8 @@ const Index = () => {
     console.log('Rendering screen:', currentScreen);
     switch (currentScreen) {
       case 'onboarding':
-        return <div className="min-h-screen flex flex-col items-center justify-center p-6">
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center p-6">
             {/* Hero Section */}
             <div className="text-center mb-6 space-y-3">
               <div className="flex items-center justify-center mb-4">
@@ -184,7 +213,8 @@ const Index = () => {
             </div>
 
             <OnboardingScreen onComplete={handleOnboardingComplete} />
-          </div>;
+          </div>
+        );
       case 'matches':
         return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
       case 'chat':
@@ -192,7 +222,8 @@ const Index = () => {
       case 'profile':
         return <ProfileScreen userProfile={userProfile} onSignOut={handleSignOut} />;
       default:
-        return <div className="min-h-screen flex flex-col items-center justify-center p-6">
+        return (
+          <div className="min-h-screen flex flex-col items-center justify-center p-6">
             <div className="text-center mb-6 space-y-3">
               <div className="flex items-center justify-center mb-4">
                 <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-20 h-20" />
@@ -210,16 +241,21 @@ const Index = () => {
             </div>
 
             <OnboardingScreen onComplete={handleOnboardingComplete} />
-          </div>;
+          </div>
+        );
     }
   };
 
-  return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
       <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
         {renderScreen()}
-        {currentScreen !== 'onboarding' && currentScreen !== 'profile-setup' && <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />}
+        {currentScreen !== 'onboarding' && currentScreen !== 'profile-setup' && (
+          <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
+        )}
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default Index;
