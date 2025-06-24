@@ -1,7 +1,10 @@
 
 import { Card } from '@/components/ui/card';
-import { MapPin, Calendar, Heart, Globe, Users, Book, Smile, Coffee } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Calendar, Heart, Globe, Users, Book, Smile, Coffee, Edit } from 'lucide-react';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
+import { useState } from 'react';
+import ProfileEditModal from './ProfileEditModal';
 
 interface ProfileInfoProps {
   userProfile: any;
@@ -9,6 +12,7 @@ interface ProfileInfoProps {
 
 const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
   const { onboardingData, loading: onboardingLoading } = useOnboardingData();
+  const [showEditModal, setShowEditModal] = useState(false);
 
   if (!userProfile) {
     return (
@@ -83,73 +87,80 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
     <div className="space-y-4">
       {/* Basic Info Card */}
       <Card className="p-4 space-y-4">
-        <div className="text-center border-b pb-4">
-          <h2 className="text-2xl font-bold">
-            {userProfile.nickname || userProfile.first_name || 'User'}
-          </h2>
-          <p className="text-gray-600">
-            {userProfile.first_name} {userProfile.last_name}
-          </p>
+        <div className="flex justify-between items-start border-b pb-4">
+          <div className="text-center flex-1">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {userProfile.nickname || userProfile.first_name || 'User'}
+            </h2>
+            <p className="text-gray-600 text-sm">
+              {userProfile.first_name} {userProfile.last_name}
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowEditModal(true)}
+            variant="outline"
+            size="sm"
+            className="flex items-center space-x-1"
+          >
+            <Edit className="w-4 h-4" />
+            <span>Edit</span>
+          </Button>
         </div>
 
         <div className="space-y-3">
           {/* Age */}
-          {userProfile.age && (
-            <div className="flex items-center space-x-3">
-              <Calendar className="w-5 h-5 text-rose-500" />
-              <span className="text-gray-700">{userProfile.age} years old</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-3">
+            <Calendar className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <span className="text-gray-700">
+              {userProfile.age ? `${userProfile.age} years old` : 'Age not specified'}
+            </span>
+          </div>
 
           {/* Location */}
-          {userProfile.location && (
-            <div className="flex items-center space-x-3">
-              <MapPin className="w-5 h-5 text-rose-500" />
-              <span className="text-gray-700">{userProfile.location}</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-3">
+            <MapPin className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <span className="text-gray-700">
+              {userProfile.location || 'Location not specified'}
+            </span>
+          </div>
 
           {/* Gender & Orientation */}
           <div className="flex items-center space-x-3">
-            <Heart className="w-5 h-5 text-rose-500" />
+            <Heart className="w-5 h-5 text-rose-500 flex-shrink-0" />
             <span className="text-gray-700">
               {formatGender(userProfile.gender)} • {formatOrientation(userProfile.sexual_orientation)}
             </span>
           </div>
 
           {/* Interested In */}
-          {userProfile.interested_in && (
-            <div className="flex items-center space-x-3">
-              <Users className="w-5 h-5 text-rose-500" />
-              <span className="text-gray-700">
-                Looking for: {formatInterestedIn(userProfile.interested_in)}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center space-x-3">
+            <Users className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <span className="text-gray-700">
+              Looking for: {formatInterestedIn(userProfile.interested_in)}
+            </span>
+          </div>
 
           {/* Religion */}
-          {userProfile.religion && (
-            <div className="flex items-center space-x-3">
-              <Book className="w-5 h-5 text-rose-500" />
-              <span className="text-gray-700">{userProfile.religion}</span>
-            </div>
-          )}
+          <div className="flex items-center space-x-3">
+            <Book className="w-5 h-5 text-rose-500 flex-shrink-0" />
+            <span className="text-gray-700">
+              {userProfile.religion || 'Religion not specified'}
+            </span>
+          </div>
 
           {/* Languages */}
-          {userProfile.languages && userProfile.languages.length > 0 && (
-            <div className="flex items-start space-x-3">
-              <Globe className="w-5 h-5 text-rose-500 mt-0.5" />
-              <div>
-                <p className="text-gray-700 font-medium">Languages:</p>
-                <p className="text-gray-600 text-sm">{formatLanguages(userProfile.languages)}</p>
-              </div>
+          <div className="flex items-start space-x-3">
+            <Globe className="w-5 h-5 text-rose-500 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-gray-700 font-medium">Languages:</p>
+              <p className="text-gray-600 text-sm">{formatLanguages(userProfile.languages)}</p>
             </div>
-          )}
+          </div>
 
           {/* Interests */}
-          {userProfile.interests && userProfile.interests.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-gray-700 font-medium">Interests & Hobbies:</p>
+          <div className="space-y-2">
+            <p className="text-gray-700 font-medium">Interests & Hobbies:</p>
+            {userProfile.interests && userProfile.interests.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {userProfile.interests.map((interest: string, index: number) => (
                   <span
@@ -160,8 +171,10 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
                   </span>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <p className="text-gray-600 text-sm">No interests specified</p>
+            )}
+          </div>
         </div>
       </Card>
 
@@ -212,6 +225,13 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
           </div>
         </Card>
       )}
+
+      {/* Profile Edit Modal */}
+      <ProfileEditModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        userProfile={userProfile}
+      />
     </div>
   );
 };
