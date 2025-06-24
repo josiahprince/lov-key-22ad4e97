@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -55,6 +54,11 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
         sexual_orientation: formData.sexual_orientation as OrientationType,
         interested_in: formData.interested_in as InterestedInType,
         location: formData.location,
+        city: formData.city,
+        region: formData.region,
+        country: formData.country,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         interests: formData.interests,
         religion: formData.religion,
         languages: formData.languages,

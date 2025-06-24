@@ -15,6 +15,11 @@ export interface ProfileFormData {
   sexual_orientation: OrientationType | '';
   interested_in: InterestedInType | '';
   location: string;
+  city: string;
+  region: string;
+  country: string;
+  latitude: number | null;
+  longitude: number | null;
   interests: string[];
   religion: string;
   languages: string[];
@@ -47,6 +52,11 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     sexual_orientation: '',
     interested_in: '',
     location: '',
+    city: '',
+    region: '',
+    country: '',
+    latitude: null,
+    longitude: null,
     interests: [],
     religion: '',
     languages: []

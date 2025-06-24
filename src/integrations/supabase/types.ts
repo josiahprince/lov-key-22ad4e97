@@ -12,6 +12,8 @@ export type Database = {
       profiles: {
         Row: {
           age: number | null
+          city: string | null
+          country: string | null
           created_at: string | null
           date_of_birth: string | null
           first_name: string | null
@@ -24,9 +26,12 @@ export type Database = {
           is_profile_complete: boolean | null
           languages: string[] | null
           last_name: string | null
+          latitude: number | null
           location: string | null
+          longitude: number | null
           nickname: string | null
           phone_number: string | null
+          region: string | null
           religion: string | null
           sexual_orientation:
             | Database["public"]["Enums"]["orientation_type"]
@@ -35,6 +40,8 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           first_name?: string | null
@@ -47,9 +54,12 @@ export type Database = {
           is_profile_complete?: boolean | null
           languages?: string[] | null
           last_name?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           nickname?: string | null
           phone_number?: string | null
+          region?: string | null
           religion?: string | null
           sexual_orientation?:
             | Database["public"]["Enums"]["orientation_type"]
@@ -58,6 +68,8 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string | null
           date_of_birth?: string | null
           first_name?: string | null
@@ -70,9 +82,12 @@ export type Database = {
           is_profile_complete?: boolean | null
           languages?: string[] | null
           last_name?: string | null
+          latitude?: number | null
           location?: string | null
+          longitude?: number | null
           nickname?: string | null
           phone_number?: string | null
+          region?: string | null
           religion?: string | null
           sexual_orientation?:
             | Database["public"]["Enums"]["orientation_type"]
