@@ -29,31 +29,16 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
     return languages.join(', ');
   };
 
-  const getDisplayName = () => {
-    if (userProfile.nickname) {
-      return userProfile.nickname;
-    }
-    if (userProfile.first_name && userProfile.last_name) {
-      return `${userProfile.first_name} ${userProfile.last_name}`;
-    }
-    if (userProfile.first_name) {
-      return userProfile.first_name;
-    }
-    return 'Add Users Name or Nickname here';
-  };
-
   return (
     <Card className="p-4 space-y-4">
       <div className="flex justify-between items-start border-b pb-4">
         <div className="text-center flex-1">
           <h2 className="text-2xl font-bold text-gray-800">
-            {getDisplayName()}
+            {userProfile.nickname || userProfile.first_name || 'User'}
           </h2>
-          {userProfile.nickname && userProfile.first_name && (
-            <p className="text-gray-600 text-sm">
-              {userProfile.first_name} {userProfile.last_name}
-            </p>
-          )}
+          <p className="text-gray-600 text-sm">
+            {userProfile.first_name} {userProfile.last_name}
+          </p>
         </div>
         <Button
           onClick={onEdit}
