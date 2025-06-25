@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -107,8 +108,8 @@ export const useUserPhotos = (userId: string | undefined) => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${slot}-${Date.now()}.${fileExt}`;
       
-      // Determine which bucket to use based on slot
-      const bucketName = slot === 1 ? 'main-profile-photos' : 'additional-profile-photos';
+      // Use the new profile-photos bucket for all photos
+      const bucketName = 'profile-photos';
 
       console.log('Uploading to bucket:', bucketName, 'with filename:', fileName);
 
@@ -246,8 +247,8 @@ export const useUserPhotos = (userId: string | undefined) => {
         const fileName = urlParts[urlParts.length - 1];
         const fullPath = `${userId}/${fileName}`;
         
-        // Determine which bucket to delete from
-        const bucketName = slot === 1 ? 'main-profile-photos' : 'additional-profile-photos';
+        // Use the profile-photos bucket
+        const bucketName = 'profile-photos';
         
         const { error: storageError } = await supabase.storage
           .from(bucketName)
