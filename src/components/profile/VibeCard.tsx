@@ -1,6 +1,5 @@
 
 import { Card } from '@/components/ui/card';
-import { Smile } from 'lucide-react';
 
 interface VibeCardProps {
   onboardingData: any;
@@ -54,7 +53,6 @@ const VibeCard = ({ onboardingData }: VibeCardProps) => {
         {/* Current Mood */}
         {onboardingData.mood && (
           <div className="flex items-center space-x-3">
-            <Smile className="w-5 h-5 text-rose-500" />
             <div className="flex items-center space-x-2">
               <span className="text-lg">{getMoodIcon(onboardingData.mood)}</span>
               <span className="text-gray-700 capitalize">{onboardingData.mood}</span>
