@@ -24,6 +24,12 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
 
   return (
     <div className="space-y-4">
+      {/* Your Profile Header */}
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Your Profile</h2>
+        <p className="text-gray-600 text-sm mt-1">This is how others see you</p>
+      </div>
+
       {/* Basic Info Card */}
       <BasicInfoCard 
         userProfile={userProfile} 
