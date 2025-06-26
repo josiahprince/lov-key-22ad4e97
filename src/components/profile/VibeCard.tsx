@@ -50,9 +50,10 @@ const VibeCard = ({ onboardingData }: VibeCardProps) => {
       </div>
 
       <div className="space-y-4">
-        {/* Current Mood */}
+        {/* Current Mood Section */}
         {onboardingData.mood && (
-          <div className="flex items-center space-x-3">
+          <div className="space-y-2">
+            <p className="text-gray-700 font-medium">Current Mood:</p>
             <div className="flex items-center space-x-2">
               <span className="text-lg">{getMoodIcon(onboardingData.mood)}</span>
               <span className="text-gray-700 capitalize">{onboardingData.mood}</span>

@@ -1,5 +1,5 @@
 
-import { Camera, Edit } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,9 +57,6 @@ const ProfileHeader = () => {
           ) : (
             <Camera className="w-8 h-8 text-rose-400" />
           )}
-        </div>
-        <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-rose-500 rounded-full flex items-center justify-center">
-          <Edit className="w-4 h-4 text-white" />
         </div>
       </div>
       <div>
