@@ -50,6 +50,7 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
         last_name: formData.last_name,
         nickname: formData.nickname,
         age: parseInt(formData.age),
+        date_of_birth: formData.date_of_birth,
         gender: formData.gender as GenderType,
         sexual_orientation: formData.sexual_orientation as OrientationType,
         interested_in: formData.interested_in as InterestedInType,
