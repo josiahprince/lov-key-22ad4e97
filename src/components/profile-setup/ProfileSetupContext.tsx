@@ -21,15 +21,11 @@ export interface ProfileFormData {
   country: string;
   latitude: number | null;
   longitude: number | null;
-  interests: string[];
-  religion: string;
-  languages: string[];
 }
 
 interface ProfileSetupContextType {
   formData: ProfileFormData;
   updateField: (field: keyof ProfileFormData, value: any) => void;
-  toggleArrayItem: (field: 'interests' | 'languages', value: string) => void;
   validateStep: (step: number) => boolean;
   dobError: string | null;
 }
@@ -59,10 +55,7 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     region: '',
     country: '',
     latitude: null,
-    longitude: null,
-    interests: [],
-    religion: '',
-    languages: []
+    longitude: null
   });
 
   const [dobError, setDobError] = useState<string | null>(null);
@@ -94,15 +87,6 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const toggleArrayItem = (field: 'interests' | 'languages', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].includes(value)
-        ? prev[field].filter(item => item !== value)
-        : [...prev[field], value]
-    }));
-  };
-
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
@@ -113,19 +97,13 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
         return Boolean(formData.gender && formData.sexual_orientation && formData.interested_in);
       case 3:
         return Boolean(formData.location);
-      case 4:
-        return formData.interests.length > 0;
-      case 5:
-        return Boolean(formData.religion);
-      case 6:
-        return formData.languages.length > 0;
       default:
         return false;
     }
   };
 
   return (
-    <ProfileSetupContext.Provider value={{ formData, updateField, toggleArrayItem, validateStep, dobError }}>
+    <ProfileSetupContext.Provider value={{ formData, updateField, validateStep, dobError }}>
       {children}
     </ProfileSetupContext.Provider>
   );

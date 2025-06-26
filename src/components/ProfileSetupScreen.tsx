@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -8,9 +9,6 @@ import { ProfileSetupProvider, useProfileSetup } from './profile-setup/ProfileSe
 import BasicInfoStep from './profile-setup/BasicInfoStep';
 import GenderOrientationStep from './profile-setup/GenderOrientationStep';
 import LocationStep from './profile-setup/LocationStep';
-import InterestsStep from './profile-setup/InterestsStep';
-import ReligionStep from './profile-setup/ReligionStep';
-import LanguagesStep from './profile-setup/LanguagesStep';
 
 type GenderType = Database['public']['Enums']['gender_type'];
 type OrientationType = Database['public']['Enums']['orientation_type'];
@@ -60,9 +58,6 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
         country: formData.country,
         latitude: formData.latitude,
         longitude: formData.longitude,
-        interests: formData.interests,
-        religion: formData.religion,
-        languages: formData.languages,
         is_profile_complete: true
       };
 
@@ -98,12 +93,6 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
         return <GenderOrientationStep />;
       case 3:
         return <LocationStep />;
-      case 4:
-        return <InterestsStep />;
-      case 5:
-        return <ReligionStep />;
-      case 6:
-        return <LanguagesStep />;
       default:
         return null;
     }
@@ -122,12 +111,12 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Complete Your Profile</h1>
           <p className="text-sm text-gray-600 mt-2">
-            Step {currentStep} of 6
+            Step {currentStep} of 3
           </p>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
             <div 
               className="bg-rose-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / 6) * 100}%` }}
+              style={{ width: `${(currentStep / 3) * 100}%` }}
             />
           </div>
         </div>
@@ -145,7 +134,7 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
             </Button>
           )}
           
-          {currentStep < 6 ? (
+          {currentStep < 3 ? (
             <Button
               onClick={handleNext}
               disabled={!validateStep(currentStep)}
