@@ -1,4 +1,5 @@
-import { Heart, MessageCircle, User, Zap } from 'lucide-react';
+
+import { Heart, MessageCircle, User } from 'lucide-react';
 
 interface NavigationProps {
   currentScreen: string;
@@ -27,16 +28,6 @@ const Navigation = ({ currentScreen, setCurrentScreen }: NavigationProps) => {
         >
           <MessageCircle className="h-5 w-5" />
           <span className="text-xs">Chat</span>
-        </button>
-        
-        <button
-          onClick={() => setCurrentScreen('matching')}
-          className={`flex flex-col items-center space-y-1 ${
-            currentScreen === 'matching' ? 'text-rose-600' : 'text-gray-500'
-          }`}
-        >
-          <Zap className="h-5 w-5" />
-          <span className="text-xs">Matching</span>
         </button>
         
         <button
