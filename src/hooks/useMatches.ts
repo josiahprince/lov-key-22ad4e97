@@ -50,6 +50,14 @@ export const useMatches = () => {
 
   const getUserMatches = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No authenticated user found');
+        return [];
+      }
+
+      console.log('Fetching matches for user:', user.id);
+
       const { data, error } = await supabase
         .from('matches')
         .select(`
@@ -62,6 +70,7 @@ export const useMatches = () => {
           profiles_user_1:profiles!matches_user_1_fkey(first_name, last_name, age, city),
           profiles_user_2:profiles!matches_user_2_fkey(first_name, last_name, age, city)
         `)
+        .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .eq('status', 'active')
         .order('matched_on', { ascending: false });
 
@@ -70,6 +79,7 @@ export const useMatches = () => {
         return [];
       }
 
+      console.log('Fetched matches:', data);
       return data || [];
     } catch (error) {
       console.error('Unexpected error fetching matches:', error);

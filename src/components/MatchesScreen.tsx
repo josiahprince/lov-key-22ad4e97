@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, X, MessageCircle, Zap, Users, MapPin, Calendar } from 'lucide-react';
 import { useMatches } from '@/hooks/useMatches';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Match {
   id: string;
@@ -36,13 +37,23 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const { generateMatches, getUserMatches, loading } = useMatches();
   const [matches, setMatches] = useState<Match[]>([]);
   const [matchResult, setMatchResult] = useState<{ matches_created: number; users_processed: number } | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    getCurrentUser();
     loadMatches();
   }, []);
 
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentUserId(user.id);
+    }
+  };
+
   const loadMatches = async () => {
     const userMatches = await getUserMatches();
+    console.log('Loaded matches:', userMatches);
     setMatches(userMatches);
   };
 
@@ -133,9 +144,9 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         <div className="space-y-4">
           {matches.map((match) => {
             // Determine which profile is the other user (not the current user)
-            const otherUser = match.profiles_user_1?.first_name !== userProfile?.first_name 
-              ? match.profiles_user_1 
-              : match.profiles_user_2;
+            const otherUser = match.user_1 === currentUserId 
+              ? match.profiles_user_2 
+              : match.profiles_user_1;
             
             if (!otherUser) return null;
 
