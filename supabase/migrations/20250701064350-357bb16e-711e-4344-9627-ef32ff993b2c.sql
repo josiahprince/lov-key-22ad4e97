@@ -1,5 +1,6 @@
 
--- Fix the generate_daily_matches function to properly reference city columns
+
+-- Fix the generate_daily_matches function to resolve SELECT DISTINCT ORDER BY issue
 CREATE OR REPLACE FUNCTION public.generate_daily_matches()
 RETURNS TABLE(
   matches_created INTEGER,
@@ -41,9 +42,9 @@ BEGIN
       CONTINUE;
     END IF;
     
-    -- Find potential matches for this user
+    -- Find potential matches for this user (removed DISTINCT to avoid ORDER BY conflict)
     FOR potential_match IN
-      SELECT DISTINCT uo2.user_id, uo2.mood, uo2.selected_memes, pr2.city, pr2.region, pr2.country
+      SELECT uo2.user_id, uo2.mood, uo2.selected_memes, pr2.city, pr2.region, pr2.country
       FROM user_onboarding uo2
       JOIN profiles pr2 ON uo2.user_id = pr2.id
       WHERE uo2.user_id != user_record.user_id  -- Not themselves
@@ -115,3 +116,4 @@ BEGIN
   RETURN QUERY SELECT matches_created_count, users_processed_count;
 END;
 $$;
+
