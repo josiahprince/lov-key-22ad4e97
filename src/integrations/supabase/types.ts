@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          match_score: number | null
+          matched_on: string
+          status: string
+          updated_at: string
+          user_1: string
+          user_2: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          match_score?: number | null
+          matched_on?: string
+          status?: string
+          updated_at?: string
+          user_1: string
+          user_2: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          match_score?: number | null
+          matched_on?: string
+          status?: string
+          updated_at?: string
+          user_1?: string
+          user_2?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_user_1_fkey"
+            columns: ["user_1"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_user_2_fkey"
+            columns: ["user_2"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age: number | null
@@ -185,7 +233,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_daily_matches: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          matches_created: number
+          users_processed: number
+        }[]
+      }
     }
     Enums: {
       gender_type: "male" | "female" | "non_binary" | "other"

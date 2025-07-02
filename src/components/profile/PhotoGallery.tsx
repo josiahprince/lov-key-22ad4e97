@@ -56,8 +56,9 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
     }
   };
 
-  const mainPhoto = photos.find(photo => photo.is_main);
-  const otherPhotos = photos.filter(photo => !photo.is_main);
+  const mainPhoto = photos.find(photo => photo.is_main && photo.photo_url) || 
+                   photos.find(photo => photo.photo_url);
+  const otherPhotos = photos.filter(photo => !photo.is_main || !photo.photo_url);
 
   if (loading) {
     return (
