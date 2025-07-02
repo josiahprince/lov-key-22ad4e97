@@ -58,7 +58,7 @@ serve(async (req) => {
         .from('user_onboarding')
         .select('id')
         .eq('user_id', profile.id)
-        .single()
+        .maybeSingle()
 
       if (!existingOnboarding) {
         console.log(`Creating demo onboarding for user: ${profile.first_name}`)
@@ -80,11 +80,14 @@ serve(async (req) => {
 
         if (onboardingError) {
           console.error(`Error creating onboarding for ${profile.first_name}:`, onboardingError)
+        } else {
+          console.log(`Successfully created onboarding for ${profile.first_name}`)
         }
       }
     }
 
     // Now call the generate_daily_matches function
+    console.log('Calling generate_daily_matches function...')
     const { data, error } = await supabase.rpc('generate_daily_matches')
     
     if (error) {
@@ -98,7 +101,8 @@ serve(async (req) => {
       )
     }
 
-    const result = data[0]
+    console.log('Raw function result:', data)
+    const result = data && data.length > 0 ? data[0] : { matches_created: 0, users_processed: 0 }
     console.log(`Demo match generation completed: ${result.matches_created} matches created for ${result.users_processed} users`)
 
     return new Response(
