@@ -1,52 +1,9 @@
 
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-interface MatchResult {
-  matches_created: number;
-  users_processed: number;
-}
 
 export const useMatches = () => {
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
-
-  const generateMatches = async (): Promise<MatchResult | null> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('generate_daily_matches');
-      
-      if (error) {
-        console.error('Error generating matches:', error);
-        toast({
-          title: "Error",
-          description: "Failed to generate matches. Please try again.",
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      const result = data[0] as MatchResult;
-      
-      toast({
-        title: "Matches Generated!",
-        description: `Created ${result.matches_created} matches for ${result.users_processed} users.`,
-      });
-
-      return result;
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getUserMatches = async () => {
     try {
@@ -88,7 +45,6 @@ export const useMatches = () => {
   };
 
   return {
-    generateMatches,
     getUserMatches,
     loading,
   };
