@@ -1,44 +1,38 @@
 
-import { Heart, MessageCircle, User } from 'lucide-react';
+import { Heart, MessageCircle, User, Search } from 'lucide-react';
 
-interface NavigationProps {
-  currentScreen: string;
-  setCurrentScreen: (screen: string) => void;
-}
+const Navigation = ({ currentScreen, setCurrentScreen }: { 
+  currentScreen: string; 
+  setCurrentScreen: (screen: string) => void; 
+}) => {
+  const navItems = [
+    { id: 'matches', label: 'Matches', icon: Search },
+    { id: 'chat', label: 'Chats', icon: MessageCircle },
+    { id: 'profile', label: 'Profile', icon: User },
+  ];
 
-const Navigation = ({ currentScreen, setCurrentScreen }: NavigationProps) => {
   return (
     <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
-      <div className="flex justify-around items-center">
-        <button
-          onClick={() => setCurrentScreen('matches')}
-          className={`flex flex-col items-center space-y-1 ${
-            currentScreen === 'matches' ? 'text-rose-600' : 'text-gray-500'
-          }`}
-        >
-          <Heart className="h-5 w-5" />
-          <span className="text-xs">Matches</span>
-        </button>
-        
-        <button
-          onClick={() => setCurrentScreen('chat')}
-          className={`flex flex-col items-center space-y-1 ${
-            currentScreen === 'chat' ? 'text-rose-600' : 'text-gray-500'
-          }`}
-        >
-          <MessageCircle className="h-5 w-5" />
-          <span className="text-xs">Chat</span>
-        </button>
-        
-        <button
-          onClick={() => setCurrentScreen('profile')}
-          className={`flex flex-col items-center space-y-1 ${
-            currentScreen === 'profile' ? 'text-rose-600' : 'text-gray-500'
-          }`}
-        >
-          <User className="h-5 w-5" />
-          <span className="text-xs">Profile</span>
-        </button>
+      <div className="flex justify-around">
+        {navItems.map((item) => {
+          const IconComponent = item.icon;
+          const isActive = currentScreen === item.id;
+          
+          return (
+            <button
+              key={item.id}
+              onClick={() => setCurrentScreen(item.id)}
+              className={`flex flex-col items-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 ${
+                isActive 
+                  ? 'bg-rose-50 text-rose-600' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <IconComponent className={`w-5 h-5 ${isActive ? 'text-rose-600' : ''}`} />
+              <span className="text-xs font-medium">{item.label}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

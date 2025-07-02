@@ -1,8 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, MapPin, Calendar, Heart, User, Smile, Meh, Frown, Zap, Coffee } from 'lucide-react';
-import { useOnboardingData } from '@/hooks/useOnboardingData';
+import { Edit2, MapPin, Calendar, Heart, User } from 'lucide-react';
 
 interface BasicInfoCardProps {
   userProfile: any;
@@ -10,8 +9,6 @@ interface BasicInfoCardProps {
 }
 
 const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
-  const { onboardingData, loading: onboardingLoading } = useOnboardingData();
-
   if (!userProfile) {
     return (
       <Card>
@@ -53,52 +50,6 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
       parts.push(`Looking for: ${userProfile.interested_in.charAt(0).toUpperCase() + userProfile.interested_in.slice(1)}`);
     }
     return parts;
-  };
-
-  const getMoodIcon = (mood: string) => {
-    switch (mood) {
-      case 'happy': return Smile;
-      case 'chill': return Heart;
-      case 'anxious': return Meh;
-      case 'deep': return Frown;
-      case 'energetic': return Zap;
-      case 'sleepy': return Coffee;
-      default: return Heart;
-    }
-  };
-
-  const getMoodColor = (mood: string) => {
-    switch (mood) {
-      case 'happy': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'chill': return 'bg-green-100 text-green-700 border-green-200';
-      case 'anxious': return 'bg-blue-100 text-blue-700 border-blue-200';
-      case 'deep': return 'bg-purple-100 text-purple-700 border-purple-200';
-      case 'energetic': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'sleepy': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
-  const memesList = [
-    { id: 'meme1', title: 'Coffee Lover', description: 'When you need coffee to function', emoji: '☕' },
-    { id: 'meme2', title: 'Book Worm', description: 'One more chapter...', emoji: '📚' },
-    { id: 'meme3', title: 'Plant Parent', description: 'Talking to my plants daily', emoji: '🌱' },
-    { id: 'meme4', title: 'Night Owl', description: '3 AM thoughts hit different', emoji: '🦉' },
-    { id: 'meme5', title: 'Foodie', description: 'Photos of food > photos of myself', emoji: '🍜' },
-    { id: 'meme6', title: 'Cricket Fanatic', description: 'Checking scores every 5 minutes', emoji: '🏏' },
-    { id: 'meme7', title: 'Monsoon Mood', description: 'Chai and rain = perfect combo', emoji: '🌧️' },
-    { id: 'meme8', title: 'Metro Survivor', description: 'Peak hour travel is an adventure', emoji: '🚇' },
-    { id: 'meme9', title: 'Street Food Explorer', description: 'Gol gappa over fine dining', emoji: '🥟' },
-    { id: 'meme10', title: 'Bollywood Buff', description: 'Can quote any SRK dialogue', emoji: '🎬' },
-    { id: 'meme11', title: 'Traffic Philosopher', description: 'Deep thoughts during Silk Board jams', emoji: '🚗' },
-    { id: 'meme12', title: 'Festival Enthusiast', description: 'Already planning next celebration', emoji: '🎉' },
-    { id: 'meme13', title: 'IPL Loyalist', description: 'Team loyalty > everything else', emoji: '🏆' },
-    { id: 'meme14', title: 'Startup Dreamer', description: 'Next unicorn idea loading...', emoji: '🦄' },
-    { id: 'meme15', title: 'Meme Connoisseur', description: 'Instagram reels are my news source', emoji: '📱' },
-  ];
-
-  const getSelectedMemes = () => {
-    return memesList.filter(meme => onboardingData?.selectedMemes?.includes(meme.id));
   };
 
   return (
@@ -177,55 +128,6 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
                 )}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* Onboarding Preferences Section */}
-        {onboardingData && !onboardingLoading && (
-          <div className="space-y-3 border-t pt-4">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">My Preferences</h3>
-            
-            {/* Current Mood */}
-            {onboardingData.mood && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600">Current Mood</p>
-                <div className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg border ${getMoodColor(onboardingData.mood)}`}>
-                  {(() => {
-                    const MoodIcon = getMoodIcon(onboardingData.mood);
-                    return <MoodIcon className="w-4 h-4" />;
-                  })()}
-                  <span className="text-xs font-medium capitalize">{onboardingData.mood}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Selected Vibes */}
-            {onboardingData.selectedMemes && onboardingData.selectedMemes.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600">My Vibes</p>
-                <div className="space-y-1">
-                  {getSelectedMemes().map((meme) => (
-                    <div key={meme.id} className="flex items-center space-x-2 px-2 py-1 bg-rose-50 border border-rose-200 rounded-md">
-                      <span className="text-sm">{meme.emoji}</span>
-                      <div>
-                        <p className="text-xs font-medium">{meme.title}</p>
-                        <p className="text-xs text-gray-600">{meme.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Perfect Sunday */}
-            {onboardingData.perfectSunday && (
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600">Perfect Sunday</p>
-                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
-                  <p className="text-xs text-gray-700">{onboardingData.perfectSunday}</p>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </CardContent>

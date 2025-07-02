@@ -1,32 +1,8 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Heart, X, MessageCircle, Users, MapPin, Calendar, Zap } from 'lucide-react';
-import { useMatches } from '@/hooks/useMatches';
-import { supabase } from '@/integrations/supabase/client';
-
-interface Match {
-  id: string;
-  user_1: string;
-  user_2: string;
-  matched_on: string;
-  match_score: number;
-  status: string;
-  profiles_user_1: {
-    first_name: string;
-    last_name: string;
-    age: number;
-    city: string;
-  } | null;
-  profiles_user_2: {
-    first_name: string;
-    last_name: string;
-    age: number;
-    city: string;
-  } | null;
-}
+import { Heart, X, MessageCircle } from 'lucide-react';
 
 interface MatchesScreenProps {
   userProfile: any;
@@ -34,208 +10,132 @@ interface MatchesScreenProps {
 }
 
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
-  const { getUserMatches, loading } = useMatches();
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [generatingDemo, setGeneratingDemo] = useState(false);
-  const [demoGenerated, setDemoGenerated] = useState(false);
+  const [skipsUsed, setSkipsUsed] = useState(0);
+  const [skippedProfiles, setSkippedProfiles] = useState<number[]>([]);
+  const [matches] = useState([
+    {
+      id: 1,
+      name: 'Alex',
+      mood: 'chill',
+      meme: { emoji: '📚', title: 'Book Worm' },
+      promptAnswer: "Perfect Sunday? Coffee shop with a good book, then maybe a walk in Cubbon Park. Simple pleasures!",
+      compatibility: 85,
+      mainPhoto: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face'
+    },
+    {
+      id: 2,
+      name: 'Sam',
+      mood: 'happy',
+      meme: { emoji: '🌱', title: 'Plant Parent' },
+      promptAnswer: "Tending to my plants, cooking something new, and maybe a movie night. What about you?",
+      compatibility: 78,
+      mainPhoto: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face'
+    },
+    {
+      id: 3,
+      name: 'Jordan',
+      mood: 'deep',
+      meme: { emoji: '🦉', title: 'Night Owl' },
+      promptAnswer: "Honestly? Journaling, listening to indie music, and having deep conversations with close friends.",
+      compatibility: 92,
+      mainPhoto: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face'
+    }
+  ]);
 
-  useEffect(() => {
-    getCurrentUser();
-    loadMatches();
-  }, []);
-
-  const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUserId(user.id);
+  const handleSkip = (profileId: number) => {
+    if (skipsUsed < 3) {
+      setSkipsUsed(skipsUsed + 1);
+      setSkippedProfiles(prev => [...prev, profileId]);
     }
   };
 
-  const loadMatches = async () => {
-    const userMatches = await getUserMatches();
-    console.log('Loaded matches:', userMatches);
-    setMatches(userMatches);
-  };
-
-  const handleDemoGeneration = async () => {
-    setGeneratingDemo(true);
-    try {
-      console.log('Triggering demo match generation...');
-      const { data, error } = await supabase.functions.invoke('generate-matches', {
-        body: { demo: true }
-      });
-      
-      if (error) {
-        console.error('Error generating demo matches:', error);
-      } else {
-        console.log('Demo matches generated:', data);
-        setDemoGenerated(true);
-        // Reload matches after generation
-        await loadMatches();
-      }
-    } catch (error) {
-      console.error('Unexpected error during demo generation:', error);
-    } finally {
-      setGeneratingDemo(false);
-    }
-  };
-
-  const handleStartChat = (matchId: string, matchName: string) => {
+  const handleStartChat = (matchId: number, matchName: string) => {
     console.log('Starting chat with:', matchName, 'ID:', matchId);
     if (onStartChat) {
       onStartChat();
     }
   };
 
-  const getMatchScore = (score: number) => {
-    if (score >= 60) return { label: 'Excellent', color: 'bg-green-500' };
-    if (score >= 40) return { label: 'Good', color: 'bg-blue-500' };
-    if (score >= 20) return { label: 'Fair', color: 'bg-yellow-500' };
-    return { label: 'Low', color: 'bg-gray-500' };
-  };
+  const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
 
   return (
     <div className="p-6 space-y-6 pb-20">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold text-gray-800">Your Matches</h1>
-        <p className="text-gray-600">Thoughtfully curated connections based on your preferences</p>
+        <h1 className="text-2xl font-bold text-gray-800">Today's Matches</h1>
+        <p className="text-gray-600">6 thoughtfully curated connections</p>
+        <div className="text-sm text-gray-500">
+          Skips remaining: {3 - skipsUsed}
+        </div>
       </div>
 
-      {/* Demo Generation Section - Only show if no matches and demo not generated */}
-      {matches.length === 0 && !demoGenerated && (
-        <Card className="bg-gradient-to-r from-orange-50 to-rose-50 border-orange-200">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-orange-700">
-              <Zap className="h-5 w-5" />
-              <span>Demo Mode</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-sm text-gray-700">
-              Generate sample matches now for demonstration. After this, matches will be automatically generated daily at 5 AM.
+      <div className="space-y-4">
+        {visibleMatches.map((match) => (
+          <Card key={match.id} className="p-6 space-y-4 border-2 border-gray-100 hover:border-rose-200 transition-all duration-200 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
+                    <img 
+                      src={match.mainPhoto} 
+                      alt={match.name}
+                      className="w-full h-full object-cover filter blur-sm"
+                    />
+                  </div>
+                  <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
+                    <span className="text-xl">{match.meme.emoji}</span>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-800">{match.name}</h3>
+                  <p className="text-sm text-gray-600 capitalize">{match.mood} • {match.meme.title}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-sm font-medium text-rose-600">{match.compatibility}% match</div>
+              </div>
             </div>
-            
-            <Button 
-              onClick={handleDemoGeneration} 
-              disabled={generatingDemo}
-              className="w-full bg-orange-500 hover:bg-orange-600"
-            >
-              {generatingDemo ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Generating Demo Matches...
-                </>
-              ) : (
-                <>
-                  <Heart className="h-4 w-4 mr-2" />
-                  Generate Demo Matches
-                </>
-              )}
-            </Button>
-          </CardContent>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-700 italic">"{match.promptAnswer}"</p>
+            </div>
+
+            <div className="flex space-x-3">
+              <Button
+                onClick={() => handleSkip(match.id)}
+                disabled={skipsUsed >= 3}
+                variant="outline"
+                className="flex-1 py-3 rounded-xl border-gray-200 hover:border-gray-300"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Skip
+              </Button>
+              <Button 
+                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl"
+                onClick={() => handleStartChat(match.id, match.name)}
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Start Chat
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {visibleMatches.length === 0 && (
+        <Card className="p-6 text-center space-y-2">
+          <p className="text-gray-600">No more matches for today</p>
+          <p className="text-sm text-gray-500">New matches arrive daily at 9 AM</p>
         </Card>
-      )}
-
-      {/* Current Matches Section */}
-      {matches.length === 0 ? (
-        <Card className="p-6 text-center space-y-4">
-          <Heart className="h-12 w-12 mx-auto text-gray-300" />
-          <div>
-            <p className="text-gray-600 mb-2">No matches found yet</p>
-            <p className="text-sm text-gray-500">
-              {demoGenerated 
-                ? "Demo matches will appear here once generated" 
-                : "New matches are generated automatically every day at 5 AM"}
-            </p>
-          </div>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {matches.map((match) => {
-            // Determine which profile is the other user (not the current user)
-            const otherUser = match.user_1 === currentUserId 
-              ? match.profiles_user_2 
-              : match.profiles_user_1;
-            
-            if (!otherUser) return null;
-
-            const scoreInfo = getMatchScore(match.match_score);
-            
-            return (
-              <Card key={match.id} className="p-4 space-y-4 border-2 border-gray-100 hover:border-rose-200 transition-all duration-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-16 h-16 bg-gradient-to-br from-rose-400 to-pink-400 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-lg">
-                        {otherUser.first_name?.charAt(0) || '?'}
-                      </span>
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800">
-                        {otherUser.first_name} {otherUser.last_name}
-                      </h3>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        {otherUser.age && (
-                          <span>{otherUser.age} years old</span>
-                        )}
-                        {otherUser.city && (
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>{otherUser.city}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center">
-                    <Badge className={`${scoreInfo.color} text-white mb-2`}>
-                      {scoreInfo.label}
-                    </Badge>
-                    <div className="text-xs text-gray-500">
-                      {match.match_score}/100
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-3 w-3" />
-                    <span>Matched on {new Date(match.matched_on).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                <div className="flex space-x-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1 py-2 rounded-xl border-gray-200 hover:border-gray-300"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Skip
-                  </Button>
-                  <Button 
-                    className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
-                    onClick={() => handleStartChat(match.id, otherUser.first_name || 'Unknown')}
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Start Chat
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
       )}
 
       <Card className="p-4 bg-gradient-to-r from-rose-50 to-pink-50 border-rose-200">
         <div className="text-center space-y-2">
           <Heart className="w-6 h-6 mx-auto text-rose-500" />
           <p className="text-sm text-gray-700">
-            New matches are generated daily at 5 AM
+            New matches arrive daily at 9 AM
           </p>
           <p className="text-xs text-gray-600">
-            Quality over quantity - each match is carefully selected based on compatibility
+            Quality over quantity - each match is carefully selected
           </p>
         </div>
       </Card>
