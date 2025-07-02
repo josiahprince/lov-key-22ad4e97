@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, X, MessageCircle, Users, MapPin, Calendar } from 'lucide-react';
+import { Heart, X, MessageCircle, Users, MapPin, Calendar, Zap } from 'lucide-react';
 import { useMatches } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -37,6 +37,8 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const { getUserMatches, loading } = useMatches();
   const [matches, setMatches] = useState<Match[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [generatingDemo, setGeneratingDemo] = useState(false);
+  const [demoGenerated, setDemoGenerated] = useState(false);
 
   useEffect(() => {
     getCurrentUser();
@@ -54,6 +56,29 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     const userMatches = await getUserMatches();
     console.log('Loaded matches:', userMatches);
     setMatches(userMatches);
+  };
+
+  const handleDemoGeneration = async () => {
+    setGeneratingDemo(true);
+    try {
+      console.log('Triggering demo match generation...');
+      const { data, error } = await supabase.functions.invoke('generate-matches', {
+        body: { demo: true }
+      });
+      
+      if (error) {
+        console.error('Error generating demo matches:', error);
+      } else {
+        console.log('Demo matches generated:', data);
+        setDemoGenerated(true);
+        // Reload matches after generation
+        await loadMatches();
+      }
+    } catch (error) {
+      console.error('Unexpected error during demo generation:', error);
+    } finally {
+      setGeneratingDemo(false);
+    }
   };
 
   const handleStartChat = (matchId: string, matchName: string) => {
@@ -77,13 +102,52 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         <p className="text-gray-600">Thoughtfully curated connections based on your preferences</p>
       </div>
 
+      {/* Demo Generation Section - Only show if no matches and demo not generated */}
+      {matches.length === 0 && !demoGenerated && (
+        <Card className="bg-gradient-to-r from-orange-50 to-rose-50 border-orange-200">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-orange-700">
+              <Zap className="h-5 w-5" />
+              <span>Demo Mode</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-sm text-gray-700">
+              Generate sample matches now for demonstration. After this, matches will be automatically generated daily at 5 AM.
+            </div>
+            
+            <Button 
+              onClick={handleDemoGeneration} 
+              disabled={generatingDemo}
+              className="w-full bg-orange-500 hover:bg-orange-600"
+            >
+              {generatingDemo ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Generating Demo Matches...
+                </>
+              ) : (
+                <>
+                  <Heart className="h-4 w-4 mr-2" />
+                  Generate Demo Matches
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Current Matches Section */}
       {matches.length === 0 ? (
         <Card className="p-6 text-center space-y-4">
           <Heart className="h-12 w-12 mx-auto text-gray-300" />
           <div>
             <p className="text-gray-600 mb-2">No matches found yet</p>
-            <p className="text-sm text-gray-500">New matches are generated automatically every day at 5 AM</p>
+            <p className="text-sm text-gray-500">
+              {demoGenerated 
+                ? "Demo matches will appear here once generated" 
+                : "New matches are generated automatically every day at 5 AM"}
+            </p>
           </div>
         </Card>
       ) : (
