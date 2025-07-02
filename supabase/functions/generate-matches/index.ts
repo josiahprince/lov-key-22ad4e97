@@ -22,10 +22,17 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // First, let's create demo onboarding data for users who don't have it
+    // First, let's get all users with complete profiles who don't have onboarding data
     const { data: profiles, error: profileError } = await supabase
       .from('profiles')
-      .select('id, first_name, city, region, country')
+      .select(`
+        id, 
+        first_name, 
+        city, 
+        region, 
+        country,
+        is_profile_complete
+      `)
       .eq('is_profile_complete', true)
 
     if (profileError) {
@@ -39,9 +46,9 @@ serve(async (req) => {
       )
     }
 
-    console.log('Found profiles:', profiles?.length || 0)
+    console.log(`Found ${profiles?.length || 0} complete profiles`)
 
-    // Sample moods and memes for demo
+    // Sample data for demo onboarding
     const sampleMoods = ['happy', 'energetic', 'chill', 'sleepy']
     const sampleMemes = ['meme1', 'meme2', 'meme3', 'meme4', 'meme5', 'meme6', 'meme7', 'meme8']
     const sampleSundays = [
@@ -49,51 +56,70 @@ serve(async (req) => {
       'Hiking in nature',
       'Watching movies at home',
       'Cooking a nice meal',
-      'Meeting friends for brunch'
+      'Meeting friends for brunch',
+      'Playing sports outdoors',
+      'Visiting museums or galleries',
+      'Having a picnic in the park'
     ]
 
-    // Create onboarding data for users who don't have it
+    // Create or update onboarding data for users who don't have it
+    let onboardingCreated = 0
     for (const profile of profiles || []) {
-      const { data: existingOnboarding } = await supabase
-        .from('user_onboarding')
-        .select('id')
-        .eq('user_id', profile.id)
-        .maybeSingle()
-
-      if (!existingOnboarding) {
-        console.log(`Creating demo onboarding for user: ${profile.first_name}`)
-        
-        const randomMood = sampleMoods[Math.floor(Math.random() * sampleMoods.length)]
-        const randomMemes = sampleMemes
-          .sort(() => 0.5 - Math.random())
-          .slice(0, 3) // Pick 3 random memes
-        const randomSunday = sampleSundays[Math.floor(Math.random() * sampleSundays.length)]
-
-        const { error: onboardingError } = await supabase
+      try {
+        const { data: existingOnboarding } = await supabase
           .from('user_onboarding')
-          .insert({
-            user_id: profile.id,
-            mood: randomMood,
-            selected_memes: randomMemes,
-            perfect_sunday: randomSunday
-          })
+          .select('id')
+          .eq('user_id', profile.id)
+          .maybeSingle()
 
-        if (onboardingError) {
-          console.error(`Error creating onboarding for ${profile.first_name}:`, onboardingError)
+        if (!existingOnboarding) {
+          console.log(`Creating demo onboarding for user: ${profile.first_name} (${profile.id})`)
+          
+          const randomMood = sampleMoods[Math.floor(Math.random() * sampleMoods.length)]
+          const randomMemes = sampleMemes
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 3) // Pick 3 random memes
+          const randomSunday = sampleSundays[Math.floor(Math.random() * sampleSundays.length)]
+
+          console.log(`Creating onboarding with mood: ${randomMood}, memes: ${randomMemes.join(', ')}`)
+
+          const { error: onboardingError } = await supabase
+            .from('user_onboarding')
+            .insert({
+              user_id: profile.id,
+              mood: randomMood,
+              selected_memes: randomMemes,
+              perfect_sunday: randomSunday
+            })
+
+          if (onboardingError) {
+            console.error(`Error creating onboarding for ${profile.first_name}:`, onboardingError)
+          } else {
+            console.log(`Successfully created onboarding for ${profile.first_name}`)
+            onboardingCreated++
+          }
         } else {
-          console.log(`Successfully created onboarding for ${profile.first_name}`)
+          console.log(`Onboarding already exists for ${profile.first_name}`)
         }
+      } catch (error) {
+        console.error(`Error processing onboarding for ${profile.first_name}:`, error)
       }
     }
 
+    console.log(`Created onboarding for ${onboardingCreated} users`)
+
     // Now call the generate_daily_matches function
     console.log('Calling generate_daily_matches function...')
-    const { data, error } = await supabase.rpc('generate_daily_matches')
+    const { data: matchData, error: matchError } = await supabase.rpc('generate_daily_matches')
     
-    if (error) {
-      console.error('Error generating matches:', error)
+    if (matchError) {
+      console.error('Error generating matches:', matchError)
       return new Response(
-        JSON.stringify({ error: 'Failed to generate matches', details: error.message }),
+        JSON.stringify({ 
+          error: 'Failed to generate matches', 
+          details: matchError.message,
+          onboarding_created: onboardingCreated
+        }),
         { 
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -101,8 +127,9 @@ serve(async (req) => {
       )
     }
 
-    console.log('Raw function result:', data)
-    const result = data && data.length > 0 ? data[0] : { matches_created: 0, users_processed: 0 }
+    console.log('Match generation result:', matchData)
+    const result = matchData && matchData.length > 0 ? matchData[0] : { matches_created: 0, users_processed: 0 }
+    
     console.log(`Demo match generation completed: ${result.matches_created} matches created for ${result.users_processed} users`)
 
     return new Response(
@@ -110,6 +137,7 @@ serve(async (req) => {
         success: true,
         matches_created: result.matches_created,
         users_processed: result.users_processed,
+        onboarding_created: onboardingCreated,
         timestamp: new Date().toISOString(),
         demo_mode: true
       }),
