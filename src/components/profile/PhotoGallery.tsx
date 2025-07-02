@@ -108,7 +108,7 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
               <Button
                 size="sm"
                 variant="outline"
-                className="absolute top-1 right-1 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500"
+                className="absolute top-1 right-1 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500 z-20 group-hover:ring-2 group-hover:ring-red-300 group-hover:shadow-lg transition-all duration-200"
                 onClick={() => removePhoto(mainPhoto.photo_slot)}
                 disabled={uploading === mainPhoto.photo_slot}
               >
