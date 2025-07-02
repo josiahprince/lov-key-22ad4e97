@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, X, MessageCircle, Zap, Users, MapPin, Calendar } from 'lucide-react';
+import { Heart, X, MessageCircle, Users, MapPin, Calendar } from 'lucide-react';
 import { useMatches } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -34,9 +34,8 @@ interface MatchesScreenProps {
 }
 
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
-  const { generateMatches, getUserMatches, loading } = useMatches();
+  const { getUserMatches, loading } = useMatches();
   const [matches, setMatches] = useState<Match[]>([]);
-  const [matchResult, setMatchResult] = useState<{ matches_created: number; users_processed: number } | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,15 +54,6 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     const userMatches = await getUserMatches();
     console.log('Loaded matches:', userMatches);
     setMatches(userMatches);
-  };
-
-  const handleGenerateMatches = async () => {
-    const result = await generateMatches();
-    if (result) {
-      setMatchResult(result);
-      // Reload matches to show new ones
-      await loadMatches();
-    }
   };
 
   const handleStartChat = (matchId: string, matchName: string) => {
@@ -87,57 +77,13 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         <p className="text-gray-600">Thoughtfully curated connections based on your preferences</p>
       </div>
 
-      {/* Generate Matches Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Zap className="h-5 w-5 text-orange-500" />
-            <span>Daily Matching</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-sm text-gray-600">
-            Generate up to 3 daily matches based on mood compatibility, shared vibes, and location proximity.
-          </div>
-          
-          <Button 
-            onClick={handleGenerateMatches} 
-            disabled={loading}
-            className="w-full"
-          >
-            {loading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Generating Matches...
-              </>
-            ) : (
-              <>
-                <Heart className="h-4 w-4 mr-2" />
-                Generate Today's Matches
-              </>
-            )}
-          </Button>
-
-          {matchResult && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-              <div className="flex items-center space-x-2">
-                <Users className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">
-                  Successfully created {matchResult.matches_created} new matches!
-                </span>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Current Matches Section */}
       {matches.length === 0 ? (
         <Card className="p-6 text-center space-y-4">
           <Heart className="h-12 w-12 mx-auto text-gray-300" />
           <div>
             <p className="text-gray-600 mb-2">No matches found yet</p>
-            <p className="text-sm text-gray-500">Generate some matches to get started!</p>
+            <p className="text-sm text-gray-500">New matches are generated automatically every day at 5 AM</p>
           </div>
         </Card>
       ) : (
@@ -222,7 +168,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         <div className="text-center space-y-2">
           <Heart className="w-6 h-6 mx-auto text-rose-500" />
           <p className="text-sm text-gray-700">
-            New matches can be generated daily
+            New matches are generated daily at 5 AM
           </p>
           <p className="text-xs text-gray-600">
             Quality over quantity - each match is carefully selected based on compatibility
