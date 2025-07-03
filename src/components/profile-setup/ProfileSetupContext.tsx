@@ -21,6 +21,13 @@ export interface ProfileFormData {
   country: string;
   latitude: number | null;
   longitude: number | null;
+  // Age preferences
+  min_age_preference: number;
+  max_age_preference: number;
+  expand_age_range: boolean;
+  // Distance preferences
+  max_distance_preference: number;
+  expand_distance_range: boolean;
 }
 
 interface ProfileSetupContextType {
@@ -55,7 +62,14 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     region: '',
     country: '',
     latitude: null,
-    longitude: null
+    longitude: null,
+    // Age preferences
+    min_age_preference: 18,
+    max_age_preference: 30,
+    expand_age_range: false,
+    // Distance preferences
+    max_distance_preference: 25,
+    expand_distance_range: false
   });
 
   const [dobError, setDobError] = useState<string | null>(null);
@@ -94,7 +108,10 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
         const isOldEnough = formData.date_of_birth ? calculateAge(formData.date_of_birth) >= 18 : false;
         return hasBasicInfo && isOldEnough && !dobError;
       case 2:
-        return Boolean(formData.gender && formData.sexual_orientation && formData.interested_in);
+        return Boolean(formData.gender && formData.sexual_orientation && formData.interested_in && 
+                      formData.min_age_preference >= 18 && formData.max_age_preference <= 90 &&
+                      formData.min_age_preference <= formData.max_age_preference &&
+                      formData.max_distance_preference >= 0 && formData.max_distance_preference <= 100);
       case 3:
         return Boolean(formData.location);
       default:
