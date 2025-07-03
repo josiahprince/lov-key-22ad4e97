@@ -28,6 +28,10 @@ export interface ProfileFormData {
   // Distance preferences
   max_distance_preference: number;
   expand_distance_range: boolean;
+  // Additional profile data
+  interests: string[];
+  personality_prompts: { [key: string]: string };
+  languages_spoken: string[];
 }
 
 interface ProfileSetupContextType {
@@ -69,7 +73,11 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     expand_age_range: false,
     // Distance preferences
     max_distance_preference: 25,
-    expand_distance_range: false
+    expand_distance_range: false,
+    // Additional profile data
+    interests: [],
+    personality_prompts: {},
+    languages_spoken: []
   });
 
   const [dobError, setDobError] = useState<string | null>(null);
@@ -114,6 +122,8 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
                       formData.max_distance_preference >= 0 && formData.max_distance_preference <= 100);
       case 3:
         return Boolean(formData.location);
+      case 4:
+        return Boolean(formData.interests.length > 0 && formData.languages_spoken.length > 0);
       default:
         return false;
     }

@@ -73,11 +73,13 @@ export type Database = {
           interests: string[] | null
           is_profile_complete: boolean | null
           languages: string[] | null
+          languages_spoken: string[] | null
           last_name: string | null
           latitude: number | null
           location: string | null
           longitude: number | null
           nickname: string | null
+          personality_prompts: Json | null
           phone_number: string | null
           region: string | null
           religion: string | null
@@ -101,11 +103,13 @@ export type Database = {
           interests?: string[] | null
           is_profile_complete?: boolean | null
           languages?: string[] | null
+          languages_spoken?: string[] | null
           last_name?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
           nickname?: string | null
+          personality_prompts?: Json | null
           phone_number?: string | null
           region?: string | null
           religion?: string | null
@@ -129,11 +133,13 @@ export type Database = {
           interests?: string[] | null
           is_profile_complete?: boolean | null
           languages?: string[] | null
+          languages_spoken?: string[] | null
           last_name?: string | null
           latitude?: number | null
           location?: string | null
           longitude?: number | null
           nickname?: string | null
+          personality_prompts?: Json | null
           phone_number?: string | null
           region?: string | null
           religion?: string | null
