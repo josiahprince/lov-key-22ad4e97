@@ -78,6 +78,9 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          max_age_preference: number | null
+          max_distance_preference: number | null
+          min_age_preference: number | null
           nickname: string | null
           personality_prompts: Json | null
           phone_number: string | null
@@ -108,6 +111,9 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          max_age_preference?: number | null
+          max_distance_preference?: number | null
+          min_age_preference?: number | null
           nickname?: string | null
           personality_prompts?: Json | null
           phone_number?: string | null
@@ -138,6 +144,9 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          max_age_preference?: number | null
+          max_distance_preference?: number | null
+          min_age_preference?: number | null
           nickname?: string | null
           personality_prompts?: Json | null
           phone_number?: string | null
