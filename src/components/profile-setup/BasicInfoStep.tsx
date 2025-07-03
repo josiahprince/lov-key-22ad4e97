@@ -79,16 +79,9 @@ const BasicInfoStep = () => {
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {selectedDate ? (
-                <span>
-                  {format(selectedDate, 'MMMM d, yyyy')}
-                  {displayAge !== null && (
-                    <span className="ml-2 text-sm text-gray-600">
-                      (Age: {displayAge})
-                    </span>
-                  )}
-                </span>
+                format(selectedDate, 'MMM d, yyyy')
               ) : (
-                <span>Select your date of birth</span>
+                <span>Select date of birth</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -109,8 +102,8 @@ const BasicInfoStep = () => {
           </PopoverContent>
         </Popover>
         {dobError && (
-          <p className="text-sm text-red-600 mt-1 flex items-center">
-            ⚠️ {dobError}
+          <p className="text-sm text-red-600 mt-1">
+            {dobError}
           </p>
         )}
       </div>
