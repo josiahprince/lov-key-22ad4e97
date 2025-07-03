@@ -8,6 +8,7 @@ import ProfileInfo from './profile/ProfileInfo';
 import PhotoGallery from './profile/PhotoGallery';
 import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
+import ProfileFilters from './profile/ProfileFilters';
 
 const ProfileScreen = ({
   userProfile,
@@ -68,15 +69,18 @@ const ProfileScreen = ({
           />
           <h1 className="text-xl font-bold text-gray-800">LovKey</h1>
         </div>
-        <Button
-          onClick={onSignOut}
-          variant="outline"
-          size="sm"
-          className="flex items-center space-x-2"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out</span>
-        </Button>
+        <div className="flex items-center space-x-2">
+          <ProfileFilters userProfile={userProfile} />
+          <Button
+            onClick={onSignOut}
+            variant="outline"
+            size="sm"
+            className="flex items-center space-x-2"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
+          </Button>
+        </div>
       </div>
 
       <ProfileHeader />
