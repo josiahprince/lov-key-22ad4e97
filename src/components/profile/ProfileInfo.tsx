@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
 import VibeCard from './VibeCard';
 import BasicInfoCard from './BasicInfoCard';
+import ProfileEditModal from './ProfileEditModal';
 import { useState } from 'react';
 
 interface ProfileInfoProps {
@@ -14,9 +15,11 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log('Edit profile clicked');
     setIsEditing(true);
+  };
+
+  const handleCloseEdit = () => {
+    setIsEditing(false);
   };
 
   if (!userProfile) {
@@ -36,6 +39,13 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
       {onboardingData && !onboardingLoading && (
         <VibeCard onboardingData={onboardingData} />
       )}
+
+      {/* Profile Edit Modal */}
+      <ProfileEditModal 
+        isOpen={isEditing} 
+        onClose={handleCloseEdit} 
+        userProfile={userProfile} 
+      />
     </div>
   );
 };
