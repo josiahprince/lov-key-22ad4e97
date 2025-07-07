@@ -6,8 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
 type GenderType = Database['public']['Enums']['gender_type'];
@@ -23,12 +28,14 @@ interface ProfileEditModalProps {
 const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProps) => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
+    userProfile?.date_of_birth ? new Date(userProfile.date_of_birth) : undefined
+  );
   
   const [formData, setFormData] = useState({
     first_name: userProfile?.first_name || '',
     last_name: userProfile?.last_name || '',
     nickname: userProfile?.nickname || '',
-    age: userProfile?.age?.toString() || '',
     gender: userProfile?.gender || '',
     sexual_orientation: userProfile?.sexual_orientation || '',
     interested_in: userProfile?.interested_in || '',
@@ -38,8 +45,24 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
     interests: userProfile?.interests?.join(', ') || '',
   });
 
+  const calculateAge = (birthDate: Date): number => {
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    return age;
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    setDateOfBirth(date);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,7 +77,8 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
         first_name: formData.first_name,
         last_name: formData.last_name,
         nickname: formData.nickname,
-        age: parseInt(formData.age) || null,
+        date_of_birth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : null,
+        age: dateOfBirth ? calculateAge(dateOfBirth) : null,
         gender: formData.gender as GenderType,
         sexual_orientation: formData.sexual_orientation as OrientationType,
         interested_in: formData.interested_in as InterestedInType,
@@ -131,16 +155,38 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
           </div>
 
           <div>
-            <Label htmlFor="age">Age</Label>
-            <Input
-              id="age"
-              type="number"
-              value={formData.age}
-              onChange={(e) => handleInputChange('age', e.target.value)}
-              min="18"
-              max="100"
-              required
-            />
+            <Label>Date of Birth</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !dateOfBirth && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateOfBirth ? format(dateOfBirth, "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={dateOfBirth}
+                  onSelect={handleDateChange}
+                  disabled={(date) =>
+                    date > new Date() || date < new Date("1900-01-01")
+                  }
+                  initialFocus
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            {dateOfBirth && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Age: {calculateAge(dateOfBirth)} years old
+              </p>
+            )}
           </div>
 
           <div>
