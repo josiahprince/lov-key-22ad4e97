@@ -83,7 +83,7 @@ const ProfileScreen = ({
         </div>
       </div>
 
-      <ProfileHeader />
+      <ProfileHeader userProfile={userProfile} />
       <ProfileInfo userProfile={userProfile} />
       <DescriptionSection />
       <PhotoGallery userId={currentUserId} />

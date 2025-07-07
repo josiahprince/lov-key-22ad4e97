@@ -4,7 +4,11 @@ import { useUserPhotos } from '@/hooks/useUserPhotos';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-const ProfileHeader = () => {
+interface ProfileHeaderProps {
+  userProfile?: any;
+}
+
+const ProfileHeader = ({ userProfile }: ProfileHeaderProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const { photos, loading } = useUserPhotos(currentUserId);
 
@@ -59,6 +63,11 @@ const ProfileHeader = () => {
           )}
         </div>
       </div>
+      {userProfile?.nickname && (
+        <div className="mt-2">
+          <h2 className="text-xl font-semibold text-gray-700">{userProfile.nickname}</h2>
+        </div>
+      )}
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Your Profile</h1>
         <p className="text-gray-600">This is how others see you</p>
