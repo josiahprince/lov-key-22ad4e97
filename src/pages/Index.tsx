@@ -147,7 +147,7 @@ const Index = () => {
 
   const handleOnboardingComplete = (profile: any) => {
     console.log('Onboarding completed:', profile);
-    setUserProfile(profile);
+    // Don't overwrite userProfile - keep the actual profile data with nickname
     setCurrentScreen('matches');
   };
 

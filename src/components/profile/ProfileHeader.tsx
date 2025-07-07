@@ -12,9 +12,6 @@ const ProfileHeader = ({ userProfile }: ProfileHeaderProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const { photos, loading } = useUserPhotos(currentUserId);
 
-  console.log('ProfileHeader userProfile:', userProfile);
-  console.log('ProfileHeader nickname:', userProfile?.nickname);
-
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
