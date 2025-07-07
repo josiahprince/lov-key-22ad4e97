@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
@@ -16,8 +15,6 @@ import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
 type GenderType = Database['public']['Enums']['gender_type'];
-type OrientationType = Database['public']['Enums']['orientation_type'];
-type InterestedInType = Database['public']['Enums']['interested_in_type'];
 
 interface ProfileEditModalProps {
   isOpen: boolean;
@@ -37,12 +34,7 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
     last_name: userProfile?.last_name || '',
     nickname: userProfile?.nickname || '',
     gender: userProfile?.gender || '',
-    sexual_orientation: userProfile?.sexual_orientation || '',
-    interested_in: userProfile?.interested_in || '',
     location: userProfile?.location || '',
-    religion: userProfile?.religion || '',
-    languages: userProfile?.languages?.join(', ') || '',
-    interests: userProfile?.interests?.join(', ') || '',
   });
 
   const calculateAge = (birthDate: Date): number => {
@@ -80,12 +72,7 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
         date_of_birth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : null,
         age: dateOfBirth ? calculateAge(dateOfBirth) : null,
         gender: formData.gender as GenderType,
-        sexual_orientation: formData.sexual_orientation as OrientationType,
-        interested_in: formData.interested_in as InterestedInType,
         location: formData.location,
-        religion: formData.religion,
-        languages: formData.languages.split(',').map(lang => lang.trim()).filter(lang => lang),
-        interests: formData.interests.split(',').map(interest => interest.trim()).filter(interest => interest),
         updated_at: new Date().toISOString(),
       };
 
@@ -205,38 +192,6 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
           </div>
 
           <div>
-            <Label htmlFor="sexual_orientation">Sexual Orientation</Label>
-            <Select value={formData.sexual_orientation} onValueChange={(value) => handleInputChange('sexual_orientation', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select orientation" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="straight">Straight</SelectItem>
-                <SelectItem value="gay">Gay</SelectItem>
-                <SelectItem value="lesbian">Lesbian</SelectItem>
-                <SelectItem value="bisexual">Bisexual</SelectItem>
-                <SelectItem value="pansexual">Pansexual</SelectItem>
-                <SelectItem value="asexual">Asexual</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="interested_in">Interested In</Label>
-            <Select value={formData.interested_in} onValueChange={(value) => handleInputChange('interested_in', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select what you're looking for" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="men">Men</SelectItem>
-                <SelectItem value="women">Women</SelectItem>
-                <SelectItem value="everyone">Everyone</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label htmlFor="location">Location</Label>
             <Input
               id="location"
@@ -244,37 +199,6 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
               onChange={(e) => handleInputChange('location', e.target.value)}
               placeholder="City, State"
               required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="religion">Religion</Label>
-            <Input
-              id="religion"
-              value={formData.religion}
-              onChange={(e) => handleInputChange('religion', e.target.value)}
-              placeholder="Your religion or beliefs"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="languages">Languages (comma-separated)</Label>
-            <Input
-              id="languages"
-              value={formData.languages}
-              onChange={(e) => handleInputChange('languages', e.target.value)}
-              placeholder="English, Spanish, French"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="interests">Interests & Hobbies (comma-separated)</Label>
-            <Textarea
-              id="interests"
-              value={formData.interests}
-              onChange={(e) => handleInputChange('interests', e.target.value)}
-              placeholder="Photography, Hiking, Cooking, Music"
-              rows={3}
             />
           </div>
 

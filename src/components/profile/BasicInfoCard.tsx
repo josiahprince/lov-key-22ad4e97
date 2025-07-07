@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit2, MapPin, Calendar, Heart, User } from 'lucide-react';
+import { Edit2, MapPin, Calendar, User } from 'lucide-react';
 
 interface BasicInfoCardProps {
   userProfile: any;
@@ -38,18 +38,11 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
     return '';
   };
 
-  const formatGenderOrientation = () => {
-    const parts = [];
+  const formatGender = () => {
     if (userProfile.gender) {
-      parts.push(`Gender: ${userProfile.gender.charAt(0).toUpperCase() + userProfile.gender.slice(1).replace('_', '-')}`);
+      return `Gender: ${userProfile.gender.charAt(0).toUpperCase() + userProfile.gender.slice(1).replace('_', '-')}`;
     }
-    if (userProfile.sexual_orientation) {
-      parts.push(`Orientation: ${userProfile.sexual_orientation.charAt(0).toUpperCase() + userProfile.sexual_orientation.slice(1)}`);
-    }
-    if (userProfile.interested_in) {
-      parts.push(`Looking for: ${userProfile.interested_in.charAt(0).toUpperCase() + userProfile.interested_in.slice(1)}`);
-    }
-    return parts;
+    return '';
   };
 
   return (
@@ -96,19 +89,19 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
           )}
         </div>
 
-        {/* Gender & Orientation Section */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Gender & Orientation</h3>
-          
-          <div className="flex items-start space-x-3">
-            <Heart className="h-4 w-4 text-gray-500 mt-0.5" />
-            <div className="space-y-1">
-              {formatGenderOrientation().map((item, index) => (
-                <p key={index} className="text-sm text-gray-900">{item}</p>
-              ))}
+        {/* Gender Section */}
+        {formatGender() && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Gender</h3>
+            
+            <div className="flex items-start space-x-3">
+              <User className="h-4 w-4 text-gray-500 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm text-gray-900">{formatGender()}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Location Section */}
         {userProfile.location && (
