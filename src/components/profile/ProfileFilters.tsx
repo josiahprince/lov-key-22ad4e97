@@ -51,14 +51,15 @@ const ProfileFilters = ({ userProfile }: { userProfile: any }) => {
 
   useEffect(() => {
     if (userProfile) {
+      console.log('ProfileFilters loading user profile:', userProfile);
       setFilters({
         age_min: userProfile.min_age_preference || 18,
         age_max: userProfile.max_age_preference || 65,
         distance_km: userProfile.max_distance_preference || 50,
         sexual_orientation: userProfile.sexual_orientation ? [userProfile.sexual_orientation] : [],
         interested_in: userProfile.interested_in ? [userProfile.interested_in] : [],
-        personality_prompts: userProfile.personality_prompts ? Object.keys(userProfile.personality_prompts) : [],
-        languages_spoken: userProfile.languages_spoken || [],
+        personality_prompts: userProfile.personality_prompts ? Object.keys(userProfile.personality_prompts).filter(key => userProfile.personality_prompts[key]) : [],
+        languages_spoken: userProfile.languages_spoken || userProfile.languages || [],
         interests: userProfile.interests || []
       });
     }
