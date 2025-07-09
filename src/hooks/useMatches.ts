@@ -118,15 +118,7 @@ export const useMatches = () => {
       // Fetch today's matches for the current user
       const { data: todayMatches, error: matchesError } = await supabase
         .from('matches')
-        .select(`
-          *,
-          user_1_profile:profiles!user_1(
-            id, first_name, last_name, city, region, country, interests
-          ),
-          user_2_profile:profiles!user_2(
-            id, first_name, last_name, city, region, country, interests
-          )
-        `)
+        .select('*')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .gte('matched_on', startOfDay.toISOString())
         .lt('matched_on', endOfDay.toISOString())
@@ -151,15 +143,7 @@ export const useMatches = () => {
         // Retry fetching after generation attempt
         const { data: newMatches } = await supabase
           .from('matches')
-          .select(`
-            *,
-            user_1_profile:profiles!user_1(
-              id, first_name, last_name, city, region, country, interests
-            ),
-            user_2_profile:profiles!user_2(
-              id, first_name, last_name, city, region, country, interests
-            )
-          `)
+          .select('*')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
           .gte('matched_on', startOfDay.toISOString())
           .lt('matched_on', endOfDay.toISOString())
@@ -198,11 +182,22 @@ export const useMatches = () => {
       // Determine which user is the match (not the current user)
       const isUser1 = match.user_1 === currentUserId;
       const matchUserId = isUser1 ? match.user_2 : match.user_1;
-      const matchProfile = isUser1 ? match.user_2_profile : match.user_1_profile;
 
       console.log('Processing match for user:', matchUserId);
 
       try {
+        // Fetch profile data for the match
+        const { data: matchProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, first_name, last_name, city, region, country, interests')
+          .eq('id', matchUserId)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error fetching profile for user:', matchUserId, profileError);
+          continue;
+        }
+
         // Fetch onboarding data for the match
         const { data: matchOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
