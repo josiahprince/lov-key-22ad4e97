@@ -2,7 +2,10 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, X, MessageCircle } from 'lucide-react';
+import { Heart, X, MessageCircle, Loader2 } from 'lucide-react';
+import { useMatches } from '@/hooks/useMatches';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface MatchesScreenProps {
   userProfile: any;
@@ -11,46 +14,53 @@ interface MatchesScreenProps {
 
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const [skipsUsed, setSkipsUsed] = useState(0);
-  const [skippedProfiles, setSkippedProfiles] = useState<number[]>([]);
-  const [matches] = useState([
-    {
-      id: 1,
-      name: 'Alex',
-      mood: 'chill',
-      meme: { emoji: '📚', title: 'Book Worm' },
-      promptAnswer: "Perfect Sunday? Coffee shop with a good book, then maybe a walk in Cubbon Park. Simple pleasures!",
-      compatibility: 85,
-      mainPhoto: 'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 2,
-      name: 'Sam',
-      mood: 'happy',
-      meme: { emoji: '🌱', title: 'Plant Parent' },
-      promptAnswer: "Tending to my plants, cooking something new, and maybe a movie night. What about you?",
-      compatibility: 78,
-      mainPhoto: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop&crop=face'
-    },
-    {
-      id: 3,
-      name: 'Jordan',
-      mood: 'deep',
-      meme: { emoji: '🦉', title: 'Night Owl' },
-      promptAnswer: "Honestly? Journaling, listening to indie music, and having deep conversations with close friends.",
-      compatibility: 92,
-      mainPhoto: 'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=150&h=150&fit=crop&crop=face'
-    }
-  ]);
+  const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
+  const { matches, loading, refetch } = useMatches();
+  const { toast } = useToast();
 
-  const handleSkip = (profileId: number) => {
+  const handleSkip = async (profileId: string) => {
     if (skipsUsed < 1) {
       setSkipsUsed(skipsUsed + 1);
       setSkippedProfiles(prev => [...prev, profileId]);
+      
+      // Update match status in database
+      try {
+        const { error } = await supabase
+          .from('matches')
+          .update({ status: 'skipped' })
+          .eq('id', profileId);
+        
+        if (error) {
+          console.error('Error updating match status:', error);
+        }
+      } catch (error) {
+        console.error('Error skipping match:', error);
+      }
     }
   };
 
-  const handleStartChat = (matchId: number, matchName: string) => {
+  const handleStartChat = async (matchId: string, matchName: string) => {
     console.log('Starting chat with:', matchName, 'ID:', matchId);
+    
+    // Update match status to indicate chat started
+    try {
+      const { error } = await supabase
+        .from('matches')
+        .update({ status: 'chatting' })
+        .eq('id', matchId);
+      
+      if (error) {
+        console.error('Error updating match status:', error);
+      } else {
+        toast({
+          title: "Chat started!",
+          description: `You can now chat with ${matchName}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error starting chat:', error);
+    }
+    
     if (onStartChat) {
       onStartChat();
     }
@@ -58,11 +68,25 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
 
   const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
 
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 pb-20">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold text-gray-800">Today's Matches</h1>
+          <p className="text-gray-600">Finding your perfect connections...</p>
+        </div>
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 pb-20">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-gray-800">Today's Matches</h1>
-        <p className="text-gray-600">3 thoughtfully curated connections</p>
+        <p className="text-gray-600">{matches.length} thoughtfully curated connections</p>
         <div className="text-sm text-gray-500">
           Skips remaining: {1 - skipsUsed}
         </div>
