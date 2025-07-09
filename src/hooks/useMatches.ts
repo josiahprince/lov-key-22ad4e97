@@ -120,10 +120,10 @@ export const useMatches = () => {
         .from('matches')
         .select(`
           *,
-          user_1_profile:profiles!matches_user_1_fkey(
+          user_1_profile:profiles!user_1(
             id, first_name, last_name, city, region, country, interests
           ),
-          user_2_profile:profiles!matches_user_2_fkey(
+          user_2_profile:profiles!user_2(
             id, first_name, last_name, city, region, country, interests
           )
         `)
@@ -153,10 +153,10 @@ export const useMatches = () => {
           .from('matches')
           .select(`
             *,
-            user_1_profile:profiles!matches_user_1_fkey(
+            user_1_profile:profiles!user_1(
               id, first_name, last_name, city, region, country, interests
             ),
-            user_2_profile:profiles!matches_user_2_fkey(
+            user_2_profile:profiles!user_2(
               id, first_name, last_name, city, region, country, interests
             )
           `)
