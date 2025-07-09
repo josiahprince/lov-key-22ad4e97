@@ -97,6 +97,7 @@ export const useMatches = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('No user found for matches');
         toast({
           title: "Authentication required",
           description: "Please log in to view matches",
@@ -105,10 +106,14 @@ export const useMatches = () => {
         return;
       }
 
+      console.log('Fetching matches for user:', user.id);
+
       // Get today's date range
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+
+      console.log('Date range:', { startOfDay: startOfDay.toISOString(), endOfDay: endOfDay.toISOString() });
 
       // Fetch today's matches for the current user
       const { data: todayMatches, error: matchesError } = await supabase
@@ -127,11 +132,14 @@ export const useMatches = () => {
         .lt('matched_on', endOfDay.toISOString())
         .eq('status', 'active');
 
+      console.log('Matches query result:', { todayMatches, matchesError });
+
       if (matchesError) {
         throw matchesError;
       }
 
       if (!todayMatches || todayMatches.length === 0) {
+        console.log('No matches found, trying to generate new ones');
         // No matches for today, try to generate new ones
         const { error: generateError } = await supabase.functions.invoke('generate-daily-matches');
         
@@ -156,10 +164,13 @@ export const useMatches = () => {
           .lt('matched_on', endOfDay.toISOString())
           .eq('status', 'active');
 
+        console.log('New matches after generation:', newMatches);
+
         if (newMatches) {
           await processMatches(newMatches, user.id);
         }
       } else {
+        console.log('Found existing matches:', todayMatches.length);
         await processMatches(todayMatches, user.id);
       }
 
