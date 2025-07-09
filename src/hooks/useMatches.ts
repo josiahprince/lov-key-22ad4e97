@@ -227,30 +227,23 @@ export const useMatches = () => {
           console.error('Error fetching photo for user:', matchUserId, photoError);
         }
 
-        // Only add matches that have complete onboarding data
-        if (matchProfile && matchOnboarding) {
-          const memeInfo = getMemeDisplayInfo(matchOnboarding.selected_memes);
-          
-          processedMatches.push({
-            id: match.id,
-            name: `${matchProfile.first_name || 'Anonymous'}`,
-            mood: matchOnboarding.mood || 'chill',
-            meme: memeInfo,
-            promptAnswer: matchOnboarding.perfect_sunday || "Looking forward to great conversations!",
-            compatibility: match.match_score || 75,
-            mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
-            city: matchProfile.city,
-            region: matchProfile.region,
-            country: matchProfile.country
-          });
-          
-          console.log('Successfully processed match:', processedMatches.length);
-        } else {
-          console.log('Skipping match due to missing data:', { 
-            hasProfile: !!matchProfile, 
-            hasOnboarding: !!matchOnboarding 
-          });
-        }
+        // Show matches even with incomplete data
+        const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
+        
+        processedMatches.push({
+          id: match.id,
+          name: matchProfile?.first_name || 'New User',
+          mood: matchOnboarding?.mood || 'chill',
+          meme: memeInfo,
+          promptAnswer: matchOnboarding?.perfect_sunday || "Getting to know each other!",
+          compatibility: match.match_score || 75,
+          mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
+          city: matchProfile?.city || 'Unknown',
+          region: matchProfile?.region,
+          country: matchProfile?.country
+        });
+        
+        console.log('Successfully processed match:', processedMatches.length);
       } catch (error) {
         console.error('Error processing match for user:', matchUserId, error);
         continue;
