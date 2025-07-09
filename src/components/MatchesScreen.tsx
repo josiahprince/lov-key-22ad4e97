@@ -43,7 +43,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   ]);
 
   const handleSkip = (profileId: number) => {
-    if (skipsUsed < 3) {
+    if (skipsUsed < 1) {
       setSkipsUsed(skipsUsed + 1);
       setSkippedProfiles(prev => [...prev, profileId]);
     }
@@ -62,9 +62,9 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     <div className="p-6 space-y-6 pb-20">
       <div className="text-center space-y-2">
         <h1 className="text-2xl font-bold text-gray-800">Today's Matches</h1>
-        <p className="text-gray-600">6 thoughtfully curated connections</p>
+        <p className="text-gray-600">3 thoughtfully curated connections</p>
         <div className="text-sm text-gray-500">
-          Skips remaining: {3 - skipsUsed}
+          Skips remaining: {1 - skipsUsed}
         </div>
       </div>
 
@@ -102,7 +102,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
             <div className="flex space-x-3">
               <Button
                 onClick={() => handleSkip(match.id)}
-                disabled={skipsUsed >= 3}
+                disabled={skipsUsed >= 1}
                 variant="outline"
                 className="flex-1 py-3 rounded-xl border-gray-200 hover:border-gray-300"
               >
