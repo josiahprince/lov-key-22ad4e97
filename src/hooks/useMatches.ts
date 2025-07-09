@@ -130,7 +130,8 @@ export const useMatches = () => {
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .gte('matched_on', startOfDay.toISOString())
         .lt('matched_on', endOfDay.toISOString())
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .limit(10);
 
       console.log('Matches query result:', { todayMatches, matchesError });
 
@@ -188,46 +189,75 @@ export const useMatches = () => {
 
   const processMatches = async (matchesData: any[], currentUserId: string) => {
     const processedMatches: MatchProfile[] = [];
+    console.log('Processing matches:', matchesData.length);
 
     for (const match of matchesData) {
+      // Stop if we already have 3 matches
+      if (processedMatches.length >= 3) break;
+
       // Determine which user is the match (not the current user)
       const isUser1 = match.user_1 === currentUserId;
       const matchUserId = isUser1 ? match.user_2 : match.user_1;
       const matchProfile = isUser1 ? match.user_2_profile : match.user_1_profile;
 
-      // Fetch onboarding data for the match
-      const { data: matchOnboarding } = await supabase
-        .from('user_onboarding')
-        .select('*')
-        .eq('user_id', matchUserId)
-        .single();
+      console.log('Processing match for user:', matchUserId);
 
-      // Fetch main photo for the match
-      const { data: matchPhoto } = await supabase
-        .from('user_photos')
-        .select('photo_url')
-        .eq('user_id', matchUserId)
-        .eq('is_main', true)
-        .single();
+      try {
+        // Fetch onboarding data for the match
+        const { data: matchOnboarding, error: onboardingError } = await supabase
+          .from('user_onboarding')
+          .select('*')
+          .eq('user_id', matchUserId)
+          .maybeSingle();
 
-      if (matchProfile && matchOnboarding) {
-        const memeInfo = getMemeDisplayInfo(matchOnboarding.selected_memes);
-        
-        processedMatches.push({
-          id: match.id,
-          name: `${matchProfile.first_name || 'Anonymous'}`,
-          mood: matchOnboarding.mood || 'chill',
-          meme: memeInfo,
-          promptAnswer: matchOnboarding.perfect_sunday || "Looking forward to great conversations!",
-          compatibility: match.match_score || 75,
-          mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
-          city: matchProfile.city,
-          region: matchProfile.region,
-          country: matchProfile.country
-        });
+        if (onboardingError) {
+          console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
+          continue;
+        }
+
+        // Fetch main photo for the match
+        const { data: matchPhoto, error: photoError } = await supabase
+          .from('user_photos')
+          .select('photo_url')
+          .eq('user_id', matchUserId)
+          .eq('is_main', true)
+          .maybeSingle();
+
+        if (photoError) {
+          console.error('Error fetching photo for user:', matchUserId, photoError);
+        }
+
+        // Only add matches that have complete onboarding data
+        if (matchProfile && matchOnboarding) {
+          const memeInfo = getMemeDisplayInfo(matchOnboarding.selected_memes);
+          
+          processedMatches.push({
+            id: match.id,
+            name: `${matchProfile.first_name || 'Anonymous'}`,
+            mood: matchOnboarding.mood || 'chill',
+            meme: memeInfo,
+            promptAnswer: matchOnboarding.perfect_sunday || "Looking forward to great conversations!",
+            compatibility: match.match_score || 75,
+            mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
+            city: matchProfile.city,
+            region: matchProfile.region,
+            country: matchProfile.country
+          });
+          
+          console.log('Successfully processed match:', processedMatches.length);
+        } else {
+          console.log('Skipping match due to missing data:', { 
+            hasProfile: !!matchProfile, 
+            hasOnboarding: !!matchOnboarding 
+          });
+        }
+      } catch (error) {
+        console.error('Error processing match for user:', matchUserId, error);
+        continue;
       }
     }
 
+    console.log('Final processed matches count:', processedMatches.length);
     setMatches(processedMatches);
   };
 
