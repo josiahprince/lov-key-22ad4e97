@@ -94,75 +94,77 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
 
       <div className="space-y-4">
         {visibleMatches.map((match) => (
-          <Card key={match.id} className="p-6 space-y-4 border-2 border-gray-100 hover:border-rose-200 transition-all duration-200 animate-fade-in">
-            <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-                <div className="relative">
-                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
-                    <img 
-                      src={match.mainPhoto} 
-                      alt={match.name}
-                      className="w-full h-full object-cover filter blur-sm"
-                    />
+          <Card key={match.id} className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-white to-rose-50/30 hover:shadow-xl transition-all duration-300 animate-fade-in">
+            {/* Header Section */}
+            <div className="relative p-4 bg-gradient-to-r from-rose-500 to-pink-500">
+              <div className="flex items-center justify-between text-white">
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/20">
+                      <img 
+                        src={match.mainPhoto} 
+                        alt={match.name}
+                        className="w-full h-full object-cover filter blur-sm"
+                      />
+                    </div>
+                    <div className="absolute inset-0 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                      <span className="text-lg">{match.meme.emoji}</span>
+                    </div>
                   </div>
-                  <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-90">
-                    <span className="text-xl">{match.meme.emoji}</span>
+                  <div>
+                    <h3 className="font-semibold text-lg">{match.name}</h3>
+                    {match.city && (
+                      <p className="text-white/80 text-xs">{match.city}</p>
+                    )}
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-gray-800">{match.name}</h3>
-                  <p className="text-sm text-gray-600 capitalize">{match.mood} • {match.meme.title}</p>
-                  {match.city && (
-                    <p className="text-xs text-gray-500">{match.city}</p>
-                  )}
+                <div className="text-right">
+                  <div className="text-xl font-bold">{match.compatibility}%</div>
+                  <div className="text-xs text-white/80">match</div>
                 </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-medium text-rose-600">{match.compatibility}% match</div>
-                <div className="text-xs text-gray-500">compatibility</div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              {/* Current Mood */}
-              <div className="bg-blue-50 p-3 rounded-lg">
-                <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Current Mood</p>
-                <p className="text-sm text-blue-800 capitalize font-medium">{match.mood}</p>
-              </div>
-
-              {/* Your Vibes */}
-              <div className="bg-purple-50 p-3 rounded-lg">
-                <p className="text-xs text-purple-600 font-medium uppercase tracking-wide">Vibe</p>
+            {/* Content Section */}
+            <div className="p-4 space-y-3">
+              {/* Mood & Vibe Row */}
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm">{match.meme.emoji}</span>
-                  <p className="text-sm text-purple-800 font-medium">{match.meme.title}</p>
+                  <div className="w-2 h-2 bg-rose-400 rounded-full"></div>
+                  <span className="text-sm text-gray-600 capitalize">{match.mood}</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <span>{match.meme.emoji}</span>
+                  <span>{match.meme.title}</span>
                 </div>
               </div>
 
-              {/* Perfect Sunday */}
-              <div className="bg-green-50 p-3 rounded-lg">
-                <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Perfect Sunday</p>
-                <p className="text-sm text-green-800 italic">"{match.promptAnswer}"</p>
+              {/* Perfect Sunday Quote */}
+              <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-rose-300">
+                <p className="text-sm text-gray-700 italic leading-relaxed">"{match.promptAnswer}"</p>
               </div>
-            </div>
 
-            <div className="flex space-x-3">
-              <Button
-                onClick={() => handleSkip(match.id)}
-                disabled={skipsUsed >= 1}
-                variant="outline"
-                className="flex-1 py-3 rounded-xl border-gray-200 hover:border-gray-300"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Skip
-              </Button>
-              <Button 
-                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl"
-                onClick={() => handleStartChat(match.id, match.name)}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Start Chat
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex space-x-2 pt-2">
+                <Button
+                  onClick={() => handleSkip(match.id)}
+                  disabled={skipsUsed >= 1}
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 border-gray-200 text-gray-600 hover:bg-gray-50"
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Skip
+                </Button>
+                <Button 
+                  size="sm"
+                  className="flex-1 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white border-0 shadow-md"
+                  onClick={() => handleStartChat(match.id, match.name)}
+                >
+                  <MessageCircle className="w-4 h-4 mr-1" />
+                  Chat
+                </Button>
+              </div>
             </div>
           </Card>
         ))}
