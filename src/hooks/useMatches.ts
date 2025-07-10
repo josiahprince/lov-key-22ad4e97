@@ -189,6 +189,11 @@ export const useMatches = () => {
           continue;
         }
 
+        if (!matchProfile) {
+          console.warn('No profile found for user:', matchUserId);
+          continue;
+        }
+
         // Fetch onboarding data for the match
         const { data: matchOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
@@ -198,7 +203,6 @@ export const useMatches = () => {
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
-          continue;
         }
 
         // Fetch main photo for the match
@@ -218,15 +222,15 @@ export const useMatches = () => {
         
         processedMatches.push({
           id: match.id,
-          name: matchProfile?.first_name || 'New User',
+          name: matchProfile.first_name || 'Unknown User',
           mood: matchOnboarding?.mood || 'chill',
           meme: memeInfo,
           promptAnswer: matchOnboarding?.perfect_sunday || "Getting to know each other!",
           compatibility: match.match_score || 75,
           mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
-          city: matchProfile?.city || 'Unknown',
-          region: matchProfile?.region,
-          country: matchProfile?.country
+          city: matchProfile.city || 'Unknown',
+          region: matchProfile.region,
+          country: matchProfile.country
         });
         
         console.log('Successfully processed match:', processedMatches.length);
