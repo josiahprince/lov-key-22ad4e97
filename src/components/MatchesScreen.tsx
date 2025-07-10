@@ -137,17 +137,19 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
               </div>
 
               {/* Vibes Section */}
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Your Vibes</p>
-                <div className="flex flex-wrap gap-2">
-                  {match.memes.map((meme, index) => (
-                    <div key={index} className="flex items-center space-x-1 bg-white/60 px-2 py-1 rounded-full text-xs text-gray-700">
-                      <span>{meme.emoji}</span>
-                      <span>{meme.title}</span>
-                    </div>
-                  ))}
+              {match.memes.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Your Vibes</p>
+                  <div className="flex flex-wrap gap-2">
+                    {match.memes.map((meme, index) => (
+                      <div key={index} className="flex items-center space-x-1 bg-white/60 px-2 py-1 rounded-full text-xs text-gray-700">
+                        <span>{meme.emoji}</span>
+                        <span>{meme.title}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Perfect Sunday Quote */}
               {match.promptAnswer && (

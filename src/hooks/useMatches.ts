@@ -37,10 +37,10 @@ export const useMatches = () => {
     };
 
     if (!selectedMemes || selectedMemes.length === 0) {
-      return [{ emoji: '🌟', title: 'Vibe Master' }];
+      return [];
     }
 
-    return selectedMemes.map(meme => memeMap[meme] || { emoji: '🌟', title: 'Vibe Master' });
+    return selectedMemes.map(meme => memeMap[meme]).filter(Boolean);
   };
 
   const fetchTodayMatches = async () => {
