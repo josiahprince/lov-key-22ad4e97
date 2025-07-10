@@ -108,20 +108,13 @@ export const useMatches = () => {
 
       console.log('Fetching matches for user:', user.id);
 
-      // Get today's date range
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
+      console.log('Fetching all active matches for user');
 
-      console.log('Date range:', { startOfDay: startOfDay.toISOString(), endOfDay: endOfDay.toISOString() });
-
-      // Fetch today's matches for the current user
+      // Fetch all active matches for the current user (not just today's)
       const { data: todayMatches, error: matchesError } = await supabase
         .from('matches')
         .select('*')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .gte('matched_on', startOfDay.toISOString())
-        .lt('matched_on', endOfDay.toISOString())
         .eq('status', 'active')
         .limit(10);
 
@@ -145,8 +138,6 @@ export const useMatches = () => {
           .from('matches')
           .select('*')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .gte('matched_on', startOfDay.toISOString())
-          .lt('matched_on', endOfDay.toISOString())
           .eq('status', 'active');
 
         console.log('New matches after generation:', newMatches);
