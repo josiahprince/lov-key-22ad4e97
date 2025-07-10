@@ -123,8 +123,27 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
               </div>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-700 italic">"{match.promptAnswer}"</p>
+            <div className="space-y-3">
+              {/* Current Mood */}
+              <div className="bg-blue-50 p-3 rounded-lg">
+                <p className="text-xs text-blue-600 font-medium uppercase tracking-wide">Current Mood</p>
+                <p className="text-sm text-blue-800 capitalize font-medium">{match.mood}</p>
+              </div>
+
+              {/* Your Vibes */}
+              <div className="bg-purple-50 p-3 rounded-lg">
+                <p className="text-xs text-purple-600 font-medium uppercase tracking-wide">Vibe</p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm">{match.meme.emoji}</span>
+                  <p className="text-sm text-purple-800 font-medium">{match.meme.title}</p>
+                </div>
+              </div>
+
+              {/* Perfect Sunday */}
+              <div className="bg-green-50 p-3 rounded-lg">
+                <p className="text-xs text-green-600 font-medium uppercase tracking-wide">Perfect Sunday</p>
+                <p className="text-sm text-green-800 italic">"{match.promptAnswer}"</p>
+              </div>
             </div>
 
             <div className="flex space-x-3">
