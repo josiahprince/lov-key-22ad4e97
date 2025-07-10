@@ -195,7 +195,10 @@ function calculateCompatibility(
       'chill': ['happy', 'sleepy'],
       'sleepy': ['chill', 'peaceful'],
       'deep': ['thoughtful', 'reflective'],
-      'excited': ['energetic', 'happy']
+      'excited': ['energetic', 'happy'],
+      'peaceful': ['sleepy', 'chill'],
+      'thoughtful': ['deep', 'reflective'],
+      'reflective': ['deep', 'thoughtful']
     };
     
     if (moodCompatibility[userOnboarding.mood]?.includes(matchOnboarding.mood)) {

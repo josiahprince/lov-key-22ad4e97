@@ -20,58 +20,7 @@ export const useMatches = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const calculateMatchScore = (
-    userOnboarding: any,
-    userProfile: any,
-    matchOnboarding: any,
-    matchProfile: any
-  ): number => {
-    let score = 0;
-
-    // Mood match = +40%
-    if (userOnboarding.mood === matchOnboarding.mood) {
-      score += 40;
-    } else {
-      // Adjacent moods
-      const moodCompatibility: { [key: string]: string[] } = {
-        'happy': ['energetic', 'chill'],
-        'energetic': ['happy', 'excited'],
-        'chill': ['happy', 'sleepy'],
-        'sleepy': ['chill', 'peaceful'],
-        'deep': ['thoughtful', 'reflective'],
-        'excited': ['energetic', 'happy']
-      };
-      
-      if (moodCompatibility[userOnboarding.mood]?.includes(matchOnboarding.mood)) {
-        score += 20;
-      }
-    }
-
-    // Meme/vibe tag match = +30%
-    const sharedMemes = userOnboarding.selected_memes?.filter((meme: string) =>
-      matchOnboarding.selected_memes?.includes(meme)
-    ) || [];
-    if (sharedMemes.length > 0) {
-      score += 30;
-    }
-
-    // Same city = +20%
-    if (userProfile.city && matchProfile.city && userProfile.city === matchProfile.city) {
-      score += 20;
-    } else if (userProfile.region && matchProfile.region && userProfile.region === matchProfile.region) {
-      score += 10;
-    }
-
-    // Common interests = +10%
-    const sharedInterests = userProfile.interests?.filter((interest: string) =>
-      matchProfile.interests?.includes(interest)
-    ) || [];
-    if (sharedInterests.length > 0) {
-      score += 10;
-    }
-
-    return Math.min(score, 100); // Cap at 100%
-  };
+  // Remove local calculation since we now use the score from the database
 
   const getMemeDisplayInfo = (selectedMemes: string[]) => {
     const memeMap: { [key: string]: { emoji: string; title: string } } = {

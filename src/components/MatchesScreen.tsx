@@ -96,7 +96,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         {visibleMatches.map((match) => (
           <Card key={match.id} className="p-6 space-y-4 border-2 border-gray-100 hover:border-rose-200 transition-all duration-200 animate-fade-in">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200">
                     <img 
@@ -105,17 +105,21 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
                       className="w-full h-full object-cover filter blur-sm"
                     />
                   </div>
-                  <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
+                  <div className="absolute inset-0 w-16 h-16 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-90">
                     <span className="text-xl">{match.meme.emoji}</span>
                   </div>
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-800">{match.name}</h3>
                   <p className="text-sm text-gray-600 capitalize">{match.mood} • {match.meme.title}</p>
+                  {match.city && (
+                    <p className="text-xs text-gray-500">{match.city}</p>
+                  )}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm font-medium text-rose-600">{match.compatibility}% match</div>
+                <div className="text-xs text-gray-500">compatibility</div>
               </div>
             </div>
 
