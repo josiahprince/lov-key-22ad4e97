@@ -108,7 +108,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
                       />
                     </div>
                     <div className="absolute inset-0 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <span className="text-lg">{match.meme.emoji}</span>
+                      <span className="text-lg">{match.memes[0]?.emoji || '🌟'}</span>
                     </div>
                   </div>
                   <div>
@@ -127,22 +127,35 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
 
             {/* Content Section */}
             <div className="p-4 space-y-3">
-              {/* Mood & Vibe Row */}
-              <div className="flex items-center justify-between">
+              {/* Current Mood Section */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Current Mood</p>
                 <div className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-rose-400 rounded-full"></div>
                   <span className="text-sm text-gray-600 capitalize">{match.mood}</span>
                 </div>
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <span>{match.meme.emoji}</span>
-                  <span>{match.meme.title}</span>
+              </div>
+
+              {/* Vibes Section */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-600 uppercase tracking-wide">Your Vibes</p>
+                <div className="flex flex-wrap gap-2">
+                  {match.memes.map((meme, index) => (
+                    <div key={index} className="flex items-center space-x-1 bg-white/60 px-2 py-1 rounded-full text-xs text-gray-700">
+                      <span>{meme.emoji}</span>
+                      <span>{meme.title}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {/* Perfect Sunday Quote */}
-              <div className="bg-gray-50 p-3 rounded-lg border-l-4 border-rose-300">
-                <p className="text-sm text-gray-700 italic leading-relaxed">"{match.promptAnswer}"</p>
-              </div>
+              {match.promptAnswer && (
+                <div className="bg-white/40 p-3 rounded-lg border-l-4 border-rose-300">
+                  <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Perfect Sunday</p>
+                  <p className="text-sm text-gray-700 italic leading-relaxed">"{match.promptAnswer}"</p>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex space-x-2 pt-2">

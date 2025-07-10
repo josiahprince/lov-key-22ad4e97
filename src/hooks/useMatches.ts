@@ -6,7 +6,7 @@ interface MatchProfile {
   id: string;
   name: string;
   mood: string;
-  meme: { emoji: string; title: string };
+  memes: { emoji: string; title: string }[];
   promptAnswer: string;
   compatibility: number;
   mainPhoto: string;
@@ -36,8 +36,11 @@ export const useMatches = () => {
       'fitness': { emoji: '💪', title: 'Fitness Enthusiast' }
     };
 
-    const firstMeme = selectedMemes?.[0];
-    return memeMap[firstMeme] || { emoji: '🌟', title: 'Vibe Master' };
+    if (!selectedMemes || selectedMemes.length === 0) {
+      return [{ emoji: '🌟', title: 'Vibe Master' }];
+    }
+
+    return selectedMemes.map(meme => memeMap[meme] || { emoji: '🌟', title: 'Vibe Master' });
   };
 
   const fetchTodayMatches = async () => {
@@ -173,8 +176,8 @@ export const useMatches = () => {
           id: match.id,
           name: matchProfile.first_name || 'Unknown User',
           mood: matchOnboarding?.mood || 'chill',
-          meme: memeInfo,
-          promptAnswer: matchOnboarding?.perfect_sunday || "Getting to know each other!",
+          memes: memeInfo,
+          promptAnswer: matchOnboarding?.perfect_sunday || "",
           compatibility: match.match_score || 75,
           mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
           city: matchProfile.city || 'Unknown',
