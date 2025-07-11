@@ -71,8 +71,8 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes 
     
     if (success) {
       setNewMessage('');
-      // Add a short delay before allowing next message
-      setTimeout(() => setCanSend(true), 2000);
+      // Add a delay before allowing next message
+      setTimeout(() => setCanSend(true), 15000);
     } else {
       setCanSend(true);
     }
