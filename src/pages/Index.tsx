@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import AuthScreen from '../components/AuthScreen';
@@ -15,6 +16,7 @@ const Index = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentScreen, setCurrentScreen] = useState('onboarding');
+  const location = useLocation();
   const [userProfile, setUserProfile] = useState(null);
   const [profileComplete, setProfileComplete] = useState(false);
   const [currentChat, setCurrentChat] = useState<{
@@ -23,6 +25,13 @@ const Index = () => {
     matchedUserName: string;
     matchedUserVibes: string;
   } | null>(null);
+
+  // Handle navigation from match profile back to matches
+  useEffect(() => {
+    if (location.state?.screen) {
+      setCurrentScreen(location.state.screen);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     console.log('Index component mounted, setting up auth listener...');

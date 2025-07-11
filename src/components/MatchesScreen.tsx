@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, X, MessageCircle, Loader2 } from 'lucide-react';
@@ -21,6 +22,11 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
   const { matches, loading, refetch } = useMatches();
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleViewProfile = (match: any) => {
+    navigate(`/match/${match.id}`);
+  };
 
   const handleSkip = async (profileId: string) => {
     setSkippedProfiles(prev => [...prev, profileId]);
@@ -101,7 +107,11 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
 
       <div className="space-y-3">
         {visibleMatches.map((match) => (
-          <Card key={match.id} className="p-4 space-y-3 bg-gray-50 border-gray-200 animate-fade-in">
+          <Card 
+            key={match.id} 
+            className="p-4 space-y-3 bg-gray-50 border-gray-200 animate-fade-in cursor-pointer hover:bg-gray-100 transition-colors"
+            onClick={() => handleViewProfile(match)}
+          >
             {/* Header Section */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
@@ -162,7 +172,10 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
             {/* Action Buttons */}
             <div className="flex space-x-2 pt-2">
               <Button
-                onClick={() => handleSkip(match.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSkip(match.id);
+                }}
                 variant="outline"
                 size="sm"
                 className="flex-1 rounded-xl"
@@ -173,7 +186,10 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
               <Button 
                 size="sm"
                 className="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
-                onClick={() => handleStartChat(match)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleStartChat(match);
+                }}
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
                 Chat
