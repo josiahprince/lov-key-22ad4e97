@@ -100,8 +100,8 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-800">{match.name}</h3>
-                  {match.city && (
-                    <p className="text-xs text-gray-600">{match.city}</p>
+                  {match.age && (
+                    <p className="text-xs text-gray-600">{match.age} years</p>
                   )}
                 </div>
               </div>

@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 interface MatchProfile {
   id: string;
   name: string;
+  age?: number;
   mood: string;
   memes: { emoji: string; title: string }[];
   promptAnswer: string;
@@ -137,7 +138,7 @@ export const useMatches = () => {
         // Fetch profile data for the match
         const { data: matchProfile, error: profileError } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, city, region, country, interests')
+          .select('id, first_name, last_name, age, city, region, country, interests')
           .eq('id', matchUserId)
           .maybeSingle();
 
@@ -180,6 +181,7 @@ export const useMatches = () => {
         processedMatches.push({
           id: match.id,
           name: matchProfile.first_name || 'Unknown User',
+          age: matchProfile.age,
           mood: matchOnboarding?.mood || 'chill',
           memes: memeInfo,
           promptAnswer: matchOnboarding?.perfect_sunday || "",
