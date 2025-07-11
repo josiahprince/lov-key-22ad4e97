@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface MatchProfile {
   id: string;
+  userId: string; // The matched user's ID
   name: string;
   age?: number;
   mood: string;
@@ -180,6 +181,7 @@ export const useMatches = () => {
         
         processedMatches.push({
           id: match.id,
+          userId: matchUserId, // Add the matched user's ID
           name: matchProfile.first_name || 'Unknown User',
           age: matchProfile.age,
           mood: matchOnboarding?.mood || 'chill',

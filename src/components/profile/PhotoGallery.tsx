@@ -8,9 +8,10 @@ import { useUserPhotos } from '@/hooks/useUserPhotos';
 
 interface PhotoGalleryProps {
   userId?: string;
+  canViewPhotos?: boolean; // Whether photos should be blurred or not
 }
 
-const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
+const PhotoGallery = ({ userId, canViewPhotos = true }: PhotoGalleryProps) => {
   const { photos, loading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto } = useUserPhotos(userId);
   const [showSocialOptions, setShowSocialOptions] = useState<number | null>(null);
   const [socialUrl, setSocialUrl] = useState('');
@@ -100,7 +101,7 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
               <img 
                 src={mainPhoto.photo_url} 
                 alt="Main profile" 
-                className="w-full h-full object-cover rounded-lg" 
+                className={`w-full h-full object-cover rounded-lg ${!canViewPhotos ? 'filter blur-md' : ''}`}
                 onError={(e) => {
                   console.error('Error loading image:', mainPhoto.photo_url);
                 }}
@@ -198,7 +199,7 @@ const PhotoGallery = ({ userId }: PhotoGalleryProps) => {
                     <img 
                       src={photo.photo_url} 
                       alt={`Photo ${photo.photo_slot}`} 
-                      className="w-full h-full object-cover rounded-lg" 
+                      className={`w-full h-full object-cover rounded-lg ${!canViewPhotos ? 'filter blur-md' : ''}`}
                       onError={(e) => {
                         console.error('Error loading image:', photo.photo_url);
                       }}

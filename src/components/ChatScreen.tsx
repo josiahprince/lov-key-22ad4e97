@@ -4,22 +4,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, Send, Images, Eye } from 'lucide-react';
+import { useMessages } from '@/hooks/useMessages';
+import { supabase } from '@/integrations/supabase/client';
 
-const ChatScreen = () => {
-  const [messages, setMessages] = useState([
-    {
-      id: 1,
-      text: "Hey! I loved reading about your perfect Sunday. Coffee shops are the best for reading! 📚",
-      sender: 'them',
-      timestamp: new Date(Date.now() - 10 * 60 * 1000)
-    }
-  ]);
+interface ChatScreenProps {
+  matchId: string;
+  matchedUserId: string;
+  matchedUserName: string;
+  matchedUserVibes: string;
+}
+
+const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes }: ChatScreenProps) => {
+  const [currentUserId, setCurrentUserId] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
-  const [messageCount] = useState(15); // Simulate message count
   const [photoRequestSent, setPhotoRequestSent] = useState(false);
-  const [photosRevealed, setPhotosRevealed] = useState(false);
   const [shuffledStarters, setShuffledStarters] = useState<string[]>([]);
+  
+  // Get current user
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
+
+  const { messages, loading, messageCounts, sendMessage, canViewPhotos } = useMessages(matchId, currentUserId);
 
   const allConversationStarters = [
     "What's the last book that really moved you?",
@@ -50,40 +63,31 @@ const ChatScreen = () => {
     setShuffledStarters(shuffled.slice(0, 12)); // Show 12 random starters
   }, []);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !canSend) return;
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !canSend || loading) return;
     
-    const message = {
-      id: messages.length + 1,
-      text: newMessage,
-      sender: 'me' as const,
-      timestamp: new Date()
-    };
-    
-    setMessages([...messages, message]);
-    setNewMessage('');
     setCanSend(false);
+    const success = await sendMessage(newMessage, matchedUserId);
     
-    // Simulate 7-second delay for next message
-    setTimeout(() => setCanSend(true), 7000);
+    if (success) {
+      setNewMessage('');
+      // Add a short delay before allowing next message
+      setTimeout(() => setCanSend(true), 2000);
+    } else {
+      setCanSend(true);
+    }
   };
 
-  const handlePhotoRequest = () => {
+  const handlePhotoRequest = async () => {
     setPhotoRequestSent(true);
-    const requestMessage = {
-      id: messages.length + 1,
-      text: "Would you like to share more photos?",
-      sender: 'me' as const,
-      timestamp: new Date()
-    };
-    setMessages([...messages, requestMessage]);
+    await sendMessage("Would you like to share more photos?", matchedUserId);
   };
 
   const handleStarterClick = (starter: string) => {
     setNewMessage(starter);
   };
 
-  const canRequestPhotos = messageCount >= 30;
+  const canRequestPhotos = messageCounts.total >= 60;
 
   return (
     <div className="flex flex-col h-screen">
@@ -95,23 +99,23 @@ const ChatScreen = () => {
               <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
                 <img 
                   src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=100&h=100&fit=crop&crop=face"
-                  alt="Alex"
-                  className={`w-full h-full object-cover ${messageCount < 30 ? 'filter blur-sm' : ''}`}
+                  alt={matchedUserName}
+                  className={`w-full h-full object-cover ${!canViewPhotos() ? 'filter blur-sm' : ''}`}
                 />
               </div>
-              {messageCount < 30 && (
+              {!canViewPhotos() && (
                 <div className="absolute inset-0 w-8 h-8 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
                   <span className="text-xs">📚</span>
                 </div>
               )}
             </div>
             <div>
-              <h2 className="font-semibold text-gray-800 text-sm">Alex</h2>
-              <p className="text-xs text-gray-600">Chill • Book Worm</p>
+              <h2 className="font-semibold text-gray-800 text-sm">{matchedUserName}</h2>
+              <p className="text-xs text-gray-600">{matchedUserVibes}</p>
             </div>
           </div>
           
-          {canRequestPhotos && !photosRevealed && (
+          {canViewPhotos() && (
             <Button
               onClick={handlePhotoRequest}
               disabled={photoRequestSent}
@@ -120,16 +124,17 @@ const ChatScreen = () => {
               className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs px-2 py-1"
             >
               <Images className="w-3 h-3 mr-1" />
-              {photoRequestSent ? 'Requested' : 'Request Photos'}
+              {photoRequestSent ? 'Requested' : 'View Photos'}
             </Button>
           )}
         </div>
         
-        {messageCount < 30 && (
+        {!canViewPhotos() && (
           <div className="mt-2 p-2 bg-yellow-50 rounded-lg">
             <p className="text-xs text-yellow-700">
               <Eye className="w-3 h-3 inline mr-1" />
-              Photos will be revealed after 30 messages ({30 - messageCount} more to go)
+              Photos will be revealed after 60 total messages with at least 30 from each person. 
+              Current: {messageCounts.total} total ({messageCounts.fromCurrentUser} from you, {messageCounts.fromOtherUser} from them)
             </p>
           </div>
         )}
@@ -193,22 +198,29 @@ const ChatScreen = () => {
 
       {/* Messages - Now takes remaining space */}
       <div className="flex-1 p-3 space-y-2 overflow-y-auto">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[80%] p-2 rounded-xl text-sm ${
-                message.sender === 'me'
-                  ? 'bg-rose-500 text-white rounded-br-sm'
-                  : 'bg-blue-100 text-gray-800 rounded-bl-sm'
-              }`}
-            >
-              <p>{message.text}</p>
-            </div>
+        {loading ? (
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto"></div>
+            <p className="mt-2 text-gray-500">Loading messages...</p>
           </div>
-        ))}
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[80%] p-2 rounded-xl text-sm ${
+                  message.sender_id === currentUserId
+                    ? 'bg-rose-500 text-white rounded-br-sm'
+                    : 'bg-blue-100 text-gray-800 rounded-bl-sm'
+                }`}
+              >
+                <p>{message.content}</p>
+              </div>
+            </div>
+          ))
+        )}
         
         {!canSend && (
           <div className="text-center">

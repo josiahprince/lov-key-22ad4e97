@@ -17,6 +17,12 @@ const Index = () => {
   const [currentScreen, setCurrentScreen] = useState('onboarding');
   const [userProfile, setUserProfile] = useState(null);
   const [profileComplete, setProfileComplete] = useState(false);
+  const [currentChat, setCurrentChat] = useState<{
+    matchId: string;
+    matchedUserId: string;
+    matchedUserName: string;
+    matchedUserVibes: string;
+  } | null>(null);
 
   useEffect(() => {
     console.log('Index component mounted, setting up auth listener...');
@@ -151,8 +157,14 @@ const Index = () => {
     setCurrentScreen('matches');
   };
 
-  const handleStartChat = () => {
-    console.log('Navigating to chat screen');
+  const handleStartChat = (matchData: {
+    matchId: string;
+    matchedUserId: string;
+    matchedUserName: string;
+    matchedUserVibes: string;
+  }) => {
+    console.log('Navigating to chat screen with data:', matchData);
+    setCurrentChat(matchData);
     setCurrentScreen('chat');
   };
 
@@ -218,7 +230,16 @@ const Index = () => {
       case 'matches':
         return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
       case 'chat':
-        return <ChatScreen />;
+        return currentChat ? (
+          <ChatScreen 
+            matchId={currentChat.matchId}
+            matchedUserId={currentChat.matchedUserId}
+            matchedUserName={currentChat.matchedUserName}
+            matchedUserVibes={currentChat.matchedUserVibes}
+          />
+        ) : (
+          <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />
+        );
       case 'profile':
         return <ProfileScreen userProfile={userProfile} onSignOut={handleSignOut} />;
       default:

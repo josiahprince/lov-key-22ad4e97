@@ -9,7 +9,12 @@ import { useToast } from '@/hooks/use-toast';
 
 interface MatchesScreenProps {
   userProfile: any;
-  onStartChat?: () => void;
+  onStartChat?: (matchData: {
+    matchId: string;
+    matchedUserId: string;
+    matchedUserName: string;
+    matchedUserVibes: string;
+  }) => void;
 }
 
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
@@ -35,22 +40,22 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     }
   };
 
-  const handleStartChat = async (matchId: string, matchName: string) => {
-    console.log('Starting chat with:', matchName, 'ID:', matchId);
+  const handleStartChat = async (match: any) => {
+    console.log('Starting chat with:', match.name, 'ID:', match.id);
     
     // Update match status to indicate chat started
     try {
       const { error } = await supabase
         .from('matches')
         .update({ status: 'chatting' })
-        .eq('id', matchId);
+        .eq('id', match.id);
       
       if (error) {
         console.error('Error updating match status:', error);
       } else {
         toast({
           title: "Chat started!",
-          description: `You can now chat with ${matchName}`,
+          description: `You can now chat with ${match.name}`,
         });
       }
     } catch (error) {
@@ -58,7 +63,16 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     }
     
     if (onStartChat) {
-      onStartChat();
+      // Get the matched user ID from the match data
+      const matchedUserId = match.userId; // This should be the other user's ID
+      const vibesText = match.memes.map((m: any) => m.title).join(' • ');
+      
+      onStartChat({
+        matchId: match.id,
+        matchedUserId: matchedUserId,
+        matchedUserName: match.name,
+        matchedUserVibes: vibesText || match.mood
+      });
     }
   };
 
@@ -159,7 +173,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
               <Button 
                 size="sm"
                 className="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
-                onClick={() => handleStartChat(match.id, match.name)}
+                onClick={() => handleStartChat(match)}
               >
                 <MessageCircle className="w-4 h-4 mr-1" />
                 Chat
