@@ -13,29 +13,25 @@ interface MatchesScreenProps {
 }
 
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
-  const [skipsUsed, setSkipsUsed] = useState(0);
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
   const { matches, loading, refetch } = useMatches();
   const { toast } = useToast();
 
   const handleSkip = async (profileId: string) => {
-    if (skipsUsed < 1) {
-      setSkipsUsed(skipsUsed + 1);
-      setSkippedProfiles(prev => [...prev, profileId]);
+    setSkippedProfiles(prev => [...prev, profileId]);
+    
+    // Update match status in database
+    try {
+      const { error } = await supabase
+        .from('matches')
+        .update({ status: 'skipped' })
+        .eq('id', profileId);
       
-      // Update match status in database
-      try {
-        const { error } = await supabase
-          .from('matches')
-          .update({ status: 'skipped' })
-          .eq('id', profileId);
-        
-        if (error) {
-          console.error('Error updating match status:', error);
-        }
-      } catch (error) {
-        console.error('Error skipping match:', error);
+      if (error) {
+        console.error('Error updating match status:', error);
       }
+    } catch (error) {
+      console.error('Error skipping match:', error);
     }
   };
 
@@ -84,13 +80,10 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
 
   return (
     <div className="px-4 space-y-4 pb-20">
-      <div className="text-center space-y-2">
-        <h1 className="text-lg font-bold text-gray-800">Today's Matches</h1>
-        <p className="text-sm text-gray-600">{matches.length} thoughtfully curated connections</p>
-        <div className="text-xs text-gray-500">
-          Skips remaining: {1 - skipsUsed}
+        <div className="text-center space-y-2">
+          <h1 className="text-lg font-bold text-gray-800">Today's Matches</h1>
+          <p className="text-sm text-gray-600">{matches.length} thoughtfully curated connections</p>
         </div>
-      </div>
 
       <div className="space-y-3">
         {visibleMatches.map((match) => (
@@ -102,7 +95,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
                   <img 
                     src={match.mainPhoto} 
                     alt={match.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover blur-sm"
                   />
                 </div>
                 <div>
@@ -131,13 +124,11 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
             {match.memes.length > 0 && (
               <div>
                 <h4 className="text-xs font-medium text-gray-700 mb-2">Their Vibes</h4>
-                <div className="space-y-1">
+                <div className="flex flex-wrap gap-2">
                   {match.memes.map((meme, index) => (
-                    <div key={index} className="flex items-center space-x-2 p-2 bg-rose-50 border border-rose-200 rounded-lg">
-                      <div className="text-sm">{meme.emoji}</div>
-                      <div>
-                        <span className="text-xs font-medium text-gray-700">{meme.title}</span>
-                      </div>
+                    <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-rose-50 border border-rose-200 rounded-lg">
+                      <div className="text-xs">{meme.emoji}</div>
+                      <span className="text-xs font-medium text-gray-700">{meme.title}</span>
                     </div>
                   ))}
                 </div>
@@ -158,7 +149,6 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
             <div className="flex space-x-2 pt-2">
               <Button
                 onClick={() => handleSkip(match.id)}
-                disabled={skipsUsed >= 1}
                 variant="outline"
                 size="sm"
                 className="flex-1 rounded-xl"
