@@ -109,7 +109,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         {visibleMatches.map((match) => (
           <Card 
             key={match.id} 
-            className="p-4 space-y-3 bg-gray-50 border-gray-200 animate-fade-in cursor-pointer hover:bg-gray-100 transition-colors"
+            className="p-4 space-y-3 bg-gray-50 border-gray-200 animate-fade-in cursor-pointer hover:bg-accent transition-colors"
             onClick={() => handleViewProfile(match)}
           >
             {/* Header Section */}
