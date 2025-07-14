@@ -3,9 +3,10 @@ import { Card } from '@/components/ui/card';
 
 interface VibeCardProps {
   onboardingData: any;
+  isMatchedUser?: boolean;
 }
 
-const VibeCard = ({ onboardingData }: VibeCardProps) => {
+const VibeCard = ({ onboardingData, isMatchedUser = false }: VibeCardProps) => {
   const getMoodIcon = (mood: string) => {
     switch (mood) {
       case 'happy': return '😊';
@@ -45,8 +46,12 @@ const VibeCard = ({ onboardingData }: VibeCardProps) => {
   return (
     <Card className="p-4 space-y-4">
       <div className="text-center border-b pb-4">
-        <h3 className="text-lg font-bold text-gray-800">Your Vibe</h3>
-        <p className="text-sm text-gray-600">From your onboarding preferences</p>
+        <h3 className="text-lg font-bold text-gray-800">
+          {isMatchedUser ? 'Their Vibe' : 'Your Vibe'}
+        </h3>
+        {!isMatchedUser && (
+          <p className="text-sm text-gray-600">From your onboarding preferences</p>
+        )}
       </div>
 
       <div className="space-y-4">

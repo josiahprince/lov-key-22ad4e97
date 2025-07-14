@@ -8,9 +8,10 @@ import { useState } from 'react';
 
 interface ProfileInfoProps {
   userProfile: any;
+  isMatchedUser?: boolean;
 }
 
-const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
+const ProfileInfo = ({ userProfile, isMatchedUser = false }: ProfileInfoProps) => {
   const { onboardingData, loading: onboardingLoading } = useOnboardingData();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -33,19 +34,24 @@ const ProfileInfo = ({ userProfile }: ProfileInfoProps) => {
   return (
     <div className="space-y-4">
       {/* Basic Profile Information Card */}
-      <BasicInfoCard userProfile={userProfile} onEdit={handleEdit} />
+      <BasicInfoCard 
+        userProfile={userProfile} 
+        onEdit={isMatchedUser ? undefined : handleEdit} 
+      />
       
       {/* Onboarding Data Card */}
       {onboardingData && !onboardingLoading && (
-        <VibeCard onboardingData={onboardingData} />
+        <VibeCard onboardingData={onboardingData} isMatchedUser={isMatchedUser} />
       )}
 
-      {/* Profile Edit Modal */}
-      <ProfileEditModal 
-        isOpen={isEditing} 
-        onClose={handleCloseEdit} 
-        userProfile={userProfile} 
-      />
+      {/* Profile Edit Modal - only show for own profile */}
+      {!isMatchedUser && (
+        <ProfileEditModal 
+          isOpen={isEditing} 
+          onClose={handleCloseEdit} 
+          userProfile={userProfile} 
+        />
+      )}
     </div>
   );
 };

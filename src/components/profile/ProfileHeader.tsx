@@ -6,9 +6,10 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileHeaderProps {
   userProfile?: any;
+  isMatchedUser?: boolean;
 }
 
-const ProfileHeader = ({ userProfile }: ProfileHeaderProps) => {
+const ProfileHeader = ({ userProfile, isMatchedUser = false }: ProfileHeaderProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const { photos, loading } = useUserPhotos(currentUserId);
 
@@ -69,8 +70,16 @@ const ProfileHeader = ({ userProfile }: ProfileHeaderProps) => {
         </div>
       )}
       <div>
-        <h1 className="text-2xl font-bold text-gray-800">Your Profile</h1>
-        <p className="text-gray-600">This is how others see you</p>
+        {isMatchedUser ? (
+          <h1 className="text-2xl font-bold text-gray-800">
+            {userProfile?.nickname || 'User'} Profile
+          </h1>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold text-gray-800">Your Profile</h1>
+            <p className="text-gray-600">This is how others see you</p>
+          </>
+        )}
       </div>
     </div>
   );
