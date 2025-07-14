@@ -114,7 +114,7 @@ const MatchProfileView = () => {
           <ProfileHeader userProfile={matchedUserProfile} isMatchedUser={true} />
           <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} />
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
-          <PhotoGallery userId={matchedUserProfile.id} canViewPhotos={canViewPhotos} />
+          <PhotoGallery userId={matchedUserProfile.id} canViewPhotos={canViewPhotos} isMatchedUser={true} />
           
           {!canViewPhotos && (
             <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-center">
