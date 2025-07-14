@@ -29,7 +29,10 @@ const Index = () => {
   // Handle navigation from match profile back to matches
   useEffect(() => {
     if (location.state?.screen) {
+      console.log('Navigation state detected, setting screen to:', location.state.screen);
       setCurrentScreen(location.state.screen);
+      // Clear the state to prevent it from persisting
+      window.history.replaceState({}, '', location.pathname);
     }
   }, [location.state]);
 
