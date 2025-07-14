@@ -5,7 +5,7 @@ import { Edit2, MapPin, Calendar, User } from 'lucide-react';
 
 interface BasicInfoCardProps {
   userProfile: any;
-  onEdit: () => void;
+  onEdit?: () => void;
 }
 
 const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
@@ -49,9 +49,11 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-xl font-bold">Profile Information</CardTitle>
-        <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
-          <Edit2 className="h-4 w-4" />
-        </Button>
+        {onEdit && (
+          <Button variant="ghost" size="sm" onClick={onEdit} className="h-8 w-8 p-0">
+            <Edit2 className="h-4 w-4" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Basic Information Section */}
