@@ -111,7 +111,7 @@ const MatchProfileView = () => {
             <h1 className="text-xl font-bold text-gray-800">Profile</h1>
           </div>
 
-          <ProfileHeader userProfile={matchedUserProfile} isMatchedUser={true} />
+          <ProfileHeader userProfile={matchedUserProfile} isMatchedUser={true} canViewPhotos={canViewPhotos} />
           <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} />
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
           <PhotoGallery userId={matchedUserProfile.id} canViewPhotos={canViewPhotos} isMatchedUser={true} />

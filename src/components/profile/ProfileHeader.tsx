@@ -7,11 +7,14 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProfileHeaderProps {
   userProfile?: any;
   isMatchedUser?: boolean;
+  canViewPhotos?: boolean;
 }
 
-const ProfileHeader = ({ userProfile, isMatchedUser = false }: ProfileHeaderProps) => {
+const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = true }: ProfileHeaderProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
-  const { photos, loading } = useUserPhotos(currentUserId);
+  // Use matched user's ID for photos if viewing matched user, otherwise use current user
+  const targetUserId = isMatchedUser ? userProfile?.id : currentUserId;
+  const { photos, loading } = useUserPhotos(targetUserId);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -50,15 +53,24 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false }: ProfileHeaderProp
       <div className="relative mx-auto w-24 h-24">
         <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
           {mainPhoto?.photo_url ? (
-            <img 
-              src={mainPhoto.photo_url} 
-              alt="Profile" 
-              className="w-full h-full object-cover rounded-full" 
-              onError={(e) => {
-                console.error('Error loading profile image:', e);
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            <div className="relative w-full h-full">
+              <img 
+                src={mainPhoto.photo_url} 
+                alt="Profile" 
+                className={`w-full h-full object-cover rounded-full ${
+                  isMatchedUser && !canViewPhotos ? 'blur-md' : ''
+                }`}
+                onError={(e) => {
+                  console.error('Error loading profile image:', e);
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              {isMatchedUser && !canViewPhotos && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-white drop-shadow-lg" />
+                </div>
+              )}
+            </div>
           ) : (
             <Camera className="w-8 h-8 text-rose-400" />
           )}
