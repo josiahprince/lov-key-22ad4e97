@@ -104,11 +104,11 @@ export const useMessages = (matchId: string, currentUserId: string) => {
     }
   };
 
-  // Check if photos should be unblurred (60+ total messages with at least 30 from each user)
+  // Check if photos should be unblurred (10+ total messages with at least 5 from each user)
   const canViewPhotos = () => {
-    return messageCounts.total >= 60 && 
-           messageCounts.fromCurrentUser >= 30 && 
-           messageCounts.fromOtherUser >= 30;
+    return messageCounts.total >= 10 && 
+           messageCounts.fromCurrentUser >= 5 && 
+           messageCounts.fromOtherUser >= 5;
   };
 
   // Set up real-time subscription
