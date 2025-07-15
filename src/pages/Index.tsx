@@ -130,7 +130,10 @@ const Index = () => {
         if (isComplete) {
           setUserProfile(profile);
           setProfileComplete(true);
-          setCurrentScreen('onboarding');
+          // Only set screen to onboarding if no navigation state is present
+          if (!location.state?.screen) {
+            setCurrentScreen('onboarding');
+          }
         } else {
           setProfileComplete(false);
           setCurrentScreen('profile-setup');
