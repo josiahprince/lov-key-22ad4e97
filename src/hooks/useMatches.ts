@@ -15,6 +15,8 @@ interface MatchProfile {
   city?: string;
   region?: string;
   country?: string;
+  chatRequestStatus: string;
+  chatRequestSender?: string;
 }
 
 export const useMatches = () => {
@@ -72,7 +74,7 @@ export const useMatches = () => {
       // Fetch all active matches for the current user (not just today's)
       const { data: todayMatches, error: matchesError } = await supabase
         .from('matches')
-        .select('*')
+        .select('*, chat_request_status, chat_request_sender')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .eq('status', 'active')
         .limit(10);
@@ -95,7 +97,7 @@ export const useMatches = () => {
         // Retry fetching after generation attempt
         const { data: newMatches } = await supabase
           .from('matches')
-          .select('*')
+          .select('*, chat_request_status, chat_request_sender')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
           .eq('status', 'active');
 
@@ -191,7 +193,9 @@ export const useMatches = () => {
           mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
           city: matchProfile.city || 'Unknown',
           region: matchProfile.region,
-          country: matchProfile.country
+          country: matchProfile.country,
+          chatRequestStatus: match.chat_request_status || 'none',
+          chatRequestSender: match.chat_request_sender
         });
         
         console.log('Successfully processed match:', processedMatches.length);

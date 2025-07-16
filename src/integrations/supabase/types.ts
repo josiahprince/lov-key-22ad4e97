@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       matches: {
         Row: {
+          chat_request_sender: string | null
+          chat_request_status: string | null
           created_at: string
           id: string
           match_score: number | null
@@ -26,6 +28,8 @@ export type Database = {
           user_2: string
         }
         Insert: {
+          chat_request_sender?: string | null
+          chat_request_status?: string | null
           created_at?: string
           id?: string
           match_score?: number | null
@@ -36,6 +40,8 @@ export type Database = {
           user_2: string
         }
         Update: {
+          chat_request_sender?: string | null
+          chat_request_status?: string | null
           created_at?: string
           id?: string
           match_score?: number | null

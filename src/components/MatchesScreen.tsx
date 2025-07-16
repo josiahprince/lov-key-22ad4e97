@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, X, MessageCircle, Loader2 } from 'lucide-react';
+import { Heart, X, MessageCircle, Loader2, Send, Check } from 'lucide-react';
 import { useMatches } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -20,6 +20,7 @@ interface MatchesScreenProps {
 
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
+  const [processingRequests, setProcessingRequests] = useState<string[]>([]);
   const { matches, loading, refetch } = useMatches();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -46,40 +47,145 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     }
   };
 
-  const handleStartChat = async (match: any) => {
-    console.log('Starting chat with:', match.name, 'ID:', match.id);
+  const handleSendChatRequest = async (match: any) => {
+    if (processingRequests.includes(match.id)) return;
     
-    // Update match status to indicate chat started
     try {
+      setProcessingRequests(prev => [...prev, match.id]);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { error } = await supabase
         .from('matches')
-        .update({ status: 'chatting' })
+        .update({ 
+          chat_request_status: 'pending',
+          chat_request_sender: user.id
+        })
         .eq('id', match.id);
       
       if (error) {
-        console.error('Error updating match status:', error);
+        console.error('Error sending chat request:', error);
+        toast({
+          title: "Error",
+          description: "Failed to send chat request. Please try again.",
+          variant: "destructive"
+        });
       } else {
         toast({
-          title: "Chat started!",
-          description: `You can now chat with ${match.name}`,
+          title: "Chat request sent!",
+          description: `Your chat request has been sent to ${match.name}`,
         });
+        refetch(); // Refresh matches to show updated status
       }
     } catch (error) {
-      console.error('Error starting chat:', error);
+      console.error('Error sending chat request:', error);
+    } finally {
+      setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
+  };
+
+  const handleAcceptChatRequest = async (match: any) => {
+    if (processingRequests.includes(match.id)) return;
     
-    if (onStartChat) {
-      // Get the matched user ID from the match data
-      const matchedUserId = match.userId; // This should be the other user's ID
-      const vibesText = match.memes.map((m: any) => m.title).join(' • ');
+    try {
+      setProcessingRequests(prev => [...prev, match.id]);
+
+      const { error } = await supabase
+        .from('matches')
+        .update({ 
+          chat_request_status: 'accepted',
+          status: 'chatting'
+        })
+        .eq('id', match.id);
       
-      onStartChat({
-        matchId: match.id,
-        matchedUserId: matchedUserId,
-        matchedUserName: match.name,
-        matchedUserVibes: vibesText || match.mood
-      });
+      if (error) {
+        console.error('Error accepting chat request:', error);
+        toast({
+          title: "Error",
+          description: "Failed to accept chat request. Please try again.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Chat request accepted!",
+          description: `You can now chat with ${match.name}`,
+        });
+        
+        if (onStartChat) {
+          const vibesText = match.memes.map((m: any) => m.title).join(' • ');
+          
+          onStartChat({
+            matchId: match.id,
+            matchedUserId: match.userId,
+            matchedUserName: match.name,
+            matchedUserVibes: vibesText || match.mood
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error accepting chat request:', error);
+    } finally {
+      setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
+  };
+
+  const getChatButtonContent = (match: any) => {
+    const currentUserId = userProfile?.id; // Use userProfile passed as prop
+    const isProcessing = processingRequests.includes(match.id);
+    
+    if (isProcessing) {
+      return {
+        text: "Processing...",
+        icon: <Loader2 className="w-4 h-4 mr-1 animate-spin" />,
+        disabled: true,
+        onClick: () => {},
+        variant: "outline" as const
+      };
+    }
+
+    // If chat request is accepted, they can chat
+    if (match.chatRequestStatus === 'accepted') {
+      return {
+        text: "Chat",
+        icon: <MessageCircle className="w-4 h-4 mr-1" />,
+        disabled: false,
+        onClick: () => handleAcceptChatRequest(match),
+        variant: "default" as const
+      };
+    }
+
+    // If there's a pending request
+    if (match.chatRequestStatus === 'pending') {
+      // If current user sent the request, show "Request Sent"
+      if (match.chatRequestSender === currentUserId) {
+        return {
+          text: "Request Sent",
+          icon: <Send className="w-4 h-4 mr-1" />,
+          disabled: true,
+          onClick: () => {},
+          variant: "outline" as const
+        };
+      } else {
+        // If other user sent the request, show "Accept Chat Request"
+        return {
+          text: "Accept Request",
+          icon: <Check className="w-4 h-4 mr-1" />,
+          disabled: false,
+          onClick: () => handleAcceptChatRequest(match),
+          variant: "default" as const
+        };
+      }
+    }
+
+    // Default: Send Chat Request
+    return {
+      text: "Send Request",
+      icon: <Send className="w-4 h-4 mr-1" />,
+      disabled: false,
+      onClick: () => handleSendChatRequest(match),
+      variant: "default" as const
+    };
   };
 
   const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
@@ -183,17 +289,28 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
                 <X className="w-4 h-4 mr-1" />
                 Skip
               </Button>
-              <Button 
-                size="sm"
-                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleStartChat(match);
-                }}
-              >
-                <MessageCircle className="w-4 h-4 mr-1" />
-                Chat
-              </Button>
+              {(() => {
+                const buttonConfig = getChatButtonContent(match);
+                return (
+                  <Button 
+                    size="sm"
+                    variant={buttonConfig.variant}
+                    disabled={buttonConfig.disabled}
+                    className={`flex-1 rounded-xl ${
+                      buttonConfig.variant === 'default' 
+                        ? 'bg-rose-500 hover:bg-rose-600 text-white' 
+                        : ''
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      buttonConfig.onClick();
+                    }}
+                  >
+                    {buttonConfig.icon}
+                    {buttonConfig.text}
+                  </Button>
+                );
+              })()}
             </div>
           </Card>
         ))}
