@@ -3,10 +3,29 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart, X, MessageCircle, Loader2, Send, Check } from 'lucide-react';
+import { Heart, X, MessageCircle, Loader2, Send, Check, Clock } from 'lucide-react';
 import { useMatches } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { formatDistanceToNow } from 'date-fns';
+
+interface MatchProfile {
+  id: string;
+  userId: string; // The matched user's ID
+  name: string;
+  age?: number;
+  mood: string;
+  memes: { emoji: string; title: string }[];
+  promptAnswer: string;
+  compatibility: number;
+  mainPhoto: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  chatRequestStatus: string;
+  chatRequestSender?: string;
+  expiresAt?: string;
+}
 
 interface MatchesScreenProps {
   userProfile: any;
@@ -272,6 +291,16 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
                 <div className="p-3 bg-gray-100 rounded-lg">
                   <p className="text-sm text-gray-700">"{match.promptAnswer}"</p>
                 </div>
+              </div>
+            )}
+
+            {/* Expiry Timer */}
+            {match.expiresAt && (
+              <div className="flex items-center space-x-2 text-xs text-gray-500">
+                <Clock className="w-3 h-3" />
+                <span>
+                  Expires {formatDistanceToNow(new Date(match.expiresAt), { addSuffix: true })}
+                </span>
               </div>
             )}
 

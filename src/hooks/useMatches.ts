@@ -17,6 +17,7 @@ interface MatchProfile {
   country?: string;
   chatRequestStatus: string;
   chatRequestSender?: string;
+  expiresAt?: string;
 }
 
 export const useMatches = () => {
@@ -69,14 +70,25 @@ export const useMatches = () => {
 
       console.log('Fetching matches for user:', user.id);
 
-      console.log('Fetching all active matches for user');
-
-      // Fetch all active matches for the current user (not just today's)
-      const { data: todayMatches, error: matchesError } = await supabase
+      // First, expire old matches that haven't been acted upon
+      await supabase
         .from('matches')
-        .select('*, chat_request_status, chat_request_sender')
+        .update({ status: 'expired' })
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .eq('status', 'active')
+        .eq('chat_request_status', 'none')
+        .lt('expires_at', new Date().toISOString());
+
+      console.log('Fetching active matches (excluding accepted chats)');
+
+      // Fetch only matches that haven't been accepted (not moved to chats)
+      const { data: todayMatches, error: matchesError } = await supabase
+        .from('matches')
+        .select('*, chat_request_status, chat_request_sender, expires_at')
+        .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
+        .eq('status', 'active')
+        .neq('chat_request_status', 'accepted') // Don't show accepted chats in matches
+        .gt('expires_at', new Date().toISOString()) // Only non-expired matches
         .limit(10);
 
       console.log('Matches query result:', { todayMatches, matchesError });
@@ -86,8 +98,34 @@ export const useMatches = () => {
       }
 
       if (!todayMatches || todayMatches.length === 0) {
-        console.log('No matches found, trying to generate new ones');
-        // No matches for today, try to generate new ones
+        console.log('No matches found, checking if new ones can be generated');
+        
+        // Check how many active chats the user has
+        const { data: activeChats, error: chatsError } = await supabase
+          .from('matches')
+          .select('id')
+          .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
+          .eq('status', 'active')
+          .eq('chat_request_status', 'accepted');
+
+        if (chatsError) {
+          console.error('Error checking active chats:', chatsError);
+        }
+
+        const activeChatCount = activeChats?.length || 0;
+        
+        if (activeChatCount >= 6) {
+          console.log('User has 6+ active chats, not generating new matches');
+          toast({
+            title: "Chat limit reached",
+            description: "You have 6 active chats. New matches will be available when some chats expire (48 hours of inactivity).",
+            variant: "default"
+          });
+          setMatches([]);
+          return;
+        }
+
+        // Try to generate new matches
         const { error: generateError } = await supabase.functions.invoke('generate-daily-matches');
         
         if (generateError) {
@@ -97,9 +135,11 @@ export const useMatches = () => {
         // Retry fetching after generation attempt
         const { data: newMatches } = await supabase
           .from('matches')
-          .select('*, chat_request_status, chat_request_sender')
+          .select('*, chat_request_status, chat_request_sender, expires_at')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .eq('status', 'active');
+          .eq('status', 'active')
+          .neq('chat_request_status', 'accepted')
+          .gt('expires_at', new Date().toISOString());
 
         console.log('New matches after generation:', newMatches);
 
@@ -195,7 +235,8 @@ export const useMatches = () => {
           region: matchProfile.region,
           country: matchProfile.country,
           chatRequestStatus: match.chat_request_status || 'none',
-          chatRequestSender: match.chat_request_sender
+          chatRequestSender: match.chat_request_sender,
+          expiresAt: match.expires_at
         });
         
         console.log('Successfully processed match:', processedMatches.length);

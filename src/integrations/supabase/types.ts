@@ -19,7 +19,9 @@ export type Database = {
           chat_request_sender: string | null
           chat_request_status: string | null
           created_at: string
+          expires_at: string | null
           id: string
+          last_interaction_at: string | null
           match_score: number | null
           matched_on: string
           status: string
@@ -31,7 +33,9 @@ export type Database = {
           chat_request_sender?: string | null
           chat_request_status?: string | null
           created_at?: string
+          expires_at?: string | null
           id?: string
+          last_interaction_at?: string | null
           match_score?: number | null
           matched_on?: string
           status?: string
@@ -43,7 +47,9 @@ export type Database = {
           chat_request_sender?: string | null
           chat_request_status?: string | null
           created_at?: string
+          expires_at?: string | null
           id?: string
+          last_interaction_at?: string | null
           match_score?: number | null
           matched_on?: string
           status?: string
