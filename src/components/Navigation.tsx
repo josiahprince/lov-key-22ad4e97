@@ -7,7 +7,7 @@ const Navigation = ({ currentScreen, setCurrentScreen }: {
 }) => {
   const navItems = [
     { id: 'matches', label: 'Matches', icon: Search },
-    { id: 'chat', label: 'Chats', icon: MessageCircle },
+    { id: 'chats', label: 'Chats', icon: MessageCircle },
     { id: 'profile', label: 'Profile', icon: User },
   ];
 
@@ -16,7 +16,8 @@ const Navigation = ({ currentScreen, setCurrentScreen }: {
       <div className="flex justify-around">
         {navItems.map((item) => {
           const IconComponent = item.icon;
-          const isActive = currentScreen === item.id;
+          // Handle both 'chats' and 'chat' as active for chats tab
+          const isActive = currentScreen === item.id || (item.id === 'chats' && currentScreen === 'chat');
           
           return (
             <button

@@ -8,6 +8,7 @@ import OnboardingScreen from '../components/OnboardingScreen';
 import ProfileSetupScreen from '../components/ProfileSetupScreen';
 import MatchesScreen from '../components/MatchesScreen';
 import ChatScreen from '../components/ChatScreen';
+import ChatsListScreen from '../components/ChatsListScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import Navigation from '../components/Navigation';
 
@@ -244,6 +245,8 @@ const Index = () => {
         );
       case 'matches':
         return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
+      case 'chats':
+        return <ChatsListScreen onStartChat={handleStartChat} />;
       case 'chat':
         return currentChat ? (
           <ChatScreen 
@@ -253,7 +256,7 @@ const Index = () => {
             matchedUserVibes={currentChat.matchedUserVibes}
           />
         ) : (
-          <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />
+          <ChatsListScreen onStartChat={handleStartChat} />
         );
       case 'profile':
         return <ProfileScreen userProfile={userProfile} onSignOut={handleSignOut} />;
