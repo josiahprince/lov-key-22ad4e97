@@ -86,7 +86,7 @@ export const useMatches = () => {
         .from('matches')
         .select('*, chat_request_status, chat_request_sender, expires_at')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .eq('status', 'active')
+        .eq('status', 'active') // Only active status for matches screen
         .neq('chat_request_status', 'accepted') // Don't show accepted chats in matches
         .gt('expires_at', new Date().toISOString()) // Only non-expired matches
         .limit(10);
@@ -105,7 +105,7 @@ export const useMatches = () => {
           .from('matches')
           .select('id')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .eq('status', 'active')
+          .in('status', ['active', 'chatting']) // Include both active and chatting status
           .eq('chat_request_status', 'accepted');
 
         if (chatsError) {
@@ -137,7 +137,7 @@ export const useMatches = () => {
           .from('matches')
           .select('*, chat_request_status, chat_request_sender, expires_at')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .eq('status', 'active')
+          .eq('status', 'active') // Only active status for matches screen
           .neq('chat_request_status', 'accepted')
           .gt('expires_at', new Date().toISOString());
 
