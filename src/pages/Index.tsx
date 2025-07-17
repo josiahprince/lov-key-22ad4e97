@@ -11,6 +11,7 @@ import ChatScreen from '../components/ChatScreen';
 import ChatsListScreen from '../components/ChatsListScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import Navigation from '../components/Navigation';
+import { useOnboardingData } from '@/hooks/useOnboardingData';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -26,6 +27,8 @@ const Index = () => {
     matchedUserName: string;
     matchedUserVibes: string;
   } | null>(null);
+  
+  const { shouldShowOnboarding } = useOnboardingData();
 
   // Handle navigation from match profile back to matches
   useEffect(() => {
@@ -131,9 +134,9 @@ const Index = () => {
         if (isComplete) {
           setUserProfile(profile);
           setProfileComplete(true);
-          // Only set screen to onboarding if no navigation state is present
+          // Only set screen to onboarding if no navigation state is present and should show onboarding
           if (!location.state?.screen) {
-            setCurrentScreen('onboarding');
+            setCurrentScreen(shouldShowOnboarding ? 'onboarding' : 'matches');
           }
         } else {
           setProfileComplete(false);
@@ -167,8 +170,21 @@ const Index = () => {
     setCurrentScreen('onboarding');
   };
 
-  const handleOnboardingComplete = (profile: any) => {
+  const handleOnboardingComplete = async (profile: any) => {
     console.log('Onboarding completed:', profile);
+    
+    // Trigger daily match generation after onboarding
+    try {
+      const { data, error } = await supabase.rpc('generate_daily_matches');
+      if (error) {
+        console.error('Error generating daily matches:', error);
+      } else {
+        console.log('Daily matches generated:', data);
+      }
+    } catch (error) {
+      console.error('Error calling generate_daily_matches:', error);
+    }
+    
     // Don't overwrite userProfile - keep the actual profile data with nickname
     setCurrentScreen('matches');
   };

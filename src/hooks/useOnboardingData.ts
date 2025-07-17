@@ -15,6 +15,7 @@ interface OnboardingData {
 export const useOnboardingData = () => {
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
   const { toast } = useToast();
 
   const fetchOnboardingData = async () => {
@@ -44,6 +45,19 @@ export const useOnboardingData = () => {
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         });
+
+        // Check if onboarding was done today
+        const lastOnboardingDate = new Date(data.updated_at).toDateString();
+        const todayDate = new Date().toDateString();
+        
+        if (lastOnboardingDate !== todayDate) {
+          setShouldShowOnboarding(true);
+        } else {
+          setShouldShowOnboarding(false);
+        }
+      } else {
+        // No onboarding data exists, show onboarding
+        setShouldShowOnboarding(true);
       }
     } catch (error) {
       console.error('Error in fetchOnboardingData:', error);
@@ -104,6 +118,7 @@ export const useOnboardingData = () => {
   return {
     onboardingData,
     loading,
+    shouldShowOnboarding,
     saveOnboardingData,
     refetch: fetchOnboardingData,
   };

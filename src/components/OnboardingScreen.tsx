@@ -13,7 +13,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
   const [promptAnswer, setPromptAnswer] = useState('');
   const [showExistingData, setShowExistingData] = useState(false);
 
-  const { onboardingData, loading, saveOnboardingData } = useOnboardingData();
+  const { onboardingData, loading, shouldShowOnboarding, saveOnboardingData } = useOnboardingData();
 
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -44,13 +44,13 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
 
   // Load existing data when component mounts
   useEffect(() => {
-    if (!loading && onboardingData) {
+    if (!loading && onboardingData && shouldShowOnboarding) {
       setMood(onboardingData.mood);
       setSelectedMemes(onboardingData.selectedMemes);
       setPromptAnswer(onboardingData.perfectSunday);
       setShowExistingData(true);
     }
-  }, [loading, onboardingData]);
+  }, [loading, onboardingData, shouldShowOnboarding]);
 
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
