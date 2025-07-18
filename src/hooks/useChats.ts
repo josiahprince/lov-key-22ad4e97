@@ -137,7 +137,7 @@ export const useChats = () => {
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
-          .maybeSingle();
+          .single();
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
