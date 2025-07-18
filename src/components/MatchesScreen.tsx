@@ -113,8 +113,7 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
       const { error } = await supabase
         .from('matches')
         .update({ 
-          chat_request_status: 'accepted',
-          status: 'chatting'
+          chat_request_status: 'accepted'
         })
         .eq('id', match.id);
       
@@ -130,6 +129,9 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
           title: "Chat request accepted!",
           description: `You can now chat with ${match.name}`,
         });
+        
+        // Refetch matches to remove the accepted chat from matches list
+        refetch();
         
         if (onStartChat) {
           const vibesText = match.memes.map((m: any) => m.title).join(' • ');

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Clock, Loader2 } from 'lucide-react';
@@ -14,7 +15,12 @@ interface ChatsListScreenProps {
 }
 
 const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
-  const { chats, loading } = useChats();
+  const { chats, loading, refetch } = useChats();
+  
+  // Add effect to refetch when component mounts or becomes visible
+  React.useEffect(() => {
+    refetch();
+  }, []);
 
   if (loading) {
     return (

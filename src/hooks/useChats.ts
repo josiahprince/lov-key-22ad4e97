@@ -63,7 +63,6 @@ export const useChats = () => {
         .from('matches')
         .select('*, chat_request_status, last_interaction_at')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .in('status', ['active', 'chatting']) // Allow both active and chatting status
         .eq('chat_request_status', 'accepted')
         .order('last_interaction_at', { ascending: false });
 
@@ -156,6 +155,12 @@ export const useChats = () => {
         }
 
         const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
+        
+        console.log('Chat data for match:', match.id, {
+          matchProfile: matchProfile?.first_name,
+          matchOnboarding: matchOnboarding?.mood,
+          memeInfo: memeInfo.length
+        });
         
         processedChats.push({
           id: match.id,
