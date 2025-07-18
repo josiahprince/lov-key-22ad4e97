@@ -128,9 +128,8 @@ export const useChats = () => {
           .eq('id', matchUserId)
           .maybeSingle();
 
-        if (profileError || !matchProfile) {
+        if (profileError) {
           console.error('Error fetching profile for user:', matchUserId, profileError);
-          continue;
         }
 
         // Fetch onboarding data for the match
@@ -161,14 +160,14 @@ export const useChats = () => {
         processedChats.push({
           id: match.id,
           userId: matchUserId,
-          name: matchProfile.first_name || 'Unknown User',
-          age: matchProfile.age,
+          name: matchProfile?.first_name || 'Unknown User',
+          age: matchProfile?.age,
           mood: matchOnboarding?.mood || 'chill',
           memes: memeInfo,
           mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
-          city: matchProfile.city || 'Unknown',
-          region: matchProfile.region,
-          country: matchProfile.country,
+          city: matchProfile?.city || 'Unknown',
+          region: matchProfile?.region,
+          country: matchProfile?.country,
           lastInteractionAt: match.last_interaction_at,
           hasUnreadMessages: false // TODO: Implement unread message checking
         });
