@@ -59,22 +59,55 @@ export const DebugUserSwitcher = () => {
   const switchUser = async (userId: string) => {
     setLoading(true);
     try {
-      // Sign out current user
+      // For debug mode, we'll use test credentials to sign in as different users
+      // This is a simplified approach using known test credentials
+      const testCredentials: Record<string, string> = {
+        // Add your test user credentials here
+        // Format: userId: 'email:password'
+      };
+
+      // Sign out current user first
       await supabase.auth.signOut();
-      
-      // For development, we'll need to simulate signing in as another user
-      // This is a simplified approach for testing purposes
-      console.log('Switching to user:', userId);
-      
-      // In a real scenario, you might need to create a special admin function
-      // or use a testing token system. For now, we'll just reload and let
-      // the user manually sign in as the test user
-      
-      // Reload the page to reset the app state
-      window.location.reload();
+
+      // Get user email from profiles table
+      const { data: userProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (profileError || !userProfile) {
+        console.error('User not found:', profileError);
+        window.location.reload();
+        return;
+      }
+
+      // For demo purposes, use a pattern-based email and default password
+      const testEmail = `test${userId.slice(0, 8)}@gmail.com`;
+      const testPassword = 'testpass123';
+
+      // Attempt to sign in with test credentials
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: testEmail,
+        password: testPassword,
+      });
+
+      if (signInError) {
+        console.error('Sign in error:', signInError);
+        // If sign in fails, just reload to the auth page
+        window.location.reload();
+        return;
+      }
+
+      // Success - the auth state change will handle the rest
+      // Small delay to ensure auth state is updated
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
       
     } catch (error) {
       console.error('Error switching user:', error);
+      window.location.reload();
     } finally {
       setLoading(false);
     }
