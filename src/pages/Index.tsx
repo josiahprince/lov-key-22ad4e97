@@ -12,6 +12,7 @@ import ChatsListScreen from '../components/ChatsListScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import Navigation from '../components/Navigation';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
+import { DebugUserSwitcher } from '../components/DebugUserSwitcher';
 
 const Index = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -303,6 +304,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
+      <DebugUserSwitcher />
       <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
         {renderScreen()}
         {currentScreen !== 'onboarding' && currentScreen !== 'profile-setup' && (
