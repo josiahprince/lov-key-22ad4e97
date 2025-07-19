@@ -146,7 +146,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
           <div>
             <p className="text-sm text-gray-600 font-medium">No active chats yet</p>
             <p className="text-xs text-gray-500 mt-1">
-              Accept chat requests from your matches to start conversations
+              Accept chat requests from the matches screen to start your first conversation!
             </p>
           </div>
         </Card>

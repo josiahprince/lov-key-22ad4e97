@@ -137,15 +137,22 @@ export const useChats = () => {
           console.error('Error fetching profile for user:', matchUserId, profileError);
         }
 
-        // Fetch onboarding data for the match
+        // Fetch onboarding data for the match - use maybeSingle to handle missing data
         const { data: matchOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
-          .single();
+          .maybeSingle();
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
+          continue; // Skip this chat if we can't fetch onboarding data
+        }
+
+        // Skip if no onboarding data exists
+        if (!matchOnboarding) {
+          console.warn('No onboarding data found for user:', matchUserId, 'skipping chat');
+          continue;
         }
 
         // Fetch main photo for the match
