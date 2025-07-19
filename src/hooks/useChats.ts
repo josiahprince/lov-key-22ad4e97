@@ -58,6 +58,8 @@ export const useChats = () => {
         return;
       }
 
+      console.log('Fetching chats for user:', user.id);
+
       // Fetch all accepted chat requests (active chats)
       const { data: chatMatches, error: chatsError } = await supabase
         .from('matches')
@@ -66,13 +68,17 @@ export const useChats = () => {
         .eq('chat_request_status', 'accepted')
         .order('last_interaction_at', { ascending: false });
 
+      console.log('Chat matches query result:', { chatMatches, chatsError });
+
       if (chatsError) {
         throw chatsError;
       }
 
       if (chatMatches && chatMatches.length > 0) {
+        console.log(`Processing ${chatMatches.length} chat matches`);
         await processChats(chatMatches, user.id);
       } else {
+        console.log('No chat matches found, setting empty array');
         setChats([]);
       }
 
