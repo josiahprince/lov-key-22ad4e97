@@ -308,6 +308,7 @@ export type Database = {
         Returns: {
           matches_created: number
           users_processed: number
+          users_skipped_chat_limit: number
         }[]
       }
     }

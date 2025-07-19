@@ -125,11 +125,24 @@ export const useMatches = () => {
           return;
         }
 
-        // Try to generate new matches
-        const { error: generateError } = await supabase.functions.invoke('generate-daily-matches');
+        // Try to generate new matches using the RPC function
+        const { data: generationResult, error: generateError } = await supabase
+          .rpc('generate_daily_matches');
         
         if (generateError) {
           console.error('Error generating matches:', generateError);
+        } else if (generationResult && generationResult.length > 0) {
+          const result = generationResult[0];
+          console.log('Match generation result:', result);
+          
+          // Check if the current user was skipped due to chat limit
+          if (result.users_skipped_chat_limit > 0 && result.matches_created === 0) {
+            toast({
+              title: "Chat Limit Reached",
+              description: "You have reached the maximum of 6 active chats. New matches will be available when some chats expire.",
+              variant: "default",
+            });
+          }
         }
         
         // Retry fetching after generation attempt
