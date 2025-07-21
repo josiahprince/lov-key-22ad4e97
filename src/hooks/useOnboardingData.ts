@@ -71,17 +71,72 @@ export const useOnboardingData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const { data: result, error } = await supabase
+      // Check if there's existing onboarding data for today
+      const today = new Date().toDateString();
+      const { data: existingData } = await supabase
         .from('user_onboarding')
-        .upsert({
-          user_id: user.id,
-          mood: data.mood,
-          selected_memes: data.selectedMemes,
-          perfect_sunday: data.perfectSunday,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      let result;
+      let error;
+
+      if (existingData) {
+        const existingDate = new Date(existingData.updated_at).toDateString();
+        
+        if (existingDate === today) {
+          // Update existing today's record
+          const { data: updateResult, error: updateError } = await supabase
+            .from('user_onboarding')
+            .update({
+              mood: data.mood,
+              selected_memes: data.selectedMemes,
+              perfect_sunday: data.perfectSunday,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingData.id)
+            .select()
+            .single();
+          
+          result = updateResult;
+          error = updateError;
+        } else {
+          // Insert new record for today
+          const { data: insertResult, error: insertError } = await supabase
+            .from('user_onboarding')
+            .insert({
+              user_id: user.id,
+              mood: data.mood,
+              selected_memes: data.selectedMemes,
+              perfect_sunday: data.perfectSunday,
+              updated_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+          
+          result = insertResult;
+          error = insertError;
+        }
+      } else {
+        // Insert new record
+        const { data: insertResult, error: insertError } = await supabase
+          .from('user_onboarding')
+          .insert({
+            user_id: user.id,
+            mood: data.mood,
+            selected_memes: data.selectedMemes,
+            perfect_sunday: data.perfectSunday,
+            updated_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        
+        result = insertResult;
+        error = insertError;
+      }
 
       if (error) throw error;
 
