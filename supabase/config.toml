@@ -1,1 +1,7 @@
 project_id = "iqgrlpstwxzonnjswefa"
+
+[functions.generate-daily-matches]
+verify_jwt = false
+
+[functions.daily-match-scheduler]
+verify_jwt = false
