@@ -93,6 +93,15 @@ export const useOnboardingData = () => {
 
       setShouldShowOnboarding(false);
 
+      // Generate daily matches after onboarding completion
+      try {
+        await supabase.functions.invoke('generate-daily-matches');
+        console.log('Daily matches generated successfully after onboarding');
+      } catch (matchError) {
+        console.error('Error generating daily matches:', matchError);
+        // Don't throw here - onboarding was successful even if match generation failed
+      }
+
       toast({
         title: "Profile updated",
         description: "Your preferences have been saved successfully.",
