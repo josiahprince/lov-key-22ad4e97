@@ -23,10 +23,15 @@ export const useOnboardingData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Check for today's onboarding data specifically
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
       const { data, error } = await supabase
         .from('user_onboarding')
         .select('*')
         .eq('user_id', user.id)
+        .gte('created_at', `${today}T00:00:00.000Z`)
+        .lt('created_at', `${today}T23:59:59.999Z`)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -37,6 +42,7 @@ export const useOnboardingData = () => {
       }
 
       if (data) {
+        // Found today's onboarding data
         setOnboardingData({
           id: data.id,
           mood: data.mood,
@@ -45,18 +51,9 @@ export const useOnboardingData = () => {
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         });
-
-        // Check if onboarding was done today
-        const lastOnboardingDate = new Date(data.updated_at).toDateString();
-        const todayDate = new Date().toDateString();
-        
-        if (lastOnboardingDate !== todayDate) {
-          setShouldShowOnboarding(true);
-        } else {
-          setShouldShowOnboarding(false);
-        }
+        setShouldShowOnboarding(false);
       } else {
-        // No onboarding data exists, show onboarding
+        // No onboarding data for today, show onboarding
         setShouldShowOnboarding(true);
       }
     } catch (error) {
@@ -71,72 +68,17 @@ export const useOnboardingData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Check if there's existing onboarding data for today
-      const today = new Date().toDateString();
-      const { data: existingData } = await supabase
+      // Simply insert new onboarding data for today
+      const { data: result, error } = await supabase
         .from('user_onboarding')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      let result;
-      let error;
-
-      if (existingData) {
-        const existingDate = new Date(existingData.updated_at).toDateString();
-        
-        if (existingDate === today) {
-          // Update existing today's record
-          const { data: updateResult, error: updateError } = await supabase
-            .from('user_onboarding')
-            .update({
-              mood: data.mood,
-              selected_memes: data.selectedMemes,
-              perfect_sunday: data.perfectSunday,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('id', existingData.id)
-            .select()
-            .single();
-          
-          result = updateResult;
-          error = updateError;
-        } else {
-          // Insert new record for today
-          const { data: insertResult, error: insertError } = await supabase
-            .from('user_onboarding')
-            .insert({
-              user_id: user.id,
-              mood: data.mood,
-              selected_memes: data.selectedMemes,
-              perfect_sunday: data.perfectSunday,
-              updated_at: new Date().toISOString(),
-            })
-            .select()
-            .single();
-          
-          result = insertResult;
-          error = insertError;
-        }
-      } else {
-        // Insert new record
-        const { data: insertResult, error: insertError } = await supabase
-          .from('user_onboarding')
-          .insert({
-            user_id: user.id,
-            mood: data.mood,
-            selected_memes: data.selectedMemes,
-            perfect_sunday: data.perfectSunday,
-            updated_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-        
-        result = insertResult;
-        error = insertError;
-      }
+        .insert({
+          user_id: user.id,
+          mood: data.mood,
+          selected_memes: data.selectedMemes,
+          perfect_sunday: data.perfectSunday,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -149,7 +91,6 @@ export const useOnboardingData = () => {
         updatedAt: result.updated_at,
       });
 
-      // Set shouldShowOnboarding to false after successful save
       setShouldShowOnboarding(false);
 
       toast({
