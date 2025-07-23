@@ -149,6 +149,9 @@ export const useOnboardingData = () => {
         updatedAt: result.updated_at,
       });
 
+      // Set shouldShowOnboarding to false after successful save
+      setShouldShowOnboarding(false);
+
       toast({
         title: "Profile updated",
         description: "Your preferences have been saved successfully.",
