@@ -28,7 +28,7 @@ const Index = () => {
     matchedUserVibes: string;
   } | null>(null);
   
-  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboardingData();
+  const { shouldShowOnboarding, loading: onboardingLoading, refetch: refetchOnboarding } = useOnboardingData();
 
   // Handle navigation from match profile back to matches
   useEffect(() => {
@@ -185,6 +185,12 @@ const Index = () => {
 
   const handleOnboardingComplete = async (profile: any) => {
     console.log('Onboarding completed:', profile);
+    
+    // Wait a moment for the onboarding data to be saved and state to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Refetch onboarding data to ensure state is updated
+    await refetchOnboarding();
     
     // Trigger daily match generation after onboarding
     try {
