@@ -166,19 +166,6 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
         </Card>
       )}
 
-      {chats.length >= 6 && (
-        <Card className="p-4 bg-yellow-50 border-yellow-200">
-          <div className="text-center space-y-2">
-            <Clock className="w-5 h-5 mx-auto text-yellow-600" />
-            <p className="text-sm text-yellow-700 font-medium">
-              Chat limit reached
-            </p>
-            <p className="text-xs text-yellow-600">
-              You have 6 active chats. No new matches will be generated until some chats expire (48 hours of inactivity).
-            </p>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
