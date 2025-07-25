@@ -1,9 +1,10 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Clock, Loader2 } from 'lucide-react';
+import { MessageCircle, Clock, Loader2, User } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatsListScreenProps {
   onStartChat: (matchData: {
@@ -16,6 +17,7 @@ interface ChatsListScreenProps {
 
 const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   const { chats, loading, refetch } = useChats();
+  const navigate = useNavigate();
   
   // Add effect to refetch when component mounts or becomes visible
   React.useEffect(() => {
@@ -116,11 +118,23 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
               </div>
             )}
 
-            {/* Continue Chat Button */}
-            <div className="pt-2">
+            {/* Action Buttons */}
+            <div className="pt-2 flex space-x-2">
               <Button
                 size="sm"
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
+                variant="outline"
+                className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/chat/${chat.id}`);
+                }}
+              >
+                <User className="w-4 h-4 mr-1" />
+                View Profile
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
                 onClick={(e) => {
                   e.stopPropagation();
                   const vibesText = chat.memes.map((m: any) => m.title).join(' • ');
