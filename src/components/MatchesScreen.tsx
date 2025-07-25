@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,6 @@ interface MatchesScreenProps {
 const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
   const [processingRequests, setProcessingRequests] = useState<string[]>([]);
-  const [activeChatCount, setActiveChatCount] = useState<number>(0);
   const { matches, loading, refetch } = useMatches();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -210,33 +209,6 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
     };
   };
 
-  // Check active chat count
-  useEffect(() => {
-    const checkActiveChatCount = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: activeChats, error } = await supabase
-          .from('matches')
-          .select('id')
-          .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .eq('chat_request_status', 'accepted')
-          .eq('status', 'active');
-
-        if (error) {
-          console.error('Error fetching active chats:', error);
-        } else {
-          setActiveChatCount(activeChats?.length || 0);
-        }
-      } catch (error) {
-        console.error('Error checking active chat count:', error);
-      }
-    };
-
-    checkActiveChatCount();
-  }, [matches]);
-
   const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
 
   if (loading) {
@@ -375,22 +347,24 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         ))}
       </div>
 
-      {visibleMatches.length === 0 && activeChatCount >= 6 && (
-        <Card className="p-4 text-center space-y-2 bg-yellow-50 border-yellow-200">
-          <Clock className="w-5 h-5 mx-auto text-yellow-600" />
-          <p className="text-sm text-yellow-700 font-medium">Chat limit reached</p>
-          <p className="text-xs text-yellow-600">
-            You have {activeChatCount} active chats. New matches won't be generated until some chats expire after 48 hours of inactivity.
-          </p>
+      {visibleMatches.length === 0 && (
+        <Card className="p-4 text-center space-y-2 bg-gray-50">
+          <p className="text-sm text-gray-600">No more matches for today</p>
+          <p className="text-xs text-gray-500">New matches arrive daily at 9 AM</p>
         </Card>
       )}
 
-      {visibleMatches.length === 0 && activeChatCount < 6 && (
-        <Card className="p-4 text-center space-y-2 bg-gray-50">
-          <p className="text-sm text-gray-600">No more matches for today</p>
-          <p className="text-xs text-gray-500">Check back tomorrow for new connections</p>
-        </Card>
-      )}
+      <Card className="p-4 bg-rose-50 border-rose-200">
+        <div className="text-center space-y-2">
+          <Heart className="w-5 h-5 mx-auto text-rose-500" />
+          <p className="text-sm text-gray-700">
+            New matches arrive daily at 9 AM
+          </p>
+          <p className="text-xs text-gray-600">
+            Quality over quantity - each match is carefully selected
+          </p>
+        </div>
+      </Card>
     </div>
   );
 };

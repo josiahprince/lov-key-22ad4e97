@@ -28,7 +28,7 @@ const Index = () => {
     matchedUserVibes: string;
   } | null>(null);
   
-  const { shouldShowOnboarding, loading: onboardingLoading, refetch: refetchOnboarding } = useOnboardingData();
+  const { shouldShowOnboarding } = useOnboardingData();
 
   // Handle navigation from match profile back to matches
   useEffect(() => {
@@ -39,19 +39,6 @@ const Index = () => {
       window.history.replaceState({}, '', location.pathname);
     }
   }, [location.state]);
-
-  // Check for daily onboarding requirement for existing users
-  useEffect(() => {
-    if (user && profileComplete && !onboardingLoading) {
-      console.log('Checking daily onboarding requirement for existing user:', shouldShowOnboarding);
-      
-      // If shouldShowOnboarding is true and we're not already on onboarding screen
-      if (shouldShowOnboarding && currentScreen !== 'onboarding') {
-        console.log('Setting screen to onboarding for daily mood check');
-        setCurrentScreen('onboarding');
-      }
-    }
-  }, [user, profileComplete, shouldShowOnboarding, onboardingLoading, currentScreen]);
 
   useEffect(() => {
     console.log('Index component mounted, setting up auth listener...');
@@ -185,12 +172,6 @@ const Index = () => {
 
   const handleOnboardingComplete = async (profile: any) => {
     console.log('Onboarding completed:', profile);
-    
-    // Wait a moment for the onboarding data to be saved and state to update
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // Refetch onboarding data to ensure state is updated
-    await refetchOnboarding();
     
     // Trigger daily match generation after onboarding
     try {

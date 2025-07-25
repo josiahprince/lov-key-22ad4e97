@@ -1,10 +1,9 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Clock, Loader2, User } from 'lucide-react';
+import { MessageCircle, Clock, Loader2 } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
 import { formatDistanceToNow } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
 
 interface ChatsListScreenProps {
   onStartChat: (matchData: {
@@ -17,16 +16,11 @@ interface ChatsListScreenProps {
 
 const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   const { chats, loading, refetch } = useChats();
-  const navigate = useNavigate();
   
   // Add effect to refetch when component mounts or becomes visible
   React.useEffect(() => {
     refetch();
   }, []);
-
-  const handleViewProfile = (matchId: string) => {
-    navigate(`/match/${matchId}`);
-  };
 
   if (loading) {
     return (
@@ -54,7 +48,15 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
           <Card 
             key={chat.id} 
             className="p-4 space-y-3 bg-gray-50 border-gray-200 animate-fade-in cursor-pointer hover:bg-lavender transition-colors"
-            onClick={() => handleViewProfile(chat.id)}
+            onClick={() => {
+              const vibesText = chat.memes.map((m: any) => m.title).join(' • ');
+              onStartChat({
+                matchId: chat.id,
+                matchedUserId: chat.userId,
+                matchedUserName: chat.name,
+                matchedUserVibes: vibesText || chat.mood
+              });
+            }}
           >
             {/* Header Section */}
             <div className="flex items-center justify-between">
@@ -114,23 +116,11 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
               </div>
             )}
 
-            {/* Action Buttons */}
-            <div className="pt-2 flex gap-2">
+            {/* Continue Chat Button */}
+            <div className="pt-2">
               <Button
                 size="sm"
-                variant="outline"
-                className="flex-1 border-rose-200 text-rose-600 hover:bg-rose-50 rounded-xl"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewProfile(chat.id);
-                }}
-              >
-                <User className="w-4 h-4 mr-1" />
-                View Profile
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
+                className="w-full bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
                 onClick={(e) => {
                   e.stopPropagation();
                   const vibesText = chat.memes.map((m: any) => m.title).join(' • ');

@@ -23,17 +23,10 @@ export const useOnboardingData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check for today's onboarding data - use local timezone
-      const now = new Date();
-      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-
       const { data, error } = await supabase
         .from('user_onboarding')
         .select('*')
         .eq('user_id', user.id)
-        .gte('created_at', startOfDay.toISOString())
-        .lt('created_at', endOfDay.toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -44,7 +37,6 @@ export const useOnboardingData = () => {
       }
 
       if (data) {
-        // Found today's onboarding data
         setOnboardingData({
           id: data.id,
           mood: data.mood,
@@ -53,9 +45,18 @@ export const useOnboardingData = () => {
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         });
-        setShouldShowOnboarding(false);
+
+        // Check if onboarding was done today
+        const lastOnboardingDate = new Date(data.updated_at).toDateString();
+        const todayDate = new Date().toDateString();
+        
+        if (lastOnboardingDate !== todayDate) {
+          setShouldShowOnboarding(true);
+        } else {
+          setShouldShowOnboarding(false);
+        }
       } else {
-        // No onboarding data for today, show onboarding
+        // No onboarding data exists, show onboarding
         setShouldShowOnboarding(true);
       }
     } catch (error) {
@@ -70,14 +71,14 @@ export const useOnboardingData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Simply insert new onboarding data for today
       const { data: result, error } = await supabase
         .from('user_onboarding')
-        .insert({
+        .upsert({
           user_id: user.id,
           mood: data.mood,
           selected_memes: data.selectedMemes,
           perfect_sunday: data.perfectSunday,
+          updated_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -92,17 +93,6 @@ export const useOnboardingData = () => {
         createdAt: result.created_at,
         updatedAt: result.updated_at,
       });
-
-      setShouldShowOnboarding(false);
-
-      // Generate daily matches after onboarding completion
-      try {
-        await supabase.functions.invoke('generate-daily-matches');
-        console.log('Daily matches generated successfully after onboarding');
-      } catch (matchError) {
-        console.error('Error generating daily matches:', matchError);
-        // Don't throw here - onboarding was successful even if match generation failed
-      }
 
       toast({
         title: "Profile updated",

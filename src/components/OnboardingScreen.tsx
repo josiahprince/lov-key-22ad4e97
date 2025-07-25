@@ -44,7 +44,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
 
   // Load existing data when component mounts
   useEffect(() => {
-    if (!loading && onboardingData && !shouldShowOnboarding) {
+    if (!loading && onboardingData && shouldShowOnboarding) {
       setMood(onboardingData.mood);
       setSelectedMemes(onboardingData.selectedMemes);
       setPromptAnswer(onboardingData.perfectSunday);

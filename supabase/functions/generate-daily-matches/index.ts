@@ -241,9 +241,8 @@ function isOrientationCompatible(userProfile: UserProfile, matchProfile: UserPro
   const matchGender = matchProfile.gender;
   const matchInterestedIn = matchProfile.interested_in;
 
-  // If either user is interested in "both" or "everyone", it's compatible
-  if (userInterestedIn === 'both' || matchInterestedIn === 'both' || 
-      userInterestedIn === 'everyone' || matchInterestedIn === 'everyone') {
+  // If either user is interested in "everyone", it's compatible
+  if (userInterestedIn === 'everyone' || matchInterestedIn === 'everyone') {
     return true;
   }
 
