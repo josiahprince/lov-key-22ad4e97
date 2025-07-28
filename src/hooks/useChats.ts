@@ -113,6 +113,13 @@ export const useChats = () => {
 
         if (profileError) {
           console.error('Error fetching profile for user:', matchUserId, profileError);
+          continue; // Skip this chat if we can't fetch profile data
+        }
+
+        // Skip if no profile exists
+        if (!matchProfile) {
+          console.warn('No profile data found for user:', matchUserId, 'skipping chat');
+          continue;
         }
 
         // Fetch onboarding data for the match - get the latest entry
@@ -125,16 +132,16 @@ export const useChats = () => {
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
+          continue; // Skip this chat if we can't fetch onboarding data
         }
 
-        // Use the latest onboarding data or create fallback
-        const matchOnboarding = onboardingList && onboardingList.length > 0 
-          ? onboardingList[0] 
-          : {
-              mood: 'chill',
-              selected_memes: ['meme1'],
-              perfect_sunday: 'Relaxing at home'
-            };
+        // Skip if no onboarding data exists
+        if (!onboardingList || onboardingList.length === 0) {
+          console.warn('No onboarding data found for user:', matchUserId, 'skipping chat');
+          continue;
+        }
+
+        const matchOnboarding = onboardingList[0];
 
         // Fetch main photo for the match
         const { data: matchPhoto, error: photoError } = await supabase
