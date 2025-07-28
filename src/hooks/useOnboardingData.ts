@@ -46,11 +46,16 @@ export const useOnboardingData = () => {
           updatedAt: data.updated_at,
         });
 
-        // Check if onboarding was done today
+        // Check if onboarding needs to be done today
         const lastOnboardingDate = new Date(data.updated_at).toDateString();
         const todayDate = new Date().toDateString();
         
-        if (lastOnboardingDate !== todayDate) {
+        // Check if it's pending daily update or if it's a new day
+        const isPendingUpdate = data.mood === 'pending_daily_update' || 
+                               data.selected_memes?.includes('pending') ||
+                               data.perfect_sunday === 'pending_daily_update';
+        
+        if (lastOnboardingDate !== todayDate || isPendingUpdate) {
           setShouldShowOnboarding(true);
         } else {
           setShouldShowOnboarding(false);
