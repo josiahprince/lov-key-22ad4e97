@@ -203,8 +203,15 @@ const Index = () => {
     matchedUserVibes: string;
   }) => {
     console.log('Navigating to chat screen with data:', matchData);
-    setCurrentChat(matchData);
-    setCurrentScreen('chat');
+    
+    // If matchId is 'chats', go to chats list screen
+    if (matchData.matchId === 'chats') {
+      setCurrentScreen('chats');
+    } else {
+      // Otherwise go to individual chat
+      setCurrentChat(matchData);
+      setCurrentScreen('chat');
+    }
   };
 
   const handleSignOut = async () => {
@@ -277,6 +284,7 @@ const Index = () => {
             matchedUserId={currentChat.matchedUserId}
             matchedUserName={currentChat.matchedUserName}
             matchedUserVibes={currentChat.matchedUserVibes}
+            onBackToChats={() => setCurrentScreen('chats')}
           />
         ) : (
           <ChatsListScreen onStartChat={handleStartChat} />

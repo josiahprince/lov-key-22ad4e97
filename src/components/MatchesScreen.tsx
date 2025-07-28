@@ -134,14 +134,13 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         // Refetch matches to remove the accepted chat from matches list
         refetch();
         
+        // Navigate to chats screen instead of directly to chat
         if (onStartChat) {
-          const vibesText = match.memes.map((m: any) => m.title).join(' • ');
-          
           onStartChat({
-            matchId: match.id,
-            matchedUserId: match.userId,
-            matchedUserName: match.name,
-            matchedUserVibes: vibesText || match.mood
+            matchId: 'chats', // Special marker to go to chats screen
+            matchedUserId: '',
+            matchedUserName: '',
+            matchedUserVibes: ''
           });
         }
       }
