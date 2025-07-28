@@ -28,7 +28,7 @@ const Index = () => {
     matchedUserVibes: string;
   } | null>(null);
   
-  const { shouldShowOnboarding } = useOnboardingData();
+  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboardingData();
 
   // Handle navigation from match profile back to matches
   useEffect(() => {
@@ -136,7 +136,8 @@ const Index = () => {
           setProfileComplete(true);
           // Check onboarding status independently - always show onboarding if shouldShowOnboarding is true
           if (!location.state?.screen) {
-            if (shouldShowOnboarding) {
+            // If onboarding data is still loading, default to showing onboarding
+            if (onboardingLoading || shouldShowOnboarding) {
               setCurrentScreen('onboarding');
             } else {
               setCurrentScreen('matches');
