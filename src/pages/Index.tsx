@@ -134,9 +134,13 @@ const Index = () => {
         if (isComplete) {
           setUserProfile(profile);
           setProfileComplete(true);
-          // Only set screen to onboarding if no navigation state is present and should show onboarding
+          // Check onboarding status independently - always show onboarding if shouldShowOnboarding is true
           if (!location.state?.screen) {
-            setCurrentScreen(shouldShowOnboarding ? 'onboarding' : 'matches');
+            if (shouldShowOnboarding) {
+              setCurrentScreen('onboarding');
+            } else {
+              setCurrentScreen('matches');
+            }
           }
         } else {
           setProfileComplete(false);
@@ -173,20 +177,22 @@ const Index = () => {
   const handleOnboardingComplete = async (profile: any) => {
     console.log('Onboarding completed:', profile);
     
-    // Trigger daily match generation after onboarding
-    try {
-      const { data, error } = await supabase.rpc('generate_daily_matches');
-      if (error) {
-        console.error('Error generating daily matches:', error);
-      } else {
-        console.log('Daily matches generated:', data);
+    // Small delay to ensure onboarding data is saved before checking requirements
+    setTimeout(async () => {
+      try {
+        const { data, error } = await supabase.rpc('generate_daily_matches');
+        if (error) {
+          console.error('Error generating daily matches:', error);
+        } else {
+          console.log('Daily matches generated:', data);
+        }
+      } catch (error) {
+        console.error('Error calling generate_daily_matches:', error);
       }
-    } catch (error) {
-      console.error('Error calling generate_daily_matches:', error);
-    }
-    
-    // Don't overwrite userProfile - keep the actual profile data with nickname
-    setCurrentScreen('matches');
+      
+      // Navigate to matches screen
+      setCurrentScreen('matches');
+    }, 1000);
   };
 
   const handleStartChat = (matchData: {
