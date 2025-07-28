@@ -66,6 +66,7 @@ export const useChats = () => {
         .select('*, chat_request_status, last_interaction_at')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .eq('chat_request_status', 'accepted')
+        .in('status', ['active', 'chatting']) // Include both active and chatting status
         .order('last_interaction_at', { ascending: false });
 
       console.log('Chat matches query result:', { chatMatches, chatsError });

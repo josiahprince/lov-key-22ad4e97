@@ -113,7 +113,8 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
       const { error } = await supabase
         .from('matches')
         .update({ 
-          chat_request_status: 'accepted'
+          chat_request_status: 'accepted',
+          status: 'chatting' // Update status to chatting when accepted
         })
         .eq('id', match.id);
       
