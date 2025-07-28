@@ -99,29 +99,6 @@ export const useChats = () => {
     const processedChats: ChatProfile[] = [];
 
     for (const match of chatMatches) {
-      // Check if there are any messages in this chat
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('match_id', match.id)
-        .limit(1);
-
-      if (messagesError) {
-        console.error('Error checking messages for match:', match.id, messagesError);
-      }
-
-      // If there are messages, keep the chat active regardless of time
-      // If no messages, apply the 48-hour rule for chat requests that were accepted but never used
-      if (!messages || messages.length === 0) {
-        const lastInteraction = new Date(match.last_interaction_at);
-        const hoursAgo = (Date.now() - lastInteraction.getTime()) / (1000 * 60 * 60);
-        
-        if (hoursAgo > 48) {
-          // Silently skip expired chats that never had messages
-          continue;
-        }
-      }
-
       // Determine which user is the match (not the current user)
       const isUser1 = match.user_1 === currentUserId;
       const matchUserId = isUser1 ? match.user_2 : match.user_1;
