@@ -113,22 +113,14 @@ export const useChats = () => {
 
         if (profileError) {
           console.error('Error fetching profile for user:', matchUserId, profileError);
-          continue; // Skip this chat if we can't fetch profile data
         }
 
-        // Skip if no profile exists
-        if (!matchProfile) {
-          console.warn('No profile data found for user:', matchUserId, 'skipping chat');
-          continue;
-        }
-
-        // Fetch onboarding data for the match - get the latest entry
-        const { data: onboardingList, error: onboardingError } = await supabase
+        // Fetch onboarding data for the match - use maybeSingle to handle missing data
+        const { data: matchOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
-          .order('updated_at', { ascending: false })
-          .limit(1);
+          .maybeSingle();
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
@@ -136,12 +128,10 @@ export const useChats = () => {
         }
 
         // Skip if no onboarding data exists
-        if (!onboardingList || onboardingList.length === 0) {
+        if (!matchOnboarding) {
           console.warn('No onboarding data found for user:', matchUserId, 'skipping chat');
           continue;
         }
-
-        const matchOnboarding = onboardingList[0];
 
         // Fetch main photo for the match
         const { data: matchPhoto, error: photoError } = await supabase
