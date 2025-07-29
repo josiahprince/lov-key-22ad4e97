@@ -44,19 +44,15 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
 
   // Load existing data when component mounts
   useEffect(() => {
-    console.log('OnboardingScreen useEffect:', { loading, onboardingData, shouldShowOnboarding });
     if (!loading && onboardingData) {
-      console.log('Setting existing data:', onboardingData);
       setMood(onboardingData.mood);
       setSelectedMemes(onboardingData.selectedMemes);
       setPromptAnswer(onboardingData.perfectSunday);
-      // Always show existing data if available, regardless of shouldShowOnboarding flag
       setShowExistingData(true);
     } else if (!loading && !onboardingData) {
-      console.log('No existing data, starting fresh onboarding');
       setShowExistingData(false);
     }
-  }, [loading, onboardingData, shouldShowOnboarding]);
+  }, [loading, onboardingData]);
 
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
