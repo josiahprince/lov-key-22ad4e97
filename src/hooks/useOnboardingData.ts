@@ -93,7 +93,7 @@ export const useOnboardingData = () => {
           if (isNewDay && isPast6AM) {
             setShouldShowOnboarding(true);
           } else {
-            setShouldShowOnboarding(false);
+          setShouldShowOnboarding(false);
           }
         }
       } else {
