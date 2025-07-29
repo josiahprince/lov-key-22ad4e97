@@ -46,15 +46,15 @@ Deno.serve(async (req) => {
       const userLocalTime = new Date(now.getTime() + (userTimezone * 60 * 60 * 1000))
       const userHour = userLocalTime.getHours()
 
-      // Check if it's 6:00 AM in user's timezone (within the last hour)
+      // Check if it's 6:00 AM in user's timezone
       if (userHour === 6) {
         // Check if we already triggered onboarding for this user today
         const todayStart = new Date(userLocalTime)
-        todayStart.setHours(0, 0, 0, 0)
+        todayStart.setHours(6, 0, 0, 0) // Set to 6 AM today
         
         const { data: existingOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
-          .select('updated_at')
+          .select('updated_at, mood')
           .eq('user_id', user.id)
           .gte('updated_at', todayStart.toISOString())
           .limit(1)
@@ -64,24 +64,29 @@ Deno.serve(async (req) => {
           continue
         }
 
-        // If no onboarding data for today, mark user as needing onboarding
-        if (!existingOnboarding || existingOnboarding.length === 0) {
-          // Update or insert a record indicating this user needs onboarding today
-          const { error: updateError } = await supabase
+        // Check if we need to trigger daily reset (no onboarding today or not already pending)
+        const needsReset = !existingOnboarding || 
+                          existingOnboarding.length === 0 || 
+                          existingOnboarding[0].mood !== 'pending_daily_update'
+
+        if (needsReset) {
+          // Insert a pending record to trigger daily onboarding reset
+          const { error: insertError } = await supabase
             .from('user_onboarding')
-            .upsert({
+            .insert({
               user_id: user.id,
               mood: 'pending_daily_update',
               selected_memes: ['pending'],
               perfect_sunday: 'pending_daily_update',
+              created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             })
 
-          if (updateError) {
-            console.error('Error updating onboarding status for user:', user.id, updateError)
+          if (insertError) {
+            console.error('Error inserting daily reset for user:', user.id, insertError)
           } else {
             triggeredCount++
-            console.log('Triggered daily onboarding for user:', user.id)
+            console.log('Triggered daily onboarding reset for user:', user.id)
           }
         }
       }
