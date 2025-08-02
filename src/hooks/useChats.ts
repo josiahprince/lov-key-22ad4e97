@@ -60,13 +60,13 @@ export const useChats = () => {
 
       console.log('Fetching chats for user:', user.id);
 
-      // Fetch all accepted chat requests (active chats)
+      // Fetch all accepted chat requests (active chats only, not inactive due to 48h rule)
       const { data: chatMatches, error: chatsError } = await supabase
         .from('matches')
         .select('*, chat_request_status, last_interaction_at')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .eq('chat_request_status', 'accepted')
-        .in('status', ['active', 'chatting']) // Include both active and chatting status
+        .in('status', ['active', 'chatting']) // Only active chats, inactive ones are removed by database function
         .order('last_interaction_at', { ascending: false });
 
       console.log('Chat matches query result:', { chatMatches, chatsError });
