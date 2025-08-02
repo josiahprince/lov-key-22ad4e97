@@ -70,18 +70,10 @@ export const useMatches = () => {
 
       console.log('Fetching matches for user:', user.id);
 
-      // First, expire old matches that haven't been acted upon
-      await supabase
-        .from('matches')
-        .update({ status: 'expired' })
-        .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .eq('status', 'active')
-        .eq('chat_request_status', 'none')
-        .lt('expires_at', new Date().toISOString());
+      console.log('Fetching active matches (excluding accepted chats and expired matches)');
 
-      console.log('Fetching active matches (excluding accepted chats)');
-
-      // Fetch only matches that haven't been accepted (not moved to chats)
+      // Fetch only matches that haven't been accepted and haven't expired
+      // The database function handles deletion of expired matches automatically
       const { data: todayMatches, error: matchesError } = await supabase
         .from('matches')
         .select('*, chat_request_status, chat_request_sender, expires_at')
