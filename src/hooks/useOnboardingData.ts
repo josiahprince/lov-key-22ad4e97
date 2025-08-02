@@ -19,42 +19,44 @@ export const useOnboardingData = () => {
   const { toast } = useToast();
 
   const fetchOnboardingData = async () => {
-    setLoading(true);
-    
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        setShouldShowOnboarding(false);
-        return;
-      }
+      if (!user) return;
 
-      // Get the most recent onboarding data
-      const { data: onboardingData, error } = await supabase
+      const { data, error } = await supabase
         .from('user_onboarding')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching onboarding data:', error);
         return;
       }
 
-      if (onboardingData) {
+      if (data) {
         setOnboardingData({
-          id: onboardingData.id,
-          mood: onboardingData.mood,
-          selectedMemes: onboardingData.selected_memes,
-          perfectSunday: onboardingData.perfect_sunday,
-          createdAt: onboardingData.created_at,
-          updatedAt: onboardingData.updated_at,
+          id: data.id,
+          mood: data.mood,
+          selectedMemes: data.selected_memes,
+          perfectSunday: data.perfect_sunday,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
         });
-        setShouldShowOnboarding(false);
+
+        // Check if onboarding was done today
+        const lastOnboardingDate = new Date(data.updated_at).toDateString();
+        const todayDate = new Date().toDateString();
+        
+        if (lastOnboardingDate !== todayDate) {
+          setShouldShowOnboarding(true);
+        } else {
+          setShouldShowOnboarding(false);
+        }
       } else {
-        setOnboardingData(null);
+        // No onboarding data exists, show onboarding
         setShouldShowOnboarding(true);
       }
     } catch (error) {

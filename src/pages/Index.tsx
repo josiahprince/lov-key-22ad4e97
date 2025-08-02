@@ -28,7 +28,7 @@ const Index = () => {
     matchedUserVibes: string;
   } | null>(null);
   
-  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboardingData();
+  const { shouldShowOnboarding } = useOnboardingData();
 
   // Handle navigation from match profile back to matches
   useEffect(() => {
@@ -136,8 +136,7 @@ const Index = () => {
           setProfileComplete(true);
           // Check onboarding status independently - always show onboarding if shouldShowOnboarding is true
           if (!location.state?.screen) {
-            // If onboarding data is still loading, default to showing onboarding
-            if (onboardingLoading || shouldShowOnboarding) {
+            if (shouldShowOnboarding) {
               setCurrentScreen('onboarding');
             } else {
               setCurrentScreen('matches');
@@ -203,15 +202,8 @@ const Index = () => {
     matchedUserVibes: string;
   }) => {
     console.log('Navigating to chat screen with data:', matchData);
-    
-    // If matchId is 'chats', go to chats list screen
-    if (matchData.matchId === 'chats') {
-      setCurrentScreen('chats');
-    } else {
-      // Otherwise go to individual chat
-      setCurrentChat(matchData);
-      setCurrentScreen('chat');
-    }
+    setCurrentChat(matchData);
+    setCurrentScreen('chat');
   };
 
   const handleSignOut = async () => {
@@ -284,7 +276,6 @@ const Index = () => {
             matchedUserId={currentChat.matchedUserId}
             matchedUserName={currentChat.matchedUserName}
             matchedUserVibes={currentChat.matchedUserVibes}
-            onBackToChats={() => setCurrentScreen('chats')}
           />
         ) : (
           <ChatsListScreen onStartChat={handleStartChat} />

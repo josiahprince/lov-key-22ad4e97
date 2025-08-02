@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, Send, Images, Eye, ArrowLeft } from 'lucide-react';
+import { Clock, Send, Images, Eye } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,10 +12,9 @@ interface ChatScreenProps {
   matchedUserId: string;
   matchedUserName: string;
   matchedUserVibes: string;
-  onBackToChats?: () => void;
 }
 
-const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, onBackToChats }: ChatScreenProps) => {
+const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes }: ChatScreenProps) => {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
@@ -96,16 +95,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
       <div className="p-3 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            {onBackToChats && (
-              <Button
-                onClick={onBackToChats}
-                variant="ghost"
-                size="sm"
-                className="p-1 h-8 w-8"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            )}
             <div className="relative">
               <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
                 <img 
