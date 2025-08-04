@@ -144,6 +144,7 @@ export type Database = {
           sexual_orientation:
             | Database["public"]["Enums"]["orientation_type"]
             | null
+          timezone: string | null
           updated_at: string | null
         }
         Insert: {
@@ -177,6 +178,7 @@ export type Database = {
           sexual_orientation?:
             | Database["public"]["Enums"]["orientation_type"]
             | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -210,6 +212,7 @@ export type Database = {
           sexual_orientation?:
             | Database["public"]["Enums"]["orientation_type"]
             | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -242,7 +245,10 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_6am_reset: string | null
+          last_onboarding_date: string | null
           mood: string
+          onboarding_shown_today: boolean | null
           perfect_sunday: string
           selected_memes: string[]
           updated_at: string
@@ -251,7 +257,10 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          last_6am_reset?: string | null
+          last_onboarding_date?: string | null
           mood: string
+          onboarding_shown_today?: boolean | null
           perfect_sunday: string
           selected_memes: string[]
           updated_at?: string
@@ -260,7 +269,10 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          last_6am_reset?: string | null
+          last_onboarding_date?: string | null
           mood?: string
+          onboarding_shown_today?: boolean | null
           perfect_sunday?: string
           selected_memes?: string[]
           updated_at?: string
@@ -310,6 +322,18 @@ export type Database = {
           users_processed: number
           users_skipped_chat_limit: number
         }[]
+      }
+      get_date_in_timezone: {
+        Args: { user_timezone: string }
+        Returns: string
+      }
+      is_after_6am_in_timezone: {
+        Args: { user_timezone: string }
+        Returns: boolean
+      }
+      should_show_onboarding: {
+        Args: { user_id_param: string }
+        Returns: boolean
       }
     }
     Enums: {

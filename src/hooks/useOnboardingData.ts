@@ -10,6 +10,8 @@ interface OnboardingData {
   perfectSunday: string;
   createdAt?: string;
   updatedAt?: string;
+  lastOnboardingDate?: string;
+  onboardingShownToday?: boolean;
 }
 
 export const useOnboardingData = () => {
@@ -18,11 +20,46 @@ export const useOnboardingData = () => {
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
   const { toast } = useToast();
 
+  const detectAndUpdateTimezone = async (userId: string) => {
+    try {
+      // Detect user's timezone
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Update user's timezone in profile
+      await supabase
+        .from('profiles')
+        .update({ timezone })
+        .eq('id', userId);
+        
+      console.log(`Updated timezone to ${timezone} for user ${userId}`);
+      return timezone;
+    } catch (error) {
+      console.error('Error detecting/updating timezone:', error);
+      return 'Asia/Kolkata'; // Fallback
+    }
+  };
+
   const fetchOnboardingData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // First, ensure user has timezone set
+      await detectAndUpdateTimezone(user.id);
+
+      // Use the database function to check if onboarding should be shown
+      const { data: shouldShow, error: shouldShowError } = await supabase
+        .rpc('should_show_onboarding', { user_id_param: user.id });
+
+      if (shouldShowError) {
+        console.error('Error checking onboarding status:', shouldShowError);
+        // Fallback to old logic if function fails
+        setShouldShowOnboarding(true);
+      } else {
+        setShouldShowOnboarding(shouldShow);
+      }
+
+      // Fetch onboarding data
       const { data, error } = await supabase
         .from('user_onboarding')
         .select('*')
@@ -44,20 +81,9 @@ export const useOnboardingData = () => {
           perfectSunday: data.perfect_sunday,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
+          lastOnboardingDate: data.last_onboarding_date,
+          onboardingShownToday: data.onboarding_shown_today,
         });
-
-        // Check if onboarding was done today
-        const lastOnboardingDate = new Date(data.updated_at).toDateString();
-        const todayDate = new Date().toDateString();
-        
-        if (lastOnboardingDate !== todayDate) {
-          setShouldShowOnboarding(true);
-        } else {
-          setShouldShowOnboarding(false);
-        }
-      } else {
-        // No onboarding data exists, show onboarding
-        setShouldShowOnboarding(true);
       }
     } catch (error) {
       console.error('Error in fetchOnboardingData:', error);
@@ -66,10 +92,23 @@ export const useOnboardingData = () => {
     }
   };
 
-  const saveOnboardingData = async (data: Omit<OnboardingData, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const saveOnboardingData = async (data: Omit<OnboardingData, 'id' | 'createdAt' | 'updatedAt' | 'lastOnboardingDate' | 'onboardingShownToday'>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+
+      // Get user's timezone for date calculation
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('timezone')
+        .eq('id', user.id)
+        .single();
+
+      const timezone = profile?.timezone || 'Asia/Kolkata';
+
+      // Get today's date in user's timezone using the database function
+      const { data: todayInTz } = await supabase
+        .rpc('get_date_in_timezone', { user_timezone: timezone });
 
       const { data: result, error } = await supabase
         .from('user_onboarding')
@@ -79,6 +118,8 @@ export const useOnboardingData = () => {
           selected_memes: data.selectedMemes,
           perfect_sunday: data.perfectSunday,
           updated_at: new Date().toISOString(),
+          onboarding_shown_today: true,
+          last_onboarding_date: todayInTz,
         })
         .select()
         .single();
@@ -92,7 +133,12 @@ export const useOnboardingData = () => {
         perfectSunday: result.perfect_sunday,
         createdAt: result.created_at,
         updatedAt: result.updated_at,
+        lastOnboardingDate: result.last_onboarding_date,
+        onboardingShownToday: result.onboarding_shown_today,
       });
+
+      // Mark that onboarding should not be shown again today
+      setShouldShowOnboarding(false);
 
       toast({
         title: "Profile updated",
