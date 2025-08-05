@@ -45,21 +45,28 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
   // Load existing data when component mounts
   useEffect(() => {
     if (!loading && onboardingData && shouldShowOnboarding) {
-      setMood(onboardingData.mood);
-      setSelectedMemes(onboardingData.selectedMemes);
-      setPromptAnswer(onboardingData.perfectSunday);
-      setShowExistingData(true);
+      // Only show existing data dialog if user hasn't started modifying anything
+      if (!mood && selectedMemes.length === 0 && !promptAnswer) {
+        setMood(onboardingData.mood);
+        setSelectedMemes(onboardingData.selectedMemes);
+        setPromptAnswer(onboardingData.perfectSunday);
+        setShowExistingData(true);
+      }
     }
   }, [loading, onboardingData, shouldShowOnboarding]);
 
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
       if (prev.includes(memeId)) {
+        // Remove the meme if already selected
         return prev.filter(id => id !== memeId);
       } else if (prev.length < 3) {
+        // Add the meme if under limit
         return [...prev, memeId];
+      } else {
+        // If at limit (3), replace the last one with the new selection
+        return [...prev.slice(0, 2), memeId];
       }
-      return prev;
     });
   };
 
@@ -72,7 +79,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
         createdAt: new Date(),
       };
 
-      // Save to database
+      // Save to database - this persists the data until tomorrow
       await saveOnboardingData({
         mood,
         selectedMemes,
@@ -165,7 +172,11 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
               Continue with these
             </Button>
             <Button 
-              onClick={() => setShowExistingData(false)}
+              onClick={() => {
+                setShowExistingData(false);
+                // Keep the existing data loaded so user can modify them
+                // Data is already set in the state from useEffect
+              }}
               variant="outline"
               className="flex-1 py-2 rounded-xl"
             >
