@@ -28,7 +28,7 @@ const Index = () => {
     matchedUserVibes: string;
   } | null>(null);
   
-  const { shouldShowOnboarding } = useOnboardingData();
+  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboardingData();
 
   // Handle navigation from match profile back to matches
   useEffect(() => {
@@ -103,6 +103,20 @@ const Index = () => {
     };
   }, []);
 
+  // Separate effect to handle onboarding screen logic after both profile and onboarding data are loaded
+  useEffect(() => {
+    if (!loading && !onboardingLoading && profileComplete && !location.state?.screen) {
+      console.log('Onboarding logic check:', { shouldShowOnboarding, loading, onboardingLoading, profileComplete });
+      if (shouldShowOnboarding) {
+        console.log('Setting screen to onboarding');
+        setCurrentScreen('onboarding');
+      } else {
+        console.log('Setting screen to matches');
+        setCurrentScreen('matches');
+      }
+    }
+  }, [loading, onboardingLoading, profileComplete, shouldShowOnboarding, location.state]);
+
   const checkProfileStatus = async (userId: string) => {
     console.log('Checking profile status for user:', userId);
     
@@ -134,13 +148,9 @@ const Index = () => {
         if (isComplete) {
           setUserProfile(profile);
           setProfileComplete(true);
-          // Check onboarding status independently - always show onboarding if shouldShowOnboarding is true
-          if (!location.state?.screen) {
-            if (shouldShowOnboarding) {
-              setCurrentScreen('onboarding');
-            } else {
-              setCurrentScreen('matches');
-            }
+          // Don't set screen here - let useEffect handle it after onboarding data loads
+          if (location.state?.screen) {
+            setCurrentScreen(location.state.screen);
           }
         } else {
           setProfileComplete(false);
