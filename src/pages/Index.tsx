@@ -216,6 +216,17 @@ const Index = () => {
     setCurrentScreen('chat');
   };
 
+  const handleBackToChats = () => {
+    console.log('Navigating back to chats screen');
+    setCurrentScreen('chats');
+    setCurrentChat(null);
+  };
+
+  const handleNavigateToChats = () => {
+    console.log('Navigating to chats screen');
+    setCurrentScreen('chats');
+  };
+
   const handleSignOut = async () => {
     console.log('Signing out user');
     setLoading(true);
@@ -276,7 +287,7 @@ const Index = () => {
           </div>
         );
       case 'matches':
-        return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} />;
+        return <MatchesScreen userProfile={userProfile} onStartChat={handleStartChat} onNavigateToChats={handleNavigateToChats} />;
       case 'chats':
         return <ChatsListScreen onStartChat={handleStartChat} />;
       case 'chat':
@@ -286,6 +297,7 @@ const Index = () => {
             matchedUserId={currentChat.matchedUserId}
             matchedUserName={currentChat.matchedUserName}
             matchedUserVibes={currentChat.matchedUserVibes}
+            onBackToChats={handleBackToChats}
           />
         ) : (
           <ChatsListScreen onStartChat={handleStartChat} />

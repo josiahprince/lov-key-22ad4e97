@@ -35,9 +35,10 @@ interface MatchesScreenProps {
     matchedUserName: string;
     matchedUserVibes: string;
   }) => void;
+  onNavigateToChats?: () => void;
 }
 
-const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
+const MatchesScreen = ({ userProfile, onStartChat, onNavigateToChats }: MatchesScreenProps) => {
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
   const [processingRequests, setProcessingRequests] = useState<string[]>([]);
   const { matches, loading, refetch } = useMatches();
@@ -134,15 +135,9 @@ const MatchesScreen = ({ userProfile, onStartChat }: MatchesScreenProps) => {
         // Refetch matches to remove the accepted chat from matches list
         refetch();
         
-        if (onStartChat) {
-          const vibesText = match.memes.map((m: any) => m.title).join(' • ');
-          
-          onStartChat({
-            matchId: match.id,
-            matchedUserId: match.userId,
-            matchedUserName: match.name,
-            matchedUserVibes: vibesText || match.mood
-          });
+        // Navigate to chats screen after accepting
+        if (onNavigateToChats) {
+          onNavigateToChats();
         }
       }
     } catch (error) {

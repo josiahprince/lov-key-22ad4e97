@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, Send, Images, Eye } from 'lucide-react';
+import { Clock, Send, Images, Eye, ArrowLeft } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -12,9 +12,10 @@ interface ChatScreenProps {
   matchedUserId: string;
   matchedUserName: string;
   matchedUserVibes: string;
+  onBackToChats?: () => void;
 }
 
-const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes }: ChatScreenProps) => {
+const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, onBackToChats }: ChatScreenProps) => {
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
@@ -95,23 +96,35 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes 
       <div className="p-3 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="relative">
-              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
-                <img 
-                  src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=100&h=100&fit=crop&crop=face"
-                  alt={matchedUserName}
-                  className={`w-full h-full object-cover ${!canViewPhotos() ? 'filter blur-sm' : ''}`}
-                />
-              </div>
-              {!canViewPhotos() && (
-                <div className="absolute inset-0 w-8 h-8 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
-                  <span className="text-xs">📚</span>
+            {onBackToChats && (
+              <Button
+                onClick={onBackToChats}
+                variant="ghost"
+                size="sm"
+                className="p-1 h-8 w-8"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
+                  <img 
+                    src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=100&h=100&fit=crop&crop=face"
+                    alt={matchedUserName}
+                    className={`w-full h-full object-cover ${!canViewPhotos() ? 'filter blur-sm' : ''}`}
+                  />
                 </div>
-              )}
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-800 text-sm">{matchedUserName}</h2>
-              <p className="text-xs text-gray-600">{matchedUserVibes}</p>
+                {!canViewPhotos() && (
+                  <div className="absolute inset-0 w-8 h-8 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
+                    <span className="text-xs">📚</span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <h2 className="font-semibold text-gray-800 text-sm">{matchedUserName}</h2>
+                <p className="text-xs text-gray-600">{matchedUserVibes}</p>
+              </div>
             </div>
           </div>
           
