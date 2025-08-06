@@ -24,6 +24,20 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
     refetch();
   }, []);
 
+  // Also refetch when the component becomes visible (tab switching)
+  React.useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refetch();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [refetch]);
+
   if (loading) {
     return (
       <div className="p-6 space-y-6 pb-20">

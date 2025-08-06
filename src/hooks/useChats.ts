@@ -202,6 +202,28 @@ export const useChats = () => {
 
   useEffect(() => {
     fetchChats();
+
+    // Set up real-time subscription for matches table
+    const matchesChannel = supabase
+      .channel('matches-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'matches'
+        },
+        (payload) => {
+          console.log('Matches updated:', payload);
+          // Refetch chats when matches are updated
+          fetchChats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(matchesChannel);
+    };
   }, []);
 
   return {
