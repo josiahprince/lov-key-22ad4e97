@@ -45,15 +45,35 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
   // Load existing data when component mounts
   useEffect(() => {
     if (!loading && onboardingData && shouldShowOnboarding) {
-      // Only show existing data dialog if user hasn't started modifying anything
-      if (!mood && selectedMemes.length === 0 && !promptAnswer) {
+      // Check if we have valid existing data (not placeholder values)
+      const hasValidMood = onboardingData.mood && 
+        onboardingData.mood !== 'pending_daily_update' && 
+        onboardingData.mood.trim() !== '';
+      
+      const hasValidMemes = onboardingData.selectedMemes && 
+        onboardingData.selectedMemes.length > 0 && 
+        !onboardingData.selectedMemes.includes('pending') &&
+        !(onboardingData.selectedMemes.length === 1 && onboardingData.selectedMemes[0] === 'pending');
+      
+      const hasValidSunday = onboardingData.perfectSunday && 
+        onboardingData.perfectSunday !== 'pending_daily_update' && 
+        onboardingData.perfectSunday.trim() !== '';
+
+      // Only show existing data dialog if user hasn't started modifying anything AND we have valid previous data
+      if (!mood && selectedMemes.length === 0 && !promptAnswer && 
+          hasValidMood && hasValidMemes && hasValidSunday) {
         setMood(onboardingData.mood);
         setSelectedMemes(onboardingData.selectedMemes);
         setPromptAnswer(onboardingData.perfectSunday);
         setShowExistingData(true);
+      } else if (hasValidMood && hasValidMemes && hasValidSunday) {
+        // Pre-populate with existing data but don't show the dialog
+        setMood(onboardingData.mood);
+        setSelectedMemes(onboardingData.selectedMemes);
+        setPromptAnswer(onboardingData.perfectSunday);
       }
     }
-  }, [loading, onboardingData, shouldShowOnboarding]);
+  }, [loading, onboardingData, shouldShowOnboarding, mood, selectedMemes, promptAnswer]);
 
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
@@ -123,7 +143,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
         <div className="space-y-4 animate-fade-in">
           <div className="text-center space-y-2">
             <h2 className="text-lg font-bold text-gray-800">Welcome back!</h2>
-            <p className="text-sm text-gray-600">Here are your current preferences:</p>
+            <p className="text-sm text-gray-600">Here are your current preferences from yesterday:</p>
           </div>
 
           <div className="space-y-3">
