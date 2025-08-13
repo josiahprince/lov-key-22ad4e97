@@ -112,8 +112,17 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     }
   };
 
-  const handleProceedWithExisting = () => {
+  const handleProceedWithExisting = async () => {
     if (onboardingData) {
+      try {
+        await saveOnboardingData({
+          mood: onboardingData.mood,
+          selectedMemes: onboardingData.selectedMemes,
+          perfectSunday: onboardingData.perfectSunday,
+        });
+      } catch (e) {
+        console.error('Failed to mark onboarding as shown with existing data', e);
+      }
       const profileData = {
         mood: onboardingData.mood,
         memes: onboardingData.selectedMemes,

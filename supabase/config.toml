@@ -70,3 +70,6 @@ verify_jwt = false
 
 [functions.reset-daily-onboarding]
 verify_jwt = false
+
+[functions.check-daily-onboarding]
+verify_jwt = false

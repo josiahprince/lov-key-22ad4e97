@@ -44,22 +44,16 @@ export const useOnboardingData = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // First, ensure user has timezone set
-      await detectAndUpdateTimezone(user.id);
+      // First, ensure user has timezone set and capture it
+      const timezone = await detectAndUpdateTimezone(user.id);
 
-      // Use the database function to check if onboarding should be shown
-      const { data: shouldShow, error: shouldShowError } = await supabase
-        .rpc('should_show_onboarding', { user_id_param: user.id });
+      // Ask DB if it's after 6 AM and what's today's date in user's timezone
+      const [{ data: isAfter6am }, { data: todayInTz }] = await Promise.all([
+        supabase.rpc('is_after_6am_in_timezone', { user_timezone: timezone }),
+        supabase.rpc('get_date_in_timezone', { user_timezone: timezone }),
+      ]);
 
-      if (shouldShowError) {
-        console.error('Error checking onboarding status:', shouldShowError);
-        // Fallback to old logic if function fails
-        setShouldShowOnboarding(true);
-      } else {
-        setShouldShowOnboarding(shouldShow);
-      }
-
-      // Fetch onboarding data
+      // Fetch latest onboarding data
       const { data, error } = await supabase
         .from('user_onboarding')
         .select('*')
@@ -70,7 +64,6 @@ export const useOnboardingData = () => {
 
       if (error) {
         console.error('Error fetching onboarding data:', error);
-        return;
       }
 
       if (data) {
@@ -85,6 +78,30 @@ export const useOnboardingData = () => {
           onboardingShownToday: data.onboarding_shown_today,
         });
       }
+
+      // Compute whether onboarding should be shown today (client-side safeguard)
+      let computedShouldShow = false;
+      if (isAfter6am) {
+        if (!data) {
+          computedShouldShow = true; // No record yet → show
+        } else if (!data.last_onboarding_date || data.last_onboarding_date < todayInTz) {
+          computedShouldShow = true; // New day → show
+        } else if (data.last_onboarding_date === todayInTz && data.onboarding_shown_today !== true) {
+          computedShouldShow = true; // Not shown yet today after 6am
+        }
+      }
+
+      // Also try the server-side decision. If it errors, fall back to computed value.
+      let serverDecision = computedShouldShow;
+      const { data: shouldShow, error: shouldShowError } = await supabase
+        .rpc('should_show_onboarding', { user_id_param: user.id });
+      if (shouldShowError) {
+        console.warn('should_show_onboarding RPC failed, using computed fallback:', shouldShowError?.message);
+      } else if (typeof shouldShow === 'boolean') {
+        serverDecision = shouldShow;
+      }
+
+      setShouldShowOnboarding(serverDecision || computedShouldShow);
     } catch (error) {
       console.error('Error in fetchOnboardingData:', error);
     } finally {
