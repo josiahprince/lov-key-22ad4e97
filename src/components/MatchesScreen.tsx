@@ -164,10 +164,12 @@ const MatchesScreen = ({ userProfile, onStartChat, onNavigateToChats }: MatchesS
     // If chat request is accepted, they can chat
     if (match.chatRequestStatus === 'accepted') {
       return {
-        text: "Chat",
+        text: "Go to Chats",
         icon: <MessageCircle className="w-4 h-4 mr-1" />,
         disabled: false,
-        onClick: () => handleAcceptChatRequest(match),
+        onClick: () => {
+          if (onNavigateToChats) onNavigateToChats();
+        },
         variant: "default" as const
       };
     }
