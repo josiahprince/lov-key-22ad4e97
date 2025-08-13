@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.10';
 
 const corsHeaders = {
@@ -8,7 +9,7 @@ const corsHeaders = {
 interface ResetResult {
   checked: number;
   resets: number;
-  errors: Array<{ user_id: string; error: string }>();
+  errors: Array<{ user_id: string; error: string }>;
 }
 
 Deno.serve(async (req) => {
@@ -28,7 +29,7 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(supabaseUrl, serviceKey);
 
-  const result: ResetResult = { checked: 0, resets: 0, errors: [] } as any;
+  const result: ResetResult = { checked: 0, resets: 0, errors: [] };
 
   try {
     // Fetch all profiles that have a timezone set
@@ -44,10 +45,19 @@ Deno.serve(async (req) => {
       const tz = profile.timezone as string;
 
       // Check if it's after 6am in user's timezone and get today's date in tz
-      const [{ data: after6 }, { data: today }] = await Promise.all([
+      const [{ data: after6, error: after6Err }, { data: today, error: todayErr }] = await Promise.all([
         supabase.rpc('is_after_6am_in_timezone', { user_timezone: tz }),
         supabase.rpc('get_date_in_timezone', { user_timezone: tz }),
       ]);
+
+      if (after6Err) {
+        result.errors.push({ user_id: profile.id, error: after6Err.message });
+        continue;
+      }
+      if (todayErr) {
+        result.errors.push({ user_id: profile.id, error: todayErr.message });
+        continue;
+      }
 
       if (!after6) continue; // Only reset after crossing 6am
 
@@ -71,7 +81,7 @@ Deno.serve(async (req) => {
       if (!onboarding.last_onboarding_date || onboarding.last_onboarding_date < today) {
         const { error: updateError } = await supabase
           .from('user_onboarding')
-          .update({ onboarding_shown_today: false, last_6am_reset: new Date().toISOString() })
+          .update({ onboarding_shown_today: false })
           .eq('id', onboarding.id);
 
         if (updateError) {
