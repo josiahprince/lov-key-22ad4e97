@@ -138,11 +138,14 @@ export const useChats = () => {
           console.error('Error fetching profile for user:', matchUserId, profileError);
         }
 
-        // Fetch onboarding data for the match - use maybeSingle to handle missing data
+        // Fetch onboarding data for the match - get the most recent non-pending record
         const { data: matchOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
+          .neq('mood', 'pending_daily_update')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (onboardingError) {
@@ -150,9 +153,9 @@ export const useChats = () => {
           continue; // Skip this chat if we can't fetch onboarding data
         }
 
-        // Skip if no onboarding data exists
+        // Skip if no valid onboarding data exists
         if (!matchOnboarding) {
-          console.warn('No onboarding data found for user:', matchUserId, 'skipping chat');
+          console.warn('No valid onboarding data found for user:', matchUserId, 'skipping chat');
           continue;
         }
 
