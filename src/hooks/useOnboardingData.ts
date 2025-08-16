@@ -53,14 +53,27 @@ export const useOnboardingData = () => {
         supabase.rpc('get_date_in_timezone', { user_timezone: timezone }),
       ]);
 
-      // Fetch latest onboarding data
+      // Fetch latest onboarding data - get the most recent non-pending record
       const { data, error } = await supabase
         .from('user_onboarding')
         .select('*')
         .eq('user_id', user.id)
+        .neq('mood', 'pending_daily_update')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      // If no valid onboarding data found, check if there are any records at all
+      let hasAnyRecord = false;
+      if (!data) {
+        const { data: anyRecord } = await supabase
+          .from('user_onboarding')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+        hasAnyRecord = !!anyRecord;
+      }
 
       if (error) {
         console.error('Error fetching onboarding data:', error);
