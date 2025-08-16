@@ -12,6 +12,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
   const [selectedMemes, setSelectedMemes] = useState<string[]>([]);
   const [promptAnswer, setPromptAnswer] = useState('');
   const [showExistingData, setShowExistingData] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const { onboardingData, loading, shouldShowOnboarding, saveOnboardingData } = useOnboardingData();
 
@@ -42,9 +43,9 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     { id: 'meme15', title: 'Meme Connoisseur', description: 'Instagram reels are my news source', emoji: '📱' },
   ];
 
-  // Load existing data when component mounts
+  // Load existing data when component mounts (only once)
   useEffect(() => {
-    if (!loading && onboardingData && shouldShowOnboarding) {
+    if (!loading && onboardingData && shouldShowOnboarding && !dataLoaded) {
       // Check if we have valid existing data (not placeholder values)
       const hasValidMood = onboardingData.mood && 
         onboardingData.mood !== 'pending_daily_update' && 
@@ -59,21 +60,17 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
         onboardingData.perfectSunday !== 'pending_daily_update' && 
         onboardingData.perfectSunday.trim() !== '';
 
-      // Only show existing data dialog if user hasn't started modifying anything AND we have valid previous data
-      if (!mood && selectedMemes.length === 0 && !promptAnswer && 
-          hasValidMood && hasValidMemes && hasValidSunday) {
+      if (hasValidMood && hasValidMemes && hasValidSunday) {
+        // Pre-populate with existing data
         setMood(onboardingData.mood);
         setSelectedMemes(onboardingData.selectedMemes);
         setPromptAnswer(onboardingData.perfectSunday);
         setShowExistingData(true);
-      } else if (hasValidMood && hasValidMemes && hasValidSunday) {
-        // Pre-populate with existing data but don't show the dialog
-        setMood(onboardingData.mood);
-        setSelectedMemes(onboardingData.selectedMemes);
-        setPromptAnswer(onboardingData.perfectSunday);
       }
+      
+      setDataLoaded(true);
     }
-  }, [loading, onboardingData, shouldShowOnboarding, mood, selectedMemes, promptAnswer]);
+  }, [loading, onboardingData, shouldShowOnboarding, dataLoaded]);
 
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
