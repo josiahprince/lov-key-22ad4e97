@@ -96,7 +96,8 @@ export const useOnboardingData = () => {
       let computedShouldShow = false;
       if (isAfter6am) {
         if (!data) {
-          computedShouldShow = true; // No record yet → show
+          // No valid (non-pending) record found → show onboarding
+          computedShouldShow = true;
         } else if (!data.last_onboarding_date || data.last_onboarding_date < todayInTz) {
           computedShouldShow = true; // New day → show
         } else if (data.last_onboarding_date === todayInTz && data.onboarding_shown_today !== true) {
@@ -113,6 +114,13 @@ export const useOnboardingData = () => {
       } else if (typeof shouldShow === 'boolean') {
         serverDecision = shouldShow;
       }
+
+      console.log('Onboarding decision:', { 
+        computedShouldShow, 
+        serverDecision, 
+        isAfter6am, 
+        hasValidData: !!data && data.mood !== 'pending_daily_update' 
+      });
 
       setShouldShowOnboarding(serverDecision || computedShouldShow);
     } catch (error) {
