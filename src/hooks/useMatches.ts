@@ -72,14 +72,13 @@ export const useMatches = () => {
 
       console.log('Fetching active matches (excluding accepted chats and expired matches)');
 
-      // Fetch only matches that haven't been accepted and haven't expired
-      // The database function handles deletion of expired matches automatically
+      // Fetch active matches (including accepted ones to show "Go to Chats" button)
+      // Only exclude chats that have messages (they belong in the chats screen)
       const { data: todayMatches, error: matchesError } = await supabase
         .from('matches')
         .select('*, chat_request_status, chat_request_sender, expires_at')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .eq('status', 'active') // Only active status for matches screen
-        .neq('chat_request_status', 'accepted') // Don't show accepted chats in matches
+        .eq('status', 'active') // Only active status for matches screen (chatting status goes to chats)
         .gt('expires_at', new Date().toISOString()) // Only non-expired matches
         .limit(10);
 
@@ -143,7 +142,6 @@ export const useMatches = () => {
           .select('*, chat_request_status, chat_request_sender, expires_at')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
           .eq('status', 'active') // Only active status for matches screen
-          .neq('chat_request_status', 'accepted')
           .gt('expires_at', new Date().toISOString());
 
         console.log('New matches after generation:', newMatches);
@@ -200,11 +198,14 @@ export const useMatches = () => {
           continue;
         }
 
-        // Fetch onboarding data for the match
+        // Fetch onboarding data for the match - get the most recent non-pending record
         const { data: matchOnboarding, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
+          .neq('mood', 'pending_daily_update')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (onboardingError) {
