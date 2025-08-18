@@ -20,7 +20,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
   const [photoRequestSent, setPhotoRequestSent] = useState(false);
-  const [shuffledStarters, setShuffledStarters] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Get current user
@@ -36,34 +35,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
 
   const { messages, loading, messageCounts, sendMessage, canViewPhotos } = useMessages(matchId, currentUserId);
 
-  const allConversationStarters = [
-    "What's the last book that really moved you?",
-    "If you could have coffee with anyone, who would it be?",
-    "What's a small thing that made you smile today?",
-    "Do you have a favorite spot in Bangalore?",
-    "What's your go-to comfort food when you're feeling down?",
-    "If you could travel anywhere right now, where would you go?",
-    "What's a hobby you've always wanted to try?",
-    "What song always puts you in a good mood?",
-    "What's the best advice someone has given you recently?",
-    "What's your idea of a perfect weekend?",
-    "If you could learn any skill instantly, what would it be?",
-    "What's the most interesting documentary you've watched?",
-    "Do you prefer sunrise or sunset? Why?",
-    "What's a childhood memory that still makes you laugh?",
-    "If you could have dinner with any fictional character, who would it be?",
-    "What's something you're really passionate about?",
-    "What's the best gift you've ever received?",
-    "Do you have any hidden talents?",
-    "What's your favorite way to unwind after a long day?",
-    "If you could live in any era, which would you choose?"
-  ];
-
-  // Shuffle conversation starters on component mount
-  useEffect(() => {
-    const shuffled = [...allConversationStarters].sort(() => Math.random() - 0.5);
-    setShuffledStarters(shuffled.slice(0, 12)); // Show 12 random starters
-  }, []);
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -96,9 +67,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     await sendMessage("Would you like to share more photos?", matchedUserId);
   };
 
-  const handleStarterClick = (starter: string) => {
-    setNewMessage(starter);
-  };
 
   const canRequestPhotos = messageCounts.total >= 60;
 
@@ -165,63 +133,7 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
         )}
       </div>
 
-      {/* Input and Controls - Moved up */}
-      <div className="p-3 space-y-2 bg-white border-b border-gray-200">
-        {/* Message Input */}
-        <div className="flex space-x-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            className="flex-1 rounded-full border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-9 text-sm"
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!canSend || !newMessage.trim()}
-            className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-2 disabled:bg-gray-300 h-9 w-9"
-          >
-            <Send className="w-3 h-3" />
-          </Button>
-        </div>
-        
-        {/* Conversation Starters */}
-        <div className="space-y-1">
-          <p className="text-xs text-gray-600">Conversation starters:</p>
-          <ScrollArea className="h-20 w-full">
-            <div className="space-y-1 pr-2">
-              <div className="flex flex-wrap gap-1">
-                {shuffledStarters.slice(0, 6).map((starter, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStarterClick(starter)}
-                    className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50 px-2 py-1 h-auto"
-                  >
-                    {starter}
-                  </Button>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {shuffledStarters.slice(6, 12).map((starter, index) => (
-                  <Button
-                    key={index + 6}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStarterClick(starter)}
-                    className="text-xs rounded-full border-rose-200 text-rose-700 hover:bg-rose-50 px-2 py-1 h-auto"
-                  >
-                    {starter}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </ScrollArea>
-        </div>
-      </div>
-
-      {/* Messages - Now takes remaining space */}
+      {/* Messages - Takes remaining space */}
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
           <div className="p-3 space-y-3">
@@ -266,6 +178,26 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
             )}
           </div>
         </ScrollArea>
+      </div>
+
+      {/* Message Input - Moved to bottom */}
+      <div className="p-3 bg-white border-t border-gray-200">
+        <div className="flex space-x-2">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type your message..."
+            className="flex-1 rounded-full border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-9 text-sm"
+            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!canSend || !newMessage.trim()}
+            className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-2 disabled:bg-gray-300 h-9 w-9"
+          >
+            <Send className="w-3 h-3" />
+          </Button>
+        </div>
       </div>
     </div>
   );
