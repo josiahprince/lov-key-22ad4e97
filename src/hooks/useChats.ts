@@ -139,19 +139,21 @@ export const useChats = () => {
         }
 
         // Fetch onboarding data for the match - get the most recent non-pending record
-        const { data: matchOnboarding, error: onboardingError } = await supabase
+        const { data: matchOnboardingData, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
           .neq('mood', 'pending_daily_update')
           .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .limit(1);
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
           continue; // Skip this chat if we can't fetch onboarding data
         }
+
+        // Handle multiple records properly by taking the first (most recent) one
+        const matchOnboarding = matchOnboardingData && matchOnboardingData.length > 0 ? matchOnboardingData[0] : null;
 
         // Skip if no valid onboarding data exists
         if (!matchOnboarding) {

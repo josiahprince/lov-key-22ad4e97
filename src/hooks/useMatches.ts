@@ -72,13 +72,13 @@ export const useMatches = () => {
 
       console.log('Fetching active matches (excluding accepted chats and expired matches)');
 
-      // Fetch active matches (excluding accepted chats which should only appear in chats screen)
+      // Fetch active matches (including accepted ones to show "Go to Chats" button)
+      // Only exclude chats that have messages (they belong in the chats screen)
       const { data: todayMatches, error: matchesError } = await supabase
         .from('matches')
         .select('*, chat_request_status, chat_request_sender, expires_at')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .eq('status', 'active') // Only active status for matches screen (chatting status goes to chats)
-        .neq('chat_request_status', 'accepted') // Exclude accepted chats - they belong in chats screen
         .gt('expires_at', new Date().toISOString()) // Only non-expired matches
         .limit(10);
 
@@ -142,7 +142,6 @@ export const useMatches = () => {
           .select('*, chat_request_status, chat_request_sender, expires_at')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
           .eq('status', 'active') // Only active status for matches screen
-          .neq('chat_request_status', 'accepted') // Exclude accepted chats - they belong in chats screen
           .gt('expires_at', new Date().toISOString());
 
         console.log('New matches after generation:', newMatches);
