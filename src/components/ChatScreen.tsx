@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
   const [canSend, setCanSend] = useState(true);
   const [photoRequestSent, setPhotoRequestSent] = useState(false);
   const [shuffledStarters, setShuffledStarters] = useState<string[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Get current user
   useEffect(() => {
@@ -63,6 +64,17 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     const shuffled = [...allConversationStarters].sort(() => Math.random() - 0.5);
     setShuffledStarters(shuffled.slice(0, 12)); // Show 12 random starters
   }, []);
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !canSend || loading) return;
@@ -210,41 +222,50 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
       </div>
 
       {/* Messages - Now takes remaining space */}
-      <div className="flex-1 p-3 space-y-2 overflow-y-auto">
-        {loading ? (
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto"></div>
-            <p className="mt-2 text-gray-500">Loading messages...</p>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] p-2 rounded-xl text-sm ${
-                  message.sender_id === currentUserId
-                    ? 'bg-rose-500 text-white rounded-br-sm'
-                    : 'bg-blue-100 text-gray-800 rounded-bl-sm'
-                }`}
-              >
-                <p>{message.content}</p>
+      <div className="flex-1 min-h-0">
+        <ScrollArea className="h-full">
+          <div className="p-3 space-y-3">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto"></div>
+                <p className="mt-2 text-gray-500">Loading messages...</p>
               </div>
-            </div>
-          ))
-        )}
-        
-        {!canSend && (
-          <div className="text-center">
-            <Card className="inline-flex items-center space-x-2 p-2 bg-yellow-50 border-yellow-200">
-              <Clock className="w-3 h-3 text-yellow-600" />
-              <span className="text-xs text-yellow-700">
-                Take your time... next message unlocks soon
-              </span>
-            </Card>
+            ) : (
+              <>
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'} mb-3`}
+                  >
+                    <div
+                      className={`max-w-[80%] p-3 rounded-xl text-sm ${
+                        message.sender_id === currentUserId
+                          ? 'bg-rose-500 text-white rounded-br-sm'
+                          : 'bg-blue-100 text-gray-800 rounded-bl-sm'
+                      }`}
+                    >
+                      <p className="break-words">{message.content}</p>
+                    </div>
+                  </div>
+                ))}
+                
+                {!canSend && (
+                  <div className="text-center py-4">
+                    <Card className="inline-flex items-center space-x-2 p-2 bg-yellow-50 border-yellow-200">
+                      <Clock className="w-3 h-3 text-yellow-600" />
+                      <span className="text-xs text-yellow-700">
+                        Take your time... next message unlocks soon
+                      </span>
+                    </Card>
+                  </div>
+                )}
+                
+                {/* Invisible element to scroll to */}
+                <div ref={messagesEndRef} />
+              </>
+            )}
           </div>
-        )}
+        </ScrollArea>
       </div>
     </div>
   );
