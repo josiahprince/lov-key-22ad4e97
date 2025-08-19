@@ -138,12 +138,11 @@ export const useChats = () => {
           console.error('Error fetching profile for user:', matchUserId, profileError);
         }
 
-        // Fetch onboarding data for the match - get the most recent non-pending record
+        // Fetch onboarding data for the match - get the most recent record (including pending)
         const { data: matchOnboardingData, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
-          .neq('mood', 'pending_daily_update')
           .order('created_at', { ascending: false })
           .limit(1);
 
