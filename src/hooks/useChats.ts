@@ -154,11 +154,12 @@ export const useChats = () => {
         // Handle multiple records properly by taking the first (most recent) one
         const matchOnboarding = matchOnboardingData && matchOnboardingData.length > 0 ? matchOnboardingData[0] : null;
 
-        // Skip if no valid onboarding data exists
-        if (!matchOnboarding) {
-          console.warn('No valid onboarding data found for user:', matchUserId, 'skipping chat');
-          continue;
-        }
+        // Use default values if no onboarding data exists instead of skipping the chat
+        const defaultOnboardingData = {
+          mood: 'chill',
+          selected_memes: [],
+          perfect_sunday: 'Relaxing at home'
+        };
 
         // Fetch main photo for the match
         const { data: matchPhoto, error: photoError } = await supabase
@@ -172,7 +173,7 @@ export const useChats = () => {
           console.error('Error fetching photo for user:', matchUserId, photoError);
         }
 
-        const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
+        const memeInfo = getMemeDisplayInfo((matchOnboarding || defaultOnboardingData).selected_memes || []);
         
         console.log('Chat data for match:', match.id, {
           matchProfile: matchProfile?.first_name,
@@ -185,7 +186,7 @@ export const useChats = () => {
           userId: matchUserId,
           name: matchProfile?.first_name || 'Unknown User',
           age: matchProfile?.age,
-          mood: matchOnboarding?.mood || 'chill',
+          mood: (matchOnboarding || defaultOnboardingData).mood || 'chill',
           memes: memeInfo,
           mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
           city: matchProfile?.city || 'Unknown',
