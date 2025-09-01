@@ -187,22 +187,11 @@ const Index = () => {
   const handleOnboardingComplete = async (profile: any) => {
     console.log('Onboarding completed:', profile);
     
-    // Small delay to ensure onboarding data is saved before checking requirements
-    setTimeout(async () => {
-      try {
-        const { data, error } = await supabase.rpc('generate_daily_matches');
-        if (error) {
-          console.error('Error generating daily matches:', error);
-        } else {
-          console.log('Daily matches generated:', data);
-        }
-      } catch (error) {
-        console.error('Error calling generate_daily_matches:', error);
-      }
-      
-      // Navigate to matches screen
-      setCurrentScreen('matches');
-    }, 1000);
+    // Navigate to matches screen immediately
+    setCurrentScreen('matches');
+    
+    // Generate matches in background (already handled by useOnboardingData hook)
+    console.log('Match generation triggered by onboarding completion');
   };
 
   const handleStartChat = (matchData: {
