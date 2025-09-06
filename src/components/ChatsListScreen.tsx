@@ -207,27 +207,30 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
               </Button>
             </div>
 
-            {/* Message Input Section - At Bottom */}
-            <div className="pt-3 border-t border-gray-200">
-              <div className="flex space-x-2">
-                <Input
-                  value={messageInputs[chat.id] || ''}
-                  onChange={(e) => handleInputChange(chat.id, e.target.value)}
-                  placeholder="Type your message..."
-                  className="flex-1 rounded-full border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-9 text-sm"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      handleSendMessage(chat.id, chat.userId, messageInputs[chat.id] || '');
-                    }
-                  }}
-                />
-                <Button
-                  onClick={() => handleSendMessage(chat.id, chat.userId, messageInputs[chat.id] || '')}
-                  disabled={!messageInputs[chat.id]?.trim()}
-                  className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-2 disabled:bg-gray-300 h-9 w-9"
-                >
-                  <Send className="w-3 h-3" />
-                </Button>
+            {/* Message Input Section - Enhanced */}
+            <div className="pt-3 border-t border-gray-200 bg-white">
+              <div className="p-2 bg-gray-50 rounded-lg">
+                <div className="flex space-x-2 items-center">
+                  <Input
+                    value={messageInputs[chat.id] || ''}
+                    onChange={(e) => handleInputChange(chat.id, e.target.value)}
+                    placeholder="Send a quick message..."
+                    className="flex-1 rounded-full border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-10 text-sm bg-white"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && messageInputs[chat.id]?.trim()) {
+                        handleSendMessage(chat.id, chat.userId, messageInputs[chat.id] || '');
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={() => handleSendMessage(chat.id, chat.userId, messageInputs[chat.id] || '')}
+                    disabled={!messageInputs[chat.id]?.trim()}
+                    className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-2 disabled:bg-gray-300 h-10 w-10 shrink-0"
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 px-2">Press Enter to send or use the Continue Chat button for full conversation</p>
               </div>
             </div>
           </Card>
