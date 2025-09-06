@@ -37,13 +37,15 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
 
   // Add effect to refetch when component mounts or becomes visible
   React.useEffect(() => {
+    console.log('ChatsListScreen mounted, refetching chats');
     refetch();
-  }, []);
+  }, [refetch]);
 
   // Also refetch when the component becomes visible (tab switching)
   React.useEffect(() => {
     const handleVisibilityChange = () => {
       if (!document.hidden) {
+        console.log('ChatsListScreen became visible, refetching chats');
         refetch();
       }
     };

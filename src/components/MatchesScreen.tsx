@@ -111,13 +111,19 @@ const MatchesScreen = ({ userProfile, onStartChat, onNavigateToChats }: MatchesS
     try {
       setProcessingRequests(prev => [...prev, match.id]);
 
-      const { error } = await supabase
+      console.log('Accepting chat request for match:', match.id);
+      
+      const { data, error } = await supabase
         .from('matches')
         .update({ 
           chat_request_status: 'accepted',
-          status: 'chatting' // Update status to chatting when accepted
+          status: 'chatting', // Update status to chatting when accepted
+          last_interaction_at: new Date().toISOString()
         })
-        .eq('id', match.id);
+        .eq('id', match.id)
+        .select(); // Add select to get the updated data back
+      
+      console.log('Update result:', { data, error });
       
       if (error) {
         console.error('Error accepting chat request:', error);
@@ -126,22 +132,41 @@ const MatchesScreen = ({ userProfile, onStartChat, onNavigateToChats }: MatchesS
           description: "Failed to accept chat request. Please try again.",
           variant: "destructive"
         });
-      } else {
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.error('No data returned from update, possible permission issue');
         toast({
-          title: "Chat request accepted!",
-          description: `You can now chat with ${match.name}`,
+          title: "Error", 
+          description: "Failed to update chat request. Please try again.",
+          variant: "destructive"
         });
-        
-        // Refetch matches to remove the accepted chat from matches list
-        refetch();
-        
-        // Navigate to chats screen after accepting
-        if (onNavigateToChats) {
-          onNavigateToChats();
-        }
+        return;
+      }
+
+      toast({
+        title: "Chat request accepted!",
+        description: `You can now chat with ${match.name}`,
+      });
+      
+      // Wait a moment for the database to be fully updated
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Refetch matches to remove the accepted chat from matches list
+      refetch();
+      
+      // Navigate to chats screen after accepting
+      if (onNavigateToChats) {
+        onNavigateToChats();
       }
     } catch (error) {
       console.error('Error accepting chat request:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
