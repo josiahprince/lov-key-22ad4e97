@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -48,7 +48,7 @@ export const useChats = () => {
     return selectedMemes.map(meme => memeMap[meme]).filter(Boolean);
   };
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
@@ -93,7 +93,7 @@ export const useChats = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const processChats = async (chatMatches: any[], currentUserId: string) => {
     const processedChats: ChatProfile[] = [];

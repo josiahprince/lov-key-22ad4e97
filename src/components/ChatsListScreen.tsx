@@ -35,11 +35,11 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
     getCurrentUser();
   }, []);
 
-  // Add effect to refetch when component mounts or becomes visible
+  // Add effect to refetch when component mounts
   React.useEffect(() => {
     console.log('ChatsListScreen mounted, refetching chats');
     refetch();
-  }, [refetch]);
+  }, []); // Remove refetch from dependencies to prevent infinite loop
 
   // Also refetch when the component becomes visible (tab switching)
   React.useEffect(() => {
@@ -54,7 +54,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [refetch]);
+  }, []); // Remove refetch from dependencies to prevent infinite loop
 
   const handleSendMessage = async (chatId: string, receiverId: string, message: string) => {
     if (!message.trim() || !currentUserId) return;
