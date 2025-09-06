@@ -1,13 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { MessageCircle, Clock, Loader2, User, Send } from 'lucide-react';
+import { MessageCircle, Clock, Loader2, User } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 
 interface ChatsListScreenProps {
   onStartChat: (matchData: {
@@ -21,20 +18,7 @@ interface ChatsListScreenProps {
 const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   const { chats, loading, refetch } = useChats();
   const navigate = useNavigate();
-  const [messageInputs, setMessageInputs] = useState<{ [key: string]: string }>({});
-  const [currentUserId, setCurrentUserId] = useState<string>('');
   
-  // Get current user
-  React.useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    };
-    getCurrentUser();
-  }, []);
-
   // Add effect to refetch when component mounts
   React.useEffect(() => {
     console.log('ChatsListScreen mounted, refetching chats');
@@ -56,42 +40,10 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
     };
   }, []); // Remove refetch from dependencies to prevent infinite loop
 
-  const handleSendMessage = async (chatId: string, receiverId: string, message: string) => {
-    if (!message.trim() || !currentUserId) return;
-
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          match_id: chatId,
-          sender_id: currentUserId,
-          receiver_id: receiverId,
-          content: message.trim()
-        });
-
-      if (error) {
-        console.error('Error sending message:', error);
-        toast.error('Failed to send message');
-        return;
-      }
-
-      // Clear the input for this specific chat
-      setMessageInputs(prev => ({ ...prev, [chatId]: '' }));
-      toast.success('Message sent!');
-      
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
-    }
-  };
-
-  const handleInputChange = (chatId: string, value: string) => {
-    setMessageInputs(prev => ({ ...prev, [chatId]: value }));
-  };
 
   if (loading) {
     return (
-      <div className="p-6 space-y-6 pb-20">
+      <div className="p-6 space-y-6 pb-32">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold text-gray-800">Your Chats</h1>
           <p className="text-gray-600">Loading your conversations...</p>
@@ -104,7 +56,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   }
 
   return (
-    <div className="px-4 space-y-4 pb-20">
+    <div className="px-4 space-y-4 pb-32">
       <div className="text-center space-y-2">
         <h1 className="text-lg font-bold text-gray-800">Your Chats</h1>
         <p className="text-sm text-gray-600">{chats.length} active conversations</p>
@@ -207,32 +159,6 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
               </Button>
             </div>
 
-            {/* Message Input Section - Enhanced */}
-            <div className="pt-3 border-t border-gray-200 bg-white">
-              <div className="p-2 bg-gray-50 rounded-lg">
-                <div className="flex space-x-2 items-center">
-                  <Input
-                    value={messageInputs[chat.id] || ''}
-                    onChange={(e) => handleInputChange(chat.id, e.target.value)}
-                    placeholder="Send a quick message..."
-                    className="flex-1 rounded-full border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-10 text-sm bg-white"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' && messageInputs[chat.id]?.trim()) {
-                        handleSendMessage(chat.id, chat.userId, messageInputs[chat.id] || '');
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={() => handleSendMessage(chat.id, chat.userId, messageInputs[chat.id] || '')}
-                    disabled={!messageInputs[chat.id]?.trim()}
-                    className="rounded-full bg-rose-500 hover:bg-rose-600 text-white p-2 disabled:bg-gray-300 h-10 w-10 shrink-0"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-gray-500 mt-1 px-2">Press Enter to send or use the Continue Chat button for full conversation</p>
-              </div>
-            </div>
           </Card>
         ))}
       </div>
