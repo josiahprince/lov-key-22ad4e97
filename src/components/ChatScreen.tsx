@@ -133,6 +133,35 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
         )}
       </div>
 
+      {/* Message Input - Placed at top for visibility */}
+      <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
+        <div className="flex space-x-3 items-center">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder={canSend ? "Type your message..." : "Wait a moment before sending..."}
+            disabled={!canSend}
+            className="flex-1 rounded-xl border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-11 text-sm px-4 disabled:bg-gray-100"
+            onKeyPress={(e) => e.key === 'Enter' && canSend && newMessage.trim() && handleSendMessage()}
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!canSend || !newMessage.trim()}
+            className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 disabled:bg-gray-300 h-11 min-w-[50px] transition-colors"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+        
+        {!canSend && (
+          <div className="mt-2 text-center">
+            <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+              ⏱️ Next message unlocks in a few seconds
+            </span>
+          </div>
+        )}
+      </div>
+
       {/* Messages - Takes remaining space */}
       <div className="flex-1 min-h-0">
         <ScrollArea className="h-full">
@@ -180,34 +209,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
         </ScrollArea>
       </div>
 
-      {/* Message Input - Fixed at bottom */}
-      <div className="p-4 bg-white border-t border-gray-200 shadow-lg">
-        <div className="flex space-x-3 items-center">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={canSend ? "Type your message..." : "Wait a moment before sending..."}
-            disabled={!canSend}
-            className="flex-1 rounded-xl border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-11 text-sm px-4 disabled:bg-gray-100"
-            onKeyPress={(e) => e.key === 'Enter' && canSend && newMessage.trim() && handleSendMessage()}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!canSend || !newMessage.trim()}
-            className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 disabled:bg-gray-300 h-11 min-w-[50px] transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        {!canSend && (
-          <div className="mt-2 text-center">
-            <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              ⏱️ Next message unlocks in a few seconds
-            </span>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
