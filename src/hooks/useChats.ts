@@ -208,9 +208,10 @@ export const useChats = () => {
   useEffect(() => {
     fetchChats();
 
-    // Set up real-time subscription for matches table
+    // Set up real-time subscription for matches table with unique channel ID
+    const channelId = `matches-updates-${Date.now()}-${Math.random()}`;
     const matchesChannel = supabase
-      .channel('matches-updates')
+      .channel(channelId)
       .on(
         'postgres_changes',
         {
@@ -229,7 +230,7 @@ export const useChats = () => {
     return () => {
       supabase.removeChannel(matchesChannel);
     };
-  }, []);
+  }, [fetchChats]);
 
   return {
     chats,

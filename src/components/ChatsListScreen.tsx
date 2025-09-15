@@ -19,26 +19,11 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   const { chats, loading, refetch } = useChats();
   const navigate = useNavigate();
   
-  // Add effect to refetch when component mounts
+  // Add effect to refetch when component mounts (only once)
   React.useEffect(() => {
     console.log('ChatsListScreen mounted, refetching chats');
     refetch();
-  }, []); // Remove refetch from dependencies to prevent infinite loop
-
-  // Also refetch when the component becomes visible (tab switching)
-  React.useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('ChatsListScreen became visible, refetching chats');
-        refetch();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []); // Remove refetch from dependencies to prevent infinite loop
+  }, [refetch]);
 
 
   if (loading) {
