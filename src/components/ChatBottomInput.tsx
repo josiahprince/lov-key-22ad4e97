@@ -61,7 +61,7 @@ const ChatBottomInput = () => {
   }
 
   return (
-    <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 shadow-lg">
+    <div className="fixed bottom-16 left-0 right-0 mx-auto max-w-md bg-white border-t border-gray-200 p-4 shadow-lg z-40">
       <div className="space-y-3">
         {/* Chat Selection */}
         <div className="flex items-center space-x-2">
