@@ -41,7 +41,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   }
 
   return (
-    <div className="px-4 space-y-4 pb-48">
+    <div className="px-4 space-y-4 pb-20">
       <div className="text-center space-y-2">
         <h1 className="text-lg font-bold text-gray-800">Your Chats</h1>
         <p className="text-sm text-gray-600">{chats.length} active conversations</p>

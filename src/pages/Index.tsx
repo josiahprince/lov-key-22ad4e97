@@ -11,7 +11,6 @@ import ChatScreen from '../components/ChatScreen';
 import ChatsListScreen from '../components/ChatsListScreen';
 import ProfileScreen from '../components/ProfileScreen';
 import Navigation from '../components/Navigation';
-import ChatBottomInput from '../components/ChatBottomInput';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
 
 const Index = () => {
@@ -323,7 +322,6 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
       <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
         {renderScreen()}
-        {currentScreen === 'chats' && <ChatBottomInput />}
         {currentScreen !== 'onboarding' && currentScreen !== 'profile-setup' && (
           <Navigation currentScreen={currentScreen} setCurrentScreen={setCurrentScreen} />
         )}
