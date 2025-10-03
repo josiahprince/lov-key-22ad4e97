@@ -94,11 +94,13 @@ export const useOnboardingData = () => {
 
       // Compute whether onboarding should be shown today (client-side safeguard)
       let computedShouldShow = false;
-      if (isAfter6am) {
-        if (!data) {
-          // No valid (non-pending) record found → show onboarding
-          computedShouldShow = true;
-        } else if (!data.last_onboarding_date || data.last_onboarding_date < todayInTz) {
+      
+      // For NEW users (no onboarding data), ALWAYS show onboarding regardless of time
+      if (!data) {
+        computedShouldShow = true;
+      } else if (isAfter6am) {
+        // For existing users, check if it's a new day after 6 AM
+        if (!data.last_onboarding_date || data.last_onboarding_date < todayInTz) {
           computedShouldShow = true; // New day → show
         } else if (data.last_onboarding_date === todayInTz && data.onboarding_shown_today !== true) {
           computedShouldShow = true; // Not shown yet today after 6am
