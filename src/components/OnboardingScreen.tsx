@@ -5,6 +5,8 @@ import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Heart, Smile, Meh, Frown, Zap, Coffee } from 'lucide-react';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
+import { useCulturalVibes } from '@/hooks/useCulturalVibes';
+import { supabase } from '@/integrations/supabase/client';
 
 const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }) => {
   const [step, setStep] = useState(1);
@@ -13,8 +15,10 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
   const [promptAnswer, setPromptAnswer] = useState('');
   const [showExistingData, setShowExistingData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [userCountry, setUserCountry] = useState<string | null>(null);
 
   const { onboardingData, loading, shouldShowOnboarding, saveOnboardingData } = useOnboardingData();
+  const { vibes: memes, loading: vibesLoading } = useCulturalVibes(userCountry);
 
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
@@ -25,23 +29,26 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     { id: 'sleepy', label: 'Sleepy', icon: Coffee, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
   ];
 
-  const memes = [
-    { id: 'meme1', title: 'Coffee Lover', description: 'When you need coffee to function', emoji: '☕' },
-    { id: 'meme2', title: 'Book Worm', description: 'One more chapter...', emoji: '📚' },
-    { id: 'meme3', title: 'Plant Parent', description: 'Talking to my plants daily', emoji: '🌱' },
-    { id: 'meme4', title: 'Night Owl', description: '3 AM thoughts hit different', emoji: '🦉' },
-    { id: 'meme5', title: 'Foodie', description: 'Photos of food > photos of myself', emoji: '🍜' },
-    { id: 'meme6', title: 'Cricket Fanatic', description: 'Checking scores every 5 minutes', emoji: '🏏' },
-    { id: 'meme7', title: 'Monsoon Mood', description: 'Chai and rain = perfect combo', emoji: '🌧️' },
-    { id: 'meme8', title: 'Metro Survivor', description: 'Peak hour travel is an adventure', emoji: '🚇' },
-    { id: 'meme9', title: 'Street Food Explorer', description: 'Gol gappa over fine dining', emoji: '🥟' },
-    { id: 'meme10', title: 'Bollywood Buff', description: 'Can quote any SRK dialogue', emoji: '🎬' },
-    { id: 'meme11', title: 'Traffic Philosopher', description: 'Deep thoughts during Silk Board jams', emoji: '🚗' },
-    { id: 'meme12', title: 'Festival Enthusiast', description: 'Already planning next celebration', emoji: '🎉' },
-    { id: 'meme13', title: 'IPL Loyalist', description: 'Team loyalty > everything else', emoji: '🏆' },
-    { id: 'meme14', title: 'Startup Dreamer', description: 'Next unicorn idea loading...', emoji: '🦄' },
-    { id: 'meme15', title: 'Meme Connoisseur', description: 'Instagram reels are my news source', emoji: '📱' },
-  ];
+  // Fetch user's country on component mount
+  useEffect(() => {
+    const fetchUserCountry = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('country')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.country) {
+          console.log('User country:', profile.country);
+          setUserCountry(profile.country);
+        }
+      }
+    };
+
+    fetchUserCountry();
+  }, []);
 
   // Load existing data when component mounts (only once)
   useEffect(() => {
@@ -130,11 +137,13 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
     }
   };
 
-  if (loading) {
+  if (loading || vibesLoading) {
     return (
       <div className="px-4 flex flex-col justify-center items-center min-h-[400px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
-        <p className="mt-4 text-gray-600">Loading your preferences...</p>
+        <p className="mt-4 text-gray-600">
+          {vibesLoading ? 'Preparing your personalized vibes...' : 'Loading your preferences...'}
+        </p>
       </div>
     );
   }

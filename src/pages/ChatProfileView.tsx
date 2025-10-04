@@ -112,7 +112,7 @@ const ChatProfileView = () => {
           </div>
 
           <ProfileHeader userProfile={matchedUserProfile} isMatchedUser={true} canViewPhotos={canViewPhotos} />
-          <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} />
+          <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} matchedUserId={matchedUserProfile.id} />
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
           <PhotoGallery userId={matchedUserProfile.id} canViewPhotos={canViewPhotos} isMatchedUser={true} />
           

@@ -1,12 +1,52 @@
 
 import { Card } from '@/components/ui/card';
+import { useCulturalVibes } from '@/hooks/useCulturalVibes';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VibeCardProps {
   onboardingData: any;
   isMatchedUser?: boolean;
+  matchedUserId?: string;
 }
 
-const VibeCard = ({ onboardingData, isMatchedUser = false }: VibeCardProps) => {
+const VibeCard = ({ onboardingData, isMatchedUser = false, matchedUserId }: VibeCardProps) => {
+  const [userCountry, setUserCountry] = useState<string | null>(null);
+  const { vibes: availableVibes } = useCulturalVibes(userCountry);
+
+  useEffect(() => {
+    const fetchCountry = async () => {
+      // If viewing matched user, get their country
+      if (isMatchedUser && matchedUserId) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('country')
+          .eq('id', matchedUserId)
+          .single();
+        
+        if (data?.country) {
+          setUserCountry(data.country);
+        }
+      } else {
+        // Get current user's country
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('country')
+            .eq('id', user.id)
+            .single();
+          
+          if (data?.country) {
+            setUserCountry(data.country);
+          }
+        }
+      }
+    };
+
+    fetchCountry();
+  }, [isMatchedUser, matchedUserId]);
+
   const getMoodIcon = (mood: string) => {
     switch (mood) {
       case 'happy': return '😊';
@@ -20,26 +60,8 @@ const VibeCard = ({ onboardingData, isMatchedUser = false }: VibeCardProps) => {
   };
 
   const getMemeData = () => {
-    const memes = [
-      { id: 'meme1', title: 'Coffee Lover', emoji: '☕' },
-      { id: 'meme2', title: 'Book Worm', emoji: '📚' },
-      { id: 'meme3', title: 'Plant Parent', emoji: '🌱' },
-      { id: 'meme4', title: 'Night Owl', emoji: '🦉' },
-      { id: 'meme5', title: 'Foodie', emoji: '🍜' },
-      { id: 'meme6', title: 'Cricket Fanatic', emoji: '🏏' },
-      { id: 'meme7', title: 'Monsoon Mood', emoji: '🌧️' },
-      { id: 'meme8', title: 'Metro Survivor', emoji: '🚇' },
-      { id: 'meme9', title: 'Street Food Explorer', emoji: '🥟' },
-      { id: 'meme10', title: 'Bollywood Buff', emoji: '🎬' },
-      { id: 'meme11', title: 'Traffic Philosopher', emoji: '🚗' },
-      { id: 'meme12', title: 'Festival Enthusiast', emoji: '🎉' },
-      { id: 'meme13', title: 'IPL Loyalist', emoji: '🏆' },
-      { id: 'meme14', title: 'Startup Dreamer', emoji: '🦄' },
-      { id: 'meme15', title: 'Meme Connoisseur', emoji: '📱' },
-    ];
-
-    return memes.filter(meme => 
-      onboardingData?.selectedMemes?.includes(meme.id)
+    return availableVibes.filter(vibe => 
+      onboardingData?.selectedMemes?.includes(vibe.id)
     );
   };
 

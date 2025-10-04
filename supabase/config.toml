@@ -73,3 +73,6 @@ verify_jwt = false
 
 [functions.check-daily-onboarding]
 verify_jwt = false
+
+[functions.generate-cultural-vibes]
+verify_jwt = false

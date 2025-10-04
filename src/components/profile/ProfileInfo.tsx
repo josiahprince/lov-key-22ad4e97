@@ -9,9 +9,10 @@ import { useState } from 'react';
 interface ProfileInfoProps {
   userProfile: any;
   isMatchedUser?: boolean;
+  matchedUserId?: string;
 }
 
-const ProfileInfo = ({ userProfile, isMatchedUser = false }: ProfileInfoProps) => {
+const ProfileInfo = ({ userProfile, isMatchedUser = false, matchedUserId }: ProfileInfoProps) => {
   const { onboardingData, loading: onboardingLoading } = useOnboardingData();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -41,7 +42,11 @@ const ProfileInfo = ({ userProfile, isMatchedUser = false }: ProfileInfoProps) =
       
       {/* Onboarding Data Card */}
       {onboardingData && !onboardingLoading && (
-        <VibeCard onboardingData={onboardingData} isMatchedUser={isMatchedUser} />
+        <VibeCard 
+          onboardingData={onboardingData} 
+          isMatchedUser={isMatchedUser}
+          matchedUserId={matchedUserId}
+        />
       )}
 
       {/* Profile Edit Modal - only show for own profile */}
