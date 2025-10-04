@@ -119,14 +119,19 @@ export const useOnboardingData = () => {
 
       const finalDecision = serverDecision || computedShouldShow;
 
-      console.log('Onboarding decision:', { 
+      console.log('🔍 Onboarding decision details:', { 
         computedShouldShow, 
         serverDecision, 
         isAfter6am, 
+        todayInTz,
+        lastOnboardingDate: data?.last_onboarding_date,
+        onboardingShownToday: data?.onboarding_shown_today,
         hasValidData: !!data && data.mood !== 'pending_daily_update',
+        hasAnyRecord,
         finalDecision
       });
 
+      console.log(`🎯 Setting shouldShowOnboarding to: ${finalDecision}`);
       setShouldShowOnboarding(finalDecision);
     } catch (error) {
       console.error('Error in fetchOnboardingData:', error);

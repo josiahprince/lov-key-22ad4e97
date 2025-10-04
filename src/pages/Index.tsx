@@ -105,15 +105,39 @@ const Index = () => {
 
   // Separate effect to handle onboarding screen logic after both profile and onboarding data are loaded
   useEffect(() => {
-    if (!loading && !onboardingLoading && profileComplete && !location.state?.screen) {
-      console.log('Onboarding logic check:', { shouldShowOnboarding, loading, onboardingLoading, profileComplete });
-      if (shouldShowOnboarding) {
-        console.log('Setting screen to onboarding');
-        setCurrentScreen('onboarding');
-      } else {
-        console.log('Setting screen to matches');
-        setCurrentScreen('matches');
-      }
+    // Only make screen decisions when both loading states are complete
+    if (loading || onboardingLoading) {
+      console.log('Still loading...', { loading, onboardingLoading });
+      return;
+    }
+
+    // Don't override navigation state
+    if (location.state?.screen) {
+      console.log('Navigation state present, skipping auto screen decision');
+      return;
+    }
+
+    // Only proceed if profile is complete
+    if (!profileComplete) {
+      console.log('Profile not complete, will show profile setup');
+      return;
+    }
+
+    // Now make the onboarding decision
+    console.log('Making onboarding decision:', { 
+      shouldShowOnboarding, 
+      loading, 
+      onboardingLoading, 
+      profileComplete,
+      currentScreen 
+    });
+
+    if (shouldShowOnboarding) {
+      console.log('✅ SHOWING ONBOARDING SCREEN');
+      setCurrentScreen('onboarding');
+    } else {
+      console.log('✅ SHOWING MATCHES SCREEN');
+      setCurrentScreen('matches');
     }
   }, [loading, onboardingLoading, profileComplete, shouldShowOnboarding, location.state]);
 
