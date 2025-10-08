@@ -223,7 +223,39 @@ export const useOnboardingData = () => {
   };
 
   useEffect(() => {
-    fetchOnboardingData();
+    let isMounted = true;
+    
+    const initOnboarding = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (isMounted && user) {
+        await fetchOnboardingData();
+      }
+    };
+    
+    initOnboarding();
+
+    // Subscribe to auth changes to refetch when user changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (isMounted && session?.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+        console.log('🔄 User changed, refetching onboarding data for:', session.user.id);
+        // Reset state first
+        setOnboardingData(null);
+        setLoading(true);
+        setShouldShowOnboarding(false);
+        // Then fetch fresh data
+        await fetchOnboardingData();
+      } else if (isMounted && !session?.user) {
+        // User logged out, reset state
+        setOnboardingData(null);
+        setLoading(false);
+        setShouldShowOnboarding(false);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return {
