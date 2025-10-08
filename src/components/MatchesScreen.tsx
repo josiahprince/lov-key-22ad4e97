@@ -150,14 +150,15 @@ const MatchesScreen = ({ userProfile, onStartChat, onNavigateToChats }: MatchesS
         description: `You can now chat with ${match.name}`,
       });
       
-      // Wait a moment for the database to be fully updated
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait a moment for the database to be fully updated and real-time to propagate
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       // Refetch matches to remove the accepted chat from matches list
-      refetch();
+      await refetch();
       
       // Navigate to chats screen after accepting
       if (onNavigateToChats) {
+        console.log('Navigating to chats screen after accepting request');
         onNavigateToChats();
       }
     } catch (error) {

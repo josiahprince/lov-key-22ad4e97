@@ -138,11 +138,13 @@ export const useChats = () => {
           console.error('Error fetching profile for user:', matchUserId, profileError);
         }
 
-        // Fetch onboarding data for the match - get the most recent record (including pending)
+        // Fetch onboarding data for the match - exclude pending records
         const { data: matchOnboardingData, error: onboardingError } = await supabase
           .from('user_onboarding')
           .select('*')
           .eq('user_id', matchUserId)
+          .neq('mood', 'pending_daily_update')
+          .not('selected_memes', 'cs', '["pending"]')
           .order('created_at', { ascending: false })
           .limit(1);
 
@@ -220,14 +222,17 @@ export const useChats = () => {
           table: 'matches'
         },
         (payload) => {
-          console.log('Matches updated:', payload);
+          console.log('🔄 Matches table updated, refetching chats:', payload);
           // Refetch chats when matches are updated
-          fetchChats();
+          setTimeout(() => fetchChats(), 300); // Small delay to ensure DB is updated
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up matches subscription');
       supabase.removeChannel(matchesChannel);
     };
   }, [fetchChats]);

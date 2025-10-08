@@ -19,11 +19,25 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
   const { chats, loading, refetch } = useChats();
   const navigate = useNavigate();
   
-  // Add effect to refetch when component mounts (only once)
+  // Add effect to refetch when component mounts or becomes visible
   React.useEffect(() => {
     console.log('ChatsListScreen mounted, refetching chats');
     refetch();
-  }, [refetch]);
+    
+    // Set up visibility change listener to refetch when returning to this screen
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('ChatsListScreen became visible, refetching');
+        refetch();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
 
   if (loading) {

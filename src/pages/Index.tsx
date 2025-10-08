@@ -238,6 +238,7 @@ const Index = () => {
   const handleNavigateToChats = () => {
     console.log('Navigating to chats screen');
     setCurrentScreen('chats');
+    setCurrentChat(null); // Clear any previous chat state
   };
 
   const handleSignOut = async () => {
