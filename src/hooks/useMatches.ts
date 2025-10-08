@@ -171,8 +171,8 @@ export const useMatches = () => {
     console.log('Processing matches:', matchesData.length);
 
     for (const match of matchesData) {
-      // Stop if we already have 3 matches
-      if (processedMatches.length >= 3) break;
+      // Stop if we already have 2 matches
+      if (processedMatches.length >= 2) break;
 
       // Determine which user is the match (not the current user)
       const isUser1 = match.user_1 === currentUserId;
