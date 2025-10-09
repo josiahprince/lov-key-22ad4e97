@@ -144,19 +144,27 @@ export const useChats = () => {
           .select('*')
           .eq('user_id', matchUserId)
           .neq('mood', 'pending_daily_update')
-          .not('selected_memes', 'cs', '["pending"]')
           .order('created_at', { ascending: false })
           .limit(1);
 
         if (onboardingError) {
           console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
-          continue; // Skip this chat if we can't fetch onboarding data
         }
 
         // Handle multiple records properly by taking the first (most recent) one
         const matchOnboarding = matchOnboardingData && matchOnboardingData.length > 0 ? matchOnboardingData[0] : null;
 
-        // Use default values if no onboarding data exists instead of skipping the chat
+        // Skip if onboarding data has pending values
+        if (matchOnboarding && (
+          matchOnboarding.mood === 'pending_daily_update' ||
+          (matchOnboarding.selected_memes && 
+           matchOnboarding.selected_memes.length === 1 && 
+           matchOnboarding.selected_memes[0] === 'pending')
+        )) {
+          continue;
+        }
+
+        // Use default values if no onboarding data exists
         const defaultOnboardingData = {
           mood: 'chill',
           selected_memes: [],
@@ -223,8 +231,8 @@ export const useChats = () => {
         },
         (payload) => {
           console.log('🔄 Matches table updated, refetching chats:', payload);
-          // Refetch chats when matches are updated
-          setTimeout(() => fetchChats(), 300); // Small delay to ensure DB is updated
+          // Refetch chats when matches are updated with longer delay for DB propagation
+          setTimeout(() => fetchChats(), 800);
         }
       )
       .subscribe((status) => {
