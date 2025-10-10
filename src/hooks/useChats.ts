@@ -58,7 +58,7 @@ export const useChats = () => {
         return;
       }
 
-      console.log('Fetching chats for user:', user.id);
+      console.log('🔍 Fetching chats for user:', user.id);
 
       // Fetch all accepted chat requests (active chats only, not inactive due to 48h rule)
       const { data: chatMatches, error: chatsError } = await supabase
@@ -69,7 +69,11 @@ export const useChats = () => {
         .in('status', ['active', 'chatting']) // Only active chats, inactive ones are removed by database function
         .order('last_interaction_at', { ascending: false });
 
-      console.log('Chat matches query result:', { chatMatches, chatsError });
+      console.log('📊 Chat matches query result:', { 
+        count: chatMatches?.length, 
+        matches: chatMatches,
+        error: chatsError 
+      });
 
       if (chatsError) {
         throw chatsError;
@@ -127,6 +131,8 @@ export const useChats = () => {
       const matchUserId = isUser1 ? match.user_2 : match.user_1;
 
       try {
+        console.log('👤 Fetching profile for matched user:', matchUserId);
+        
         // Fetch profile data for the match
         const { data: matchProfile, error: profileError } = await supabase
           .from('profiles')
@@ -134,8 +140,14 @@ export const useChats = () => {
           .eq('id', matchUserId)
           .maybeSingle();
 
+        console.log('👤 Profile fetch result:', { 
+          matchUserId, 
+          profileData: matchProfile, 
+          error: profileError 
+        });
+
         if (profileError) {
-          console.error('Error fetching profile for user:', matchUserId, profileError);
+          console.error('❌ Error fetching profile for user:', matchUserId, profileError);
         }
 
         // Fetch onboarding data for the match - exclude pending records
@@ -185,13 +197,7 @@ export const useChats = () => {
 
         const memeInfo = getMemeDisplayInfo((matchOnboarding || defaultOnboardingData).selected_memes || []);
         
-        console.log('Chat data for match:', match.id, {
-          matchProfile: matchProfile?.first_name,
-          matchOnboarding: matchOnboarding?.mood,
-          memeInfo: memeInfo.length
-        });
-        
-        processedChats.push({
+        const chatProfileData = {
           id: match.id,
           userId: matchUserId,
           name: matchProfile?.first_name || 'Unknown User',
@@ -203,15 +209,24 @@ export const useChats = () => {
           region: matchProfile?.region,
           country: matchProfile?.country,
           lastInteractionAt: match.last_interaction_at,
-          hasUnreadMessages: false // TODO: Implement unread message checking
+          hasUnreadMessages: false
+        };
+        
+        console.log('✅ Processed chat data for match:', match.id, {
+          matchProfile: matchProfile,
+          matchOnboarding: matchOnboarding?.mood,
+          memeInfo: memeInfo.length,
+          finalChatData: chatProfileData
         });
         
+        processedChats.push(chatProfileData);
       } catch (error) {
         console.error('Error processing chat for user:', matchUserId, error);
         continue;
       }
     }
 
+    console.log('💬 Final processed chats:', processedChats);
     setChats(processedChats);
   };
 
