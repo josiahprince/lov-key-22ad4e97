@@ -254,28 +254,31 @@ export const useOnboardingData = () => {
 
   useEffect(() => {
     let isMounted = true;
+    let isInitialized = false;
     
     const initOnboarding = async () => {
+      if (isInitialized) return; // Prevent duplicate initialization
+      isInitialized = true;
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (isMounted && user) {
         await fetchOnboardingData();
+      } else if (isMounted) {
+        // No user, set loading to false immediately
+        setLoading(false);
       }
     };
     
     initOnboarding();
 
-    // Subscribe to auth changes to refetch when user changes
+    // Subscribe to auth changes - but don't refetch unnecessarily
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (isMounted && session?.user && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
-        console.log('🔄 User changed, refetching onboarding data for:', session.user.id);
-        // Reset state first
-        setOnboardingData(null);
-        setLoading(true);
-        setShouldShowOnboarding(false);
-        // Then fetch fresh data
-        await fetchOnboardingData();
-      } else if (isMounted && !session?.user) {
+      // Skip if this is the initial session event (already handled by initOnboarding)
+      if (!isInitialized) return;
+      
+      if (isMounted && !session?.user) {
         // User logged out, reset state
+        console.log('🔄 User logged out, resetting onboarding state');
         setOnboardingData(null);
         setLoading(false);
         setShouldShowOnboarding(false);
