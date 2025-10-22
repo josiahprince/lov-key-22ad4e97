@@ -209,8 +209,8 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
             <Button 
               onClick={() => {
                 setShowExistingData(false);
-                // Keep the existing data loaded so user can modify them
-                // Data is already set in the state from useEffect
+                // Reset vibes selection to allow fresh picks
+                setSelectedMemes([]);
               }}
               variant="outline"
               className="flex-1 py-2 rounded-xl"
