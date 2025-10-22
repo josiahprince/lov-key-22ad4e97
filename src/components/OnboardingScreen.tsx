@@ -88,8 +88,8 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
         // Add the meme if under limit
         return [...prev, memeId];
       } else {
-        // If at limit (3), replace the last one with the new selection
-        return [...prev.slice(0, 2), memeId];
+        // At limit (3), don't allow adding more
+        return prev;
       }
     });
   };
