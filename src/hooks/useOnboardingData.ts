@@ -42,16 +42,41 @@ export const useOnboardingData = () => {
   const fetchOnboardingData = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       // First, ensure user has timezone set and capture it
       const timezone = await detectAndUpdateTimezone(user.id);
 
-      // Ask DB if it's after 6 AM and what's today's date in user's timezone
-      const [{ data: isAfter6am }, { data: todayInTz }] = await Promise.all([
-        supabase.rpc('is_after_6am_in_timezone', { user_timezone: timezone }),
-        supabase.rpc('get_date_in_timezone', { user_timezone: timezone }),
-      ]);
+      // Add timeout to RPC calls to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('RPC timeout')), 5000)
+      );
+
+      let isAfter6am = true; // Default to true
+      let todayInTz = new Date().toISOString().split('T')[0]; // Fallback to today
+
+      try {
+        // Ask DB if it's after 6 AM and what's today's date in user's timezone
+        const results = await Promise.race([
+          Promise.all([
+            supabase.rpc('is_after_6am_in_timezone', { user_timezone: timezone }),
+            supabase.rpc('get_date_in_timezone', { user_timezone: timezone }),
+          ]),
+          timeoutPromise
+        ]) as [
+          { data: boolean | null; error: any },
+          { data: string | null; error: any }
+        ];
+        
+        isAfter6am = results[0]?.data ?? true;
+        todayInTz = results[1]?.data ?? todayInTz;
+      } catch (rpcError) {
+        console.warn('RPC calls failed or timed out, using defaults:', rpcError);
+        // Continue with defaults
+      }
 
       // Fetch latest onboarding data - get the most recent non-pending record
       const { data, error } = await supabase
@@ -109,12 +134,17 @@ export const useOnboardingData = () => {
 
       // Also try the server-side decision. If it errors, fall back to computed value.
       let serverDecision = computedShouldShow;
-      const { data: shouldShow, error: shouldShowError } = await supabase
-        .rpc('should_show_onboarding', { user_id_param: user.id });
-      if (shouldShowError) {
-        console.warn('should_show_onboarding RPC failed, using computed fallback:', shouldShowError?.message);
-      } else if (typeof shouldShow === 'boolean') {
-        serverDecision = shouldShow;
+      try {
+        const serverResult = await Promise.race([
+          supabase.rpc('should_show_onboarding', { user_id_param: user.id }),
+          timeoutPromise
+        ]) as { data: boolean | null; error: any };
+        
+        if (serverResult && typeof serverResult.data === 'boolean') {
+          serverDecision = serverResult.data;
+        }
+      } catch (shouldShowError) {
+        console.warn('should_show_onboarding RPC failed or timed out, using computed fallback:', shouldShowError);
       }
 
       const finalDecision = serverDecision || computedShouldShow;
