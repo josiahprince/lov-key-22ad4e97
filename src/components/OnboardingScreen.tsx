@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Heart, Smile, Meh, Frown, Zap, Coffee } from 'lucide-react';
+import { Heart, Smile, Meh, Frown, Zap, Coffee, Flame } from 'lucide-react';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
 import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,10 +22,10 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
 
   const moods = [
     { id: 'happy', label: 'Happy', icon: Smile, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    { id: 'chill', label: 'Chill', icon: Heart, color: 'bg-green-100 text-green-700 border-green-200' },
+    { id: 'angry', label: 'Angry', icon: Flame, color: 'bg-red-100 text-red-700 border-red-200' },
     { id: 'anxious', label: 'Anxious', icon: Meh, color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    { id: 'deep', label: 'Deep', icon: Frown, color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    { id: 'energetic', label: 'Energetic', icon: Zap, color: 'bg-orange-100 text-orange-700 border-orange-200' },
+    { id: 'sad', label: 'Sad', icon: Frown, color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    { id: 'optimistic', label: 'Optimistic', icon: Heart, color: 'bg-pink-100 text-pink-700 border-pink-200' },
     { id: 'sleepy', label: 'Sleepy', icon: Coffee, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
   ];
 
