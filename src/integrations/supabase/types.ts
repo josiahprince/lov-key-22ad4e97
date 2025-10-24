@@ -316,17 +316,14 @@ export type Database = {
     }
     Functions: {
       generate_daily_matches: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           matches_created: number
           users_processed: number
           users_skipped_chat_limit: number
         }[]
       }
-      get_date_in_timezone: {
-        Args: { user_timezone: string }
-        Returns: string
-      }
+      get_date_in_timezone: { Args: { user_timezone: string }; Returns: string }
       is_after_6am_in_timezone: {
         Args: { user_timezone: string }
         Returns: boolean
