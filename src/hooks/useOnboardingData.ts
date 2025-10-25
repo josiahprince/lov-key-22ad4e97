@@ -271,12 +271,18 @@ export const useOnboardingData = () => {
     
     initOnboarding();
 
-    // Subscribe to auth changes - but don't refetch unnecessarily
+    // Subscribe to auth changes - refetch on sign in, reset on sign out
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip if this is the initial session event (already handled by initOnboarding)
-      if (!isInitialized) return;
+      if (!isMounted) return;
       
-      if (isMounted && !session?.user) {
+      console.log('🔄 Auth state change:', event);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        // User signed in, refetch their onboarding data
+        console.log('🔄 User signed in, fetching onboarding data');
+        setLoading(true);
+        await fetchOnboardingData();
+      } else if (!session?.user) {
         // User logged out, reset state
         console.log('🔄 User logged out, resetting onboarding state');
         setOnboardingData(null);
