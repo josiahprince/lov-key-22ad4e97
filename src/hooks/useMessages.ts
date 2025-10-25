@@ -118,7 +118,11 @@ export const useMessages = (matchId: string, currentUserId: string) => {
     fetchMessages();
 
     const channel = supabase
-      .channel(`messages-${matchId}`)
+      .channel(`messages:${matchId}`, {
+        config: {
+          broadcast: { self: false }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -128,6 +132,7 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           filter: `match_id=eq.${matchId}`
         },
         (payload) => {
+          console.log('Realtime message received:', payload);
           const newMessage = payload.new as Message;
           setMessages(prev => {
             // Avoid duplicates
@@ -149,9 +154,12 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [matchId, currentUserId]);
