@@ -217,6 +217,9 @@ export const useOnboardingData = () => {
 
       // Mark that onboarding should not be shown again today
       setShouldShowOnboarding(false);
+      
+      // Force update the local state immediately to prevent re-showing
+      console.log('✅ Onboarding completed, flag set to false for today');
 
       // Trigger daily match generation after successful onboarding
       try {
@@ -255,6 +258,7 @@ export const useOnboardingData = () => {
   useEffect(() => {
     let isMounted = true;
     let isInitialized = false;
+    let currentUserId: string | null = null;
     
     const initOnboarding = async () => {
       if (isInitialized) return; // Prevent duplicate initialization
@@ -262,6 +266,7 @@ export const useOnboardingData = () => {
       
       const { data: { user } } = await supabase.auth.getUser();
       if (isMounted && user) {
+        currentUserId = user.id;
         await fetchOnboardingData();
       } else if (isMounted) {
         // No user, set loading to false immediately
@@ -271,18 +276,28 @@ export const useOnboardingData = () => {
     
     initOnboarding();
 
-    // Subscribe to auth changes - but don't refetch unnecessarily
+    // Subscribe to auth changes - only refetch on actual user change
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip if this is the initial session event (already handled by initOnboarding)
-      if (!isInitialized) return;
+      if (!isMounted || !isInitialized) return;
       
-      if (isMounted && !session?.user) {
-        // User logged out, reset state
+      const newUserId = session?.user?.id || null;
+      
+      // User logged out
+      if (!newUserId && currentUserId) {
         console.log('🔄 User logged out, resetting onboarding state');
+        currentUserId = null;
         setOnboardingData(null);
         setLoading(false);
         setShouldShowOnboarding(false);
       }
+      // Different user logged in (not just session refresh)
+      else if (newUserId && newUserId !== currentUserId) {
+        console.log('🔄 New user logged in, fetching onboarding data');
+        currentUserId = newUserId;
+        setLoading(true);
+        await fetchOnboardingData();
+      }
+      // Same user, session refresh - don't refetch to avoid showing onboarding again
     });
 
     return () => {
