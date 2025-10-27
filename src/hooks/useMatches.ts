@@ -88,15 +88,33 @@ export const useMatches = () => {
         throw matchesError;
       }
 
-      if (!todayMatches || todayMatches.length === 0) {
-        console.log('No matches found, checking if new ones can be generated');
+      // Check how many matches were created TODAY (regardless of current status)
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const { data: todayCreatedMatches, error: todayMatchesError } = await supabase
+        .from('matches')
+        .select('id, status, chat_request_status, created_at')
+        .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
+        .gte('matched_on', todayStart.toISOString());
+
+      if (todayMatchesError) {
+        console.error('Error checking today\'s matches:', todayMatchesError);
+      }
+
+      const matchesCreatedToday = todayCreatedMatches?.length || 0;
+      console.log(`User has ${matchesCreatedToday} matches created today`);
+
+      // If no active matches to display but haven't generated 2 matches today, try to generate
+      if ((!todayMatches || todayMatches.length === 0) && matchesCreatedToday < 2) {
+        console.log('No active matches found and less than 2 matches created today, checking if new ones can be generated');
         
         // Check how many active chats the user has
         const { data: activeChats, error: chatsError } = await supabase
           .from('matches')
           .select('id')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .in('status', ['active', 'chatting']) // Include both active and chatting status
+          .in('status', ['active', 'chatting'])
           .eq('chat_request_status', 'accepted');
 
         if (chatsError) {
@@ -104,6 +122,7 @@ export const useMatches = () => {
         }
 
         const activeChatCount = activeChats?.length || 0;
+        console.log(`User has ${activeChatCount} active chats`);
         
         if (activeChatCount >= 6) {
           console.log('User has 6+ active chats, not generating new matches');
@@ -117,6 +136,7 @@ export const useMatches = () => {
         }
 
         // Try to generate new matches using the RPC function
+        console.log('Calling generate_daily_matches RPC');
         const { data: generationResult, error: generateError } = await supabase
           .rpc('generate_daily_matches');
         
@@ -141,17 +161,23 @@ export const useMatches = () => {
           .from('matches')
           .select('*, chat_request_status, chat_request_sender, expires_at')
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .eq('status', 'active') // Only active status for matches screen
+          .eq('status', 'active')
           .gt('expires_at', new Date().toISOString());
 
         console.log('New matches after generation:', newMatches);
 
         if (newMatches) {
           await processMatches(newMatches, user.id);
+        } else {
+          setMatches([]);
         }
-      } else {
-        console.log('Found existing matches:', todayMatches.length);
+      } else if (todayMatches && todayMatches.length > 0) {
+        console.log('Found existing active matches:', todayMatches.length);
         await processMatches(todayMatches, user.id);
+      } else {
+        // User already has 2 matches created today but none are active (all accepted/expired)
+        console.log('User already has 2 matches created today');
+        setMatches([]);
       }
 
     } catch (error) {
