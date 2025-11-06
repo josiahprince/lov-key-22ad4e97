@@ -19,9 +19,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
-    if (!DEEPSEEK_API_KEY) {
-      throw new Error('DEEPSEEK_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
     const { country } = await req.json();
@@ -32,15 +32,15 @@ Deno.serve(async (req) => {
 
     console.log(`Generating vibes for country: ${country}`);
 
-    // Call Deepseek API to generate culturally relevant vibes
-    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+    // Call Lovable AI Gateway to generate culturally relevant vibes
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'deepseek-chat',
+        model: 'google/gemini-2.5-flash',
         messages: [
           {
             role: 'system',
@@ -80,14 +80,22 @@ Return ONLY the JSON array, no other text.`
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Deepseek API error:', response.status, errorText);
-      throw new Error(`Deepseek API error: ${response.status}`);
+      console.error('Lovable AI error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      if (response.status === 402) {
+        throw new Error('Payment required. Please add credits to your workspace.');
+      }
+      
+      throw new Error(`Lovable AI error: ${response.status}`);
     }
 
     const data = await response.json();
     const content = data.choices[0].message.content;
     
-    console.log('Raw Deepseek response:', content);
+    console.log('Raw AI response:', content);
 
     // Parse the JSON response
     let vibesData: Array<{title: string; description: string; emoji: string}>;
@@ -100,8 +108,8 @@ Return ONLY the JSON array, no other text.`
         vibesData = JSON.parse(content);
       }
     } catch (parseError) {
-      console.error('Failed to parse Deepseek response:', parseError);
-      throw new Error('Invalid response format from Deepseek');
+      console.error('Failed to parse AI response:', parseError);
+      throw new Error('Invalid response format from AI');
     }
 
     // Validate and format the vibes
