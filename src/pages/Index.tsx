@@ -17,7 +17,7 @@ const Index = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState('onboarding');
+  const [currentScreen, setCurrentScreen] = useState<string>('');
   const location = useLocation();
   const [userProfile, setUserProfile] = useState(null);
   const [profileComplete, setProfileComplete] = useState(false);
@@ -38,7 +38,7 @@ const Index = () => {
       // Clear the state to prevent it from persisting
       window.history.replaceState({}, '', location.pathname);
     }
-  }, [location.state]);
+  }, [location.state?.screen]);
 
   useEffect(() => {
     console.log('Index component mounted, setting up auth listener...');
@@ -111,15 +111,15 @@ const Index = () => {
       return;
     }
 
-    // Don't override navigation state
-    if (location.state?.screen) {
-      console.log('Navigation state present, skipping auto screen decision');
-      return;
-    }
-
     // Only proceed if profile is complete
     if (!profileComplete) {
       console.log('Profile not complete, will show profile setup');
+      return;
+    }
+
+    // Don't override user-initiated navigation (like back from profile view)
+    if (location.state?.screen && currentScreen !== '') {
+      console.log('Navigation state present, skipping auto screen decision');
       return;
     }
 
@@ -135,11 +135,11 @@ const Index = () => {
     if (shouldShowOnboarding) {
       console.log('✅ SHOWING ONBOARDING SCREEN');
       setCurrentScreen('onboarding');
-    } else {
-      console.log('✅ SHOWING MATCHES SCREEN');
+    } else if (!currentScreen || currentScreen === '') {
+      console.log('✅ SHOWING MATCHES SCREEN (default)');
       setCurrentScreen('matches');
     }
-  }, [loading, onboardingLoading, profileComplete, shouldShowOnboarding, location.state]);
+  }, [loading, onboardingLoading, profileComplete, shouldShowOnboarding]);
 
   const checkProfileStatus = async (userId: string) => {
     console.log('Checking profile status for user:', userId);
@@ -173,9 +173,7 @@ const Index = () => {
           setUserProfile(profile);
           setProfileComplete(true);
           // Don't set screen here - let useEffect handle it after onboarding data loads
-          if (location.state?.screen) {
-            setCurrentScreen(location.state.screen);
-          }
+          console.log('Profile is complete, waiting for onboarding data to determine screen...');
         } else {
           setProfileComplete(false);
           setCurrentScreen('profile-setup');
