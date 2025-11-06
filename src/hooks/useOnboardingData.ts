@@ -198,6 +198,8 @@ export const useOnboardingData = () => {
           updated_at: new Date().toISOString(),
           onboarding_shown_today: true,
           last_onboarding_date: todayInTz,
+        }, {
+          onConflict: 'user_id'
         })
         .select()
         .single();
