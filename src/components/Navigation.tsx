@@ -1,5 +1,6 @@
 
 import { Heart, MessageCircle, User, Search } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 const Navigation = ({ currentScreen, setCurrentScreen }: { 
   currentScreen: string; 
@@ -13,7 +14,8 @@ const Navigation = ({ currentScreen, setCurrentScreen }: {
 
   return (
     <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
-      <div className="flex justify-around">
+      <div className="flex justify-between items-center">
+        <div className="flex justify-around flex-1">
         {navItems.map((item) => {
           const IconComponent = item.icon;
           // Handle both 'chats' and 'chat' as active for chats tab
@@ -34,6 +36,8 @@ const Navigation = ({ currentScreen, setCurrentScreen }: {
             </button>
           );
         })}
+        </div>
+        <NotificationBell />
       </div>
     </div>
   );
