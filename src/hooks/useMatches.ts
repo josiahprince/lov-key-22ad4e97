@@ -105,8 +105,20 @@ export const useMatches = () => {
       const matchesCreatedToday = todayCreatedMatches?.length || 0;
       console.log(`User has ${matchesCreatedToday} matches created today`);
 
-      // If no active matches to display but haven't generated 2 matches today, try to generate
-      if ((!todayMatches || todayMatches.length === 0) && matchesCreatedToday < 2) {
+      // If user already has 2 matches created today, don't generate more (regardless of status)
+      if (matchesCreatedToday >= 2) {
+        console.log('User already has 2 matches created today, not generating more');
+        if (todayMatches && todayMatches.length > 0) {
+          await processMatches(todayMatches, user.id);
+        } else {
+          setMatches([]);
+        }
+        return;
+      }
+
+      // If we get here, user has less than 2 matches created today
+      // Check if we should generate new ones
+      if (!todayMatches || todayMatches.length === 0) {
         console.log('No active matches found and less than 2 matches created today, checking if new ones can be generated');
         
         // Check how many active chats the user has
@@ -171,13 +183,9 @@ export const useMatches = () => {
         } else {
           setMatches([]);
         }
-      } else if (todayMatches && todayMatches.length > 0) {
+      } else {
         console.log('Found existing active matches:', todayMatches.length);
         await processMatches(todayMatches, user.id);
-      } else {
-        // User already has 2 matches created today but none are active (all accepted/expired)
-        console.log('User already has 2 matches created today');
-        setMatches([]);
       }
 
     } catch (error) {
