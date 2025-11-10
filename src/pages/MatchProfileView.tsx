@@ -7,7 +7,9 @@ import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileInfo from '@/components/profile/ProfileInfo';
 import PhotoGallery from '@/components/profile/PhotoGallery';
 import MatchedUserDescriptionSection from '@/components/profile/MatchedUserDescriptionSection';
+import PhotoGalleryViewer from '@/components/profile/PhotoGalleryViewer';
 import { useMessages } from '@/hooks/useMessages';
+import { useUserPhotos } from '@/hooks/useUserPhotos';
 
 const MatchProfileView = () => {
   const { matchId } = useParams();
@@ -15,9 +17,11 @@ const MatchProfileView = () => {
   const [matchedUserProfile, setMatchedUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   
   const { messages } = useMessages(matchId || '', currentUserId || '');
   const canViewPhotos = messages.length >= 60;
+  const { photos } = useUserPhotos(matchedUserProfile?.id);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -111,7 +115,12 @@ const MatchProfileView = () => {
             <h1 className="text-xl font-bold text-gray-800">Profile</h1>
           </div>
 
-          <ProfileHeader userProfile={matchedUserProfile} isMatchedUser={true} canViewPhotos={canViewPhotos} />
+          <ProfileHeader 
+            userProfile={matchedUserProfile} 
+            isMatchedUser={true} 
+            canViewPhotos={canViewPhotos}
+            onPhotoClick={() => setIsGalleryOpen(true)}
+          />
           <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} matchedUserId={matchedUserProfile.id} />
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
           <PhotoGallery userId={matchedUserProfile.id} canViewPhotos={canViewPhotos} isMatchedUser={true} />
@@ -128,6 +137,13 @@ const MatchProfileView = () => {
           )}
         </div>
       </div>
+      
+      <PhotoGalleryViewer
+        photos={photos}
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        canViewPhotos={canViewPhotos}
+      />
     </div>
   );
 };
