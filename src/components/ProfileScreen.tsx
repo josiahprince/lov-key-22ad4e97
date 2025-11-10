@@ -9,6 +9,8 @@ import PhotoGallery from './profile/PhotoGallery';
 import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
 import ProfileFilters from './profile/ProfileFilters';
+import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
+import { useUserPhotos } from '@/hooks/useUserPhotos';
 
 const ProfileScreen = ({
   userProfile,
@@ -18,6 +20,8 @@ const ProfileScreen = ({
   onSignOut: () => void;
 }) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const { photos } = useUserPhotos(currentUserId);
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -83,11 +87,22 @@ const ProfileScreen = ({
         </div>
       </div>
 
-      <ProfileHeader userProfile={userProfile} />
+      <ProfileHeader 
+        userProfile={userProfile} 
+        onPhotoClick={() => setIsGalleryOpen(true)}
+      />
       <ProfileInfo userProfile={userProfile} />
       <DescriptionSection />
       <PhotoGallery userId={currentUserId} />
       <PrivacyCards />
+
+      <PhotoGalleryViewer
+        photos={photos}
+        initialIndex={0}
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        canViewPhotos={true}
+      />
     </div>
   );
 };

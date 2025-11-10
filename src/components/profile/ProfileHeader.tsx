@@ -8,9 +8,10 @@ interface ProfileHeaderProps {
   userProfile?: any;
   isMatchedUser?: boolean;
   canViewPhotos?: boolean;
+  onPhotoClick?: () => void;
 }
 
-const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = true }: ProfileHeaderProps) => {
+const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = true, onPhotoClick }: ProfileHeaderProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   // Use matched user's ID for photos if viewing matched user, otherwise use current user
   const targetUserId = isMatchedUser ? userProfile?.id : currentUserId;
@@ -51,7 +52,12 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
   return (
     <div className="text-center space-y-4">
       <div className="relative mx-auto w-24 h-24">
-        <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
+        <div 
+          className={`w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden ${
+            mainPhoto?.photo_url && onPhotoClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+          }`}
+          onClick={() => mainPhoto?.photo_url && onPhotoClick?.()}
+        >
           {mainPhoto?.photo_url ? (
             <div className="relative w-full h-full">
               <img 
