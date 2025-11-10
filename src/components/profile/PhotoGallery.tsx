@@ -10,9 +10,10 @@ interface PhotoGalleryProps {
   userId?: string;
   canViewPhotos?: boolean; // Whether photos should be blurred or not
   isMatchedUser?: boolean; // Whether this is a matched user's profile (disables editing)
+  onPhotoClick?: (photoIndex: number) => void; // Callback when a photo is clicked
 }
 
-const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false }: PhotoGalleryProps) => {
+const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, onPhotoClick }: PhotoGalleryProps) => {
   const { photos, loading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto } = useUserPhotos(userId);
   const [showSocialOptions, setShowSocialOptions] = useState<number | null>(null);
   const [socialUrl, setSocialUrl] = useState('');
@@ -101,7 +102,15 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false }: P
           <span className="text-sm font-medium text-gray-600">Main Profile Photo</span>
         </div>
         {mainPhoto?.photo_url ? (
-          <div className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-gray-200">
+          <div 
+            className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-rose-300 transition-colors"
+            onClick={() => {
+              if (onPhotoClick) {
+                const photoIndex = photos.findIndex(p => p.photo_url === mainPhoto.photo_url);
+                if (photoIndex !== -1) onPhotoClick(photoIndex);
+              }
+            }}
+          >
             <img 
               src={mainPhoto.photo_url} 
               alt="Main profile" 
@@ -204,7 +213,15 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false }: P
             {otherPhotos.map((photo) => (
               <div key={photo.photo_slot} className="relative">
                 {photo.photo_url ? (
-                  <div className={`relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 ${!isMatchedUser ? 'hover:border-rose-300 transition-colors group' : ''}`}>
+                  <div 
+                    className={`relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-rose-300 transition-colors ${!isMatchedUser ? 'group' : ''}`}
+                    onClick={() => {
+                      if (onPhotoClick) {
+                        const photoIndex = photos.findIndex(p => p.photo_url === photo.photo_url);
+                        if (photoIndex !== -1) onPhotoClick(photoIndex);
+                      }
+                    }}
+                  >
                     <img 
                       src={photo.photo_url} 
                       alt={`Photo ${photo.photo_slot}`} 

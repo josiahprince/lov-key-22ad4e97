@@ -18,6 +18,7 @@ const ChatProfileView = () => {
   const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   
   const { messages } = useMessages(matchId || '', currentUserId || '');
   const canViewPhotos = messages.length >= 60;
@@ -119,11 +120,22 @@ const ChatProfileView = () => {
             userProfile={matchedUserProfile} 
             isMatchedUser={true} 
             canViewPhotos={canViewPhotos}
-            onPhotoClick={() => setIsGalleryOpen(true)}
+            onPhotoClick={() => {
+              setSelectedPhotoIndex(0);
+              setIsGalleryOpen(true);
+            }}
           />
           <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} matchedUserId={matchedUserProfile.id} />
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
-          <PhotoGallery userId={matchedUserProfile.id} canViewPhotos={canViewPhotos} isMatchedUser={true} />
+          <PhotoGallery 
+            userId={matchedUserProfile.id} 
+            canViewPhotos={canViewPhotos} 
+            isMatchedUser={true}
+            onPhotoClick={(index) => {
+              setSelectedPhotoIndex(index);
+              setIsGalleryOpen(true);
+            }}
+          />
           
           {!canViewPhotos && (
             <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-center">
@@ -140,6 +152,7 @@ const ChatProfileView = () => {
       
       <PhotoGalleryViewer
         photos={photos}
+        initialIndex={selectedPhotoIndex}
         isOpen={isGalleryOpen}
         onClose={() => setIsGalleryOpen(false)}
         canViewPhotos={canViewPhotos}

@@ -21,6 +21,7 @@ const ProfileScreen = ({
 }) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const { photos } = useUserPhotos(currentUserId);
 
   useEffect(() => {
@@ -89,16 +90,25 @@ const ProfileScreen = ({
 
       <ProfileHeader 
         userProfile={userProfile} 
-        onPhotoClick={() => setIsGalleryOpen(true)}
+        onPhotoClick={() => {
+          setSelectedPhotoIndex(0);
+          setIsGalleryOpen(true);
+        }}
       />
       <ProfileInfo userProfile={userProfile} />
       <DescriptionSection />
-      <PhotoGallery userId={currentUserId} />
+      <PhotoGallery 
+        userId={currentUserId}
+        onPhotoClick={(index) => {
+          setSelectedPhotoIndex(index);
+          setIsGalleryOpen(true);
+        }}
+      />
       <PrivacyCards />
 
       <PhotoGalleryViewer
         photos={photos}
-        initialIndex={0}
+        initialIndex={selectedPhotoIndex}
         isOpen={isGalleryOpen}
         onClose={() => setIsGalleryOpen(false)}
         canViewPhotos={true}
