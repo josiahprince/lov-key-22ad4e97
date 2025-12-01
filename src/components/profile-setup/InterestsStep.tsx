@@ -17,18 +17,6 @@ const LANGUAGE_OPTIONS = [
   'Thai', 'Vietnamese', 'Indonesian', 'Tagalog', 'Swahili'
 ];
 
-const PERSONALITY_PROMPTS = [
-  'Two truths and a lie',
-  'My most irrational fear',
-  'The way to win me over is',
-  'I go crazy for',
-  'The dorkiest thing about me',
-  'My simple pleasures',
-  'A life goal of mine',
-  'I want someone who',
-  'The key to my heart',
-  'My greatest strength'
-];
 
 const InterestsStep = () => {
   const { formData, updateField } = useProfileSetup();
@@ -51,12 +39,6 @@ const InterestsStep = () => {
     }
   };
 
-  const handlePromptChange = (prompt: string, answer: string) => {
-    updateField('personality_prompts', {
-      ...formData.personality_prompts,
-      [prompt]: answer
-    });
-  };
 
   return (
     <div className="space-y-8">
