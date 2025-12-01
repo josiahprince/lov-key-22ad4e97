@@ -100,28 +100,6 @@ const InterestsStep = () => {
         </div>
       </div>
 
-      {/* Personality Prompts Section */}
-      <div className="space-y-4">
-        <Label className="text-lg font-semibold">Personality Prompts</Label>
-        <p className="text-sm text-gray-600">Answer a few fun questions (optional)</p>
-        <div className="space-y-4">
-          {PERSONALITY_PROMPTS.slice(0, 3).map((prompt) => (
-            <div key={prompt} className="space-y-2">
-              <Label className="text-sm font-medium">{prompt}</Label>
-              <Textarea
-                placeholder="Your answer here..."
-                value={formData.personality_prompts[prompt] || ''}
-                onChange={(e) => handlePromptChange(prompt, e.target.value)}
-                className="min-h-[60px] text-sm"
-                maxLength={150}
-              />
-              <div className="text-xs text-gray-500 text-right">
-                {(formData.personality_prompts[prompt] || '').length}/150
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };
