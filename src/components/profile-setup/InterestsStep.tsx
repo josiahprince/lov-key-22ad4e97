@@ -46,7 +46,10 @@ const InterestsStep = () => {
       
       {/* Interests Section */}
       <div className="space-y-4">
-        <Label className="text-lg font-semibold">Interests & Hobbies *</Label>
+        <div className="flex justify-between items-center">
+          <Label className="text-lg font-semibold">Interests & Hobbies *</Label>
+          <span className="text-sm text-gray-600">{formData.interests.length} selected</span>
+        </div>
         <p className="text-sm text-gray-600">Select at least one interest</p>
         <div className="grid grid-cols-3 gap-2">
           {INTEREST_OPTIONS.map((interest) => (
@@ -65,7 +68,10 @@ const InterestsStep = () => {
 
       {/* Languages Section */}
       <div className="space-y-4">
-        <Label className="text-lg font-semibold">Languages Spoken *</Label>
+        <div className="flex justify-between items-center">
+          <Label className="text-lg font-semibold">Languages Spoken *</Label>
+          <span className="text-sm text-gray-600">{formData.languages_spoken.length} selected</span>
+        </div>
         <p className="text-sm text-gray-600">Select at least one language</p>
         <div className="grid grid-cols-2 gap-2">
           {LANGUAGE_OPTIONS.map((language) => (
