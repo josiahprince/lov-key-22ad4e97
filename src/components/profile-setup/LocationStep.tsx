@@ -10,7 +10,6 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 
 const LocationStep = () => {
   const { formData, updateField } = useProfileSetup();
-  const [manualEntry, setManualEntry] = useState(false);
   const { location, loading, error, permissionDenied, getCurrentLocation, resetLocation } = useGeolocation();
 
   // Update form data when location is detected
@@ -30,36 +29,6 @@ const LocationStep = () => {
     getCurrentLocation();
   };
 
-  const handleManualEntry = () => {
-    setManualEntry(true);
-    resetLocation();
-  };
-
-  if (manualEntry) {
-    return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-center mb-6">Location</h2>
-        <div>
-          <Label htmlFor="location">Where are you located? *</Label>
-          <Input
-            id="location"
-            value={formData.location}
-            onChange={(e) => updateField('location', e.target.value)}
-            placeholder="City, State/Country"
-          />
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setManualEntry(false)}
-          className="w-full"
-        >
-          Use Automatic Location Instead
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-center mb-6">Location</h2>
@@ -72,22 +41,13 @@ const LocationStep = () => {
             <p className="text-sm text-gray-600 mb-4">
               We'll automatically detect your location to help you find matches nearby
             </p>
-            <div className="space-y-2">
-              <Button
-                onClick={handleUseCurrentLocation}
-                className="w-full bg-rose-500 hover:bg-rose-600"
-              >
-                <MapPin className="w-4 h-4 mr-2" />
-                Use My Current Location
-              </Button>
-              <Button
-                onClick={handleManualEntry}
-                variant="outline"
-                className="w-full"
-              >
-                Enter Location Manually
-              </Button>
-            </div>
+            <Button
+              onClick={handleUseCurrentLocation}
+              className="w-full bg-rose-500 hover:bg-rose-600"
+            >
+              <MapPin className="w-4 h-4 mr-2" />
+              Use My Current Location
+            </Button>
           </div>
         </Card>
       )}
@@ -108,23 +68,14 @@ const LocationStep = () => {
           <div>
             <h3 className="font-medium text-gray-800">Location Error</h3>
             <p className="text-sm text-gray-600 mb-4">{error}</p>
-            <div className="space-y-2">
-              {!permissionDenied && (
-                <Button
-                  onClick={handleUseCurrentLocation}
-                  variant="outline"
-                  className="w-full"
-                >
-                  Try Again
-                </Button>
-              )}
+            {!permissionDenied && (
               <Button
-                onClick={handleManualEntry}
+                onClick={handleUseCurrentLocation}
                 className="w-full bg-rose-500 hover:bg-rose-600"
               >
-                Enter Location Manually
+                Try Again
               </Button>
-            </div>
+            )}
           </div>
         </Card>
       )}
@@ -149,24 +100,14 @@ const LocationStep = () => {
               {location.fullAddress}
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Button
-              onClick={handleUseCurrentLocation}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              Refresh Location
-            </Button>
-            <Button
-              onClick={handleManualEntry}
-              variant="outline"
-              size="sm"
-              className="flex-1"
-            >
-              Edit Manually
-            </Button>
-          </div>
+          <Button
+            onClick={handleUseCurrentLocation}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            Refresh Location
+          </Button>
         </Card>
       )}
 
