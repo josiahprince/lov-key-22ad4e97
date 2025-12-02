@@ -57,7 +57,7 @@ const InterestsStep = () => {
               key={interest}
               variant={formData.interests.includes(interest) ? "default" : "outline"}
               onClick={() => handleInterestToggle(interest)}
-              className="text-xs h-8 justify-center"
+              className="text-xs h-8 justify-center transition-all duration-200 hover:scale-105 active:scale-95"
               size="sm"
             >
               {interest}
@@ -79,7 +79,7 @@ const InterestsStep = () => {
               key={language}
               variant={formData.languages_spoken.includes(language) ? "default" : "outline"}
               onClick={() => handleLanguageToggle(language)}
-              className="text-sm h-8 justify-start"
+              className="text-sm h-8 justify-start transition-all duration-200 hover:scale-105 active:scale-95"
               size="sm"
             >
               {language}
