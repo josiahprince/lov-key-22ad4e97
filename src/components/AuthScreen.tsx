@@ -59,7 +59,9 @@ const AuthScreen = ({
         </div>
 
         <form onSubmit={handleAuth} className="space-y-4">
-          
+          <div>
+            <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200" />
+          </div>
           
           <div>
             <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className="rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200" />
