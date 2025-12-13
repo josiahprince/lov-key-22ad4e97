@@ -1,6 +1,6 @@
-
 import { Card } from '@/components/ui/card';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
+import { useMatchedUserOnboardingData } from '@/hooks/useMatchedUserOnboardingData';
 import VibeCard from './VibeCard';
 import BasicInfoCard from './BasicInfoCard';
 import ProfileEditModal from './ProfileEditModal';
@@ -13,7 +13,18 @@ interface ProfileInfoProps {
 }
 
 const ProfileInfo = ({ userProfile, isMatchedUser = false, matchedUserId }: ProfileInfoProps) => {
-  const { onboardingData, loading: onboardingLoading } = useOnboardingData();
+  // Fetch current user's onboarding data (for own profile)
+  const { onboardingData: ownOnboardingData, loading: ownOnboardingLoading } = useOnboardingData();
+  
+  // Fetch matched user's onboarding data (for matched user profile)
+  const { onboardingData: matchedOnboardingData, loading: matchedOnboardingLoading } = useMatchedUserOnboardingData(
+    isMatchedUser ? matchedUserId : undefined
+  );
+
+  // Use the appropriate onboarding data based on whether viewing own or matched profile
+  const onboardingData = isMatchedUser ? matchedOnboardingData : ownOnboardingData;
+  const onboardingLoading = isMatchedUser ? matchedOnboardingLoading : ownOnboardingLoading;
+
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEdit = () => {
