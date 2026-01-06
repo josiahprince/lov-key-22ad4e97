@@ -318,6 +318,30 @@ export const useUserPhotos = (userId: string | undefined) => {
 
   useEffect(() => {
     fetchPhotos();
+
+    // Subscribe to real-time updates for photos
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`user-photos-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_photos',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => {
+          console.log('Photos updated in real-time');
+          fetchPhotos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   return {
