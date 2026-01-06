@@ -113,16 +113,12 @@ export const useMessages = (matchId: string, currentUserId: string) => {
 
   // Set up real-time subscription
   useEffect(() => {
-    if (!matchId) return;
+    if (!matchId || !currentUserId) return;
 
     fetchMessages();
 
     const channel = supabase
-      .channel(`messages:${matchId}`, {
-        config: {
-          broadcast: { self: false }
-        }
-      })
+      .channel(`messages-realtime:${matchId}`)
       .on(
         'postgres_changes',
         {
@@ -132,13 +128,16 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           filter: `match_id=eq.${matchId}`
         },
         (payload) => {
-          console.log('Realtime message received:', payload);
+          console.log('Realtime message INSERT received:', payload);
           const newMessage = payload.new as Message;
+          
           setMessages(prev => {
             // Avoid duplicates
             if (prev.some(msg => msg.id === newMessage.id)) {
+              console.log('Duplicate message ignored:', newMessage.id);
               return prev;
             }
+            console.log('Adding new message to state:', newMessage.id);
             return [...prev, newMessage];
           });
           
@@ -154,12 +153,56 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           }));
         }
       )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`
+        },
+        (payload) => {
+          console.log('Realtime message UPDATE received:', payload);
+          const updatedMessage = payload.new as Message;
+          setMessages(prev => 
+            prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg)
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: `match_id=eq.${matchId}`
+        },
+        (payload) => {
+          console.log('Realtime message DELETE received:', payload);
+          const deletedMessage = payload.old as Message;
+          setMessages(prev => prev.filter(msg => msg.id !== deletedMessage.id));
+          
+          // Recalculate counts
+          setMessageCounts(prev => ({
+            total: Math.max(0, prev.total - 1),
+            fromCurrentUser: deletedMessage.sender_id === currentUserId 
+              ? Math.max(0, prev.fromCurrentUser - 1)
+              : prev.fromCurrentUser,
+            fromOtherUser: deletedMessage.sender_id !== currentUserId 
+              ? Math.max(0, prev.fromOtherUser - 1)
+              : prev.fromOtherUser
+          }));
+        }
+      )
+      .subscribe((status, err) => {
+        console.log('Messages realtime subscription status:', status);
+        if (err) {
+          console.error('Messages realtime subscription error:', err);
+        }
       });
 
     return () => {
-      console.log('Cleaning up realtime subscription');
+      console.log('Cleaning up messages realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [matchId, currentUserId]);
