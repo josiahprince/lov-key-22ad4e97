@@ -34,6 +34,34 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
     };
 
     fetchDescription();
+
+    // Subscribe to real-time updates
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`matched-user-description-${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'user_descriptions',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log('Description updated in real-time:', payload);
+          if (payload.eventType === 'DELETE') {
+            setDescription('');
+          } else {
+            setDescription((payload.new as any)?.description || '');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [userId]);
 
   if (loading) {

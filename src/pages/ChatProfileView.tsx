@@ -10,20 +10,15 @@ import MatchedUserDescriptionSection from '@/components/profile/MatchedUserDescr
 import PhotoGalleryViewer from '@/components/profile/PhotoGalleryViewer';
 import { useMessages } from '@/hooks/useMessages';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
+import { useMatchedUserProfile } from '@/hooks/useMatchedUserProfile';
 
 const ChatProfileView = () => {
   const { matchId } = useParams();
   const navigate = useNavigate();
-  const [matchedUserProfile, setMatchedUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   
-  const { messages } = useMessages(matchId || '', currentUserId || '');
-  const canViewPhotos = messages.length >= 60;
-  const { photos } = useUserPhotos(matchedUserProfile?.id);
-
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -32,42 +27,10 @@ const ChatProfileView = () => {
     getCurrentUser();
   }, []);
 
-  useEffect(() => {
-    const fetchMatchedUserProfile = async () => {
-      if (!matchId || !currentUserId) return;
-
-      try {
-        // First get the match to find the other user
-        const { data: match, error: matchError } = await supabase
-          .from('matches')
-          .select('*')
-          .eq('id', matchId)
-          .single();
-
-        if (matchError) throw matchError;
-
-        // Determine which user is the matched user (not current user)
-        const matchedUserId = match.user_1 === currentUserId ? match.user_2 : match.user_1;
-
-        // Get the matched user's profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', matchedUserId)
-          .single();
-
-        if (profileError) throw profileError;
-
-        setMatchedUserProfile(profile);
-      } catch (error) {
-        console.error('Error fetching matched user profile:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMatchedUserProfile();
-  }, [matchId, currentUserId]);
+  const { matchedUserProfile, loading } = useMatchedUserProfile(matchId, currentUserId);
+  const { messages } = useMessages(matchId || '', currentUserId || '');
+  const canViewPhotos = messages.length >= 60;
+  const { photos } = useUserPhotos(matchedUserProfile?.id);
 
   const handleBack = () => {
     navigate('/', { state: { screen: 'chats' } });
