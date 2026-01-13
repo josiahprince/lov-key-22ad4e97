@@ -19,6 +19,33 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify JWT authentication for user-triggered functions
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.warn('Unauthorized access attempt to generate-cultural-vibes');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized', vibes: [] }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Verify the JWT token using Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
+    if (supabaseUrl && supabaseAnonKey) {
+      const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.warn('Invalid JWT token for generate-cultural-vibes');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized', vibes: [] }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
@@ -28,6 +55,11 @@ Deno.serve(async (req) => {
     
     if (!country) {
       throw new Error('Country is required');
+    }
+    
+    // Validate country input
+    if (typeof country !== 'string' || country.length > 100) {
+      throw new Error('Invalid country format');
     }
 
     console.log(`Generating vibes for country: ${country}`);

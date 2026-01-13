@@ -27,6 +27,16 @@ Deno.serve(async (req) => {
     );
   }
 
+  // Verify service role authentication for admin/scheduled functions
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader || !authHeader.includes(serviceKey)) {
+    console.warn('Unauthorized access attempt to check-daily-onboarding');
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  }
+
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const result: ResetResult = { checked: 0, resets: 0, errors: [] };

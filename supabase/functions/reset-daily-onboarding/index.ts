@@ -21,6 +21,16 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    // Verify service role authentication for admin/scheduled functions
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader || !authHeader.includes(supabaseServiceKey)) {
+      console.warn('Unauthorized access attempt to reset-daily-onboarding');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     console.log('Starting daily onboarding reset process...');
