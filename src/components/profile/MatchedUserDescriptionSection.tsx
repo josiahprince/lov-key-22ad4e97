@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,6 +9,8 @@ interface MatchedUserDescriptionSectionProps {
 const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSectionProps) => {
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef<string>(Math.random().toString(36).substring(7));
 
   useEffect(() => {
     const fetchDescription = async () => {
@@ -38,8 +40,15 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
     // Subscribe to real-time updates
     if (!userId) return;
 
+    // Clean up existing subscription before creating new one
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
+    }
+
+    const channelName = `matched-desc-${userId}-${instanceIdRef.current}`;
     const channel = supabase
-      .channel(`matched-user-description-${userId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -59,8 +68,13 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
       )
       .subscribe();
 
+    subscriptionRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
     };
   }, [userId]);
 

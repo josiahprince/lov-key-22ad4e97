@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface OnboardingData {
@@ -13,6 +13,8 @@ interface OnboardingData {
 export const useMatchedUserOnboardingData = (userId: string | undefined) => {
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef<string>(Math.random().toString(36).substring(7));
 
   const mapDataToOnboarding = (data: any): OnboardingData => ({
     id: data.id,
@@ -56,9 +58,16 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
 
     fetchOnboardingData();
 
+    // Clean up existing subscription before creating new one
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
+    }
+
     // Subscribe to real-time updates for the matched user's onboarding data
+    const channelName = `matched-onboarding-${userId}-${instanceIdRef.current}`;
     const channel = supabase
-      .channel(`matched-user-onboarding-${userId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -77,8 +86,13 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
       )
       .subscribe();
 
+    subscriptionRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
     };
   }, [userId]);
 
