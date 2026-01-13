@@ -75,7 +75,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-cultural-vibes]
-verify_jwt = false
+verify_jwt = true
 
 [functions.cleanup-expired-matches]
 verify_jwt = false

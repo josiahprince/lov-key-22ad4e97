@@ -64,9 +64,22 @@ export const useMessages = (matchId: string, currentUserId: string) => {
     }
   };
 
-  // Send a new message
+  // Send a new message with validation
   const sendMessage = async (content: string, receiverId: string) => {
-    if (!content.trim() || !matchId || !currentUserId) return false;
+    const trimmedContent = content.trim();
+    
+    // Validate message content
+    if (!trimmedContent || !matchId || !currentUserId) return false;
+    
+    // Enforce 5000 character limit (matching database constraint)
+    if (trimmedContent.length > 5000) {
+      toast({
+        title: "Message too long",
+        description: "Messages must be 5000 characters or less",
+        variant: "destructive"
+      });
+      return false;
+    }
 
     try {
       const { data, error } = await supabase
@@ -75,7 +88,7 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           match_id: matchId,
           sender_id: currentUserId,
           receiver_id: receiverId,
-          content: content.trim()
+          content: trimmedContent
         })
         .select()
         .single();

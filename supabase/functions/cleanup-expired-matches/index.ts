@@ -12,9 +12,21 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Verify service role authentication for admin/scheduled functions
+    const authHeader = req.headers.get('authorization');
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    
+    if (!authHeader || !authHeader.includes(serviceKey)) {
+      console.warn('Unauthorized access attempt to cleanup-expired-matches');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      serviceKey
     );
 
     console.log('Starting cleanup of expired matches and inactive chats...');
