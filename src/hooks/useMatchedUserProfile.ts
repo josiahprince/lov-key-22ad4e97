@@ -1,15 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useMatchedUserProfile = (matchId: string | undefined, currentUserId: string | undefined) => {
   const [matchedUserProfile, setMatchedUserProfile] = useState<any>(null);
   const [matchedUserId, setMatchedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef<string>(Math.random().toString(36).substring(7));
 
   useEffect(() => {
     if (!matchId || !currentUserId) {
       setLoading(false);
       return;
+    }
+
+    // Clean up existing subscription before creating new one
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
     }
 
     const fetchMatchedUserProfile = async () => {
@@ -37,6 +45,27 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
         if (profileError) throw profileError;
 
         setMatchedUserProfile(profile);
+
+        // Set up real-time subscription for the matched user's profile
+        const channelName = `matched-profile-${otherUserId}-${instanceIdRef.current}`;
+        const channel = supabase
+          .channel(channelName)
+          .on(
+            'postgres_changes',
+            {
+              event: 'UPDATE',
+              schema: 'public',
+              table: 'profiles',
+              filter: `id=eq.${otherUserId}`,
+            },
+            (payload) => {
+              console.log('Profile updated in real-time:', payload);
+              setMatchedUserProfile(payload.new);
+            }
+          )
+          .subscribe();
+
+        subscriptionRef.current = channel;
       } catch (error) {
         console.error('Error fetching matched user profile:', error);
       } finally {
@@ -46,47 +75,10 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
 
     fetchMatchedUserProfile();
 
-    // Subscribe to real-time updates for the matched user's profile
-    // We need to set up the subscription after we know the matchedUserId
-    const setupRealtimeSubscription = async () => {
-      const { data: match } = await supabase
-        .from('matches')
-        .select('user_1, user_2')
-        .eq('id', matchId)
-        .single();
-
-      if (!match) return null;
-
-      const otherUserId = match.user_1 === currentUserId ? match.user_2 : match.user_1;
-
-      const channel = supabase
-        .channel(`matched-user-profile-${otherUserId}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${otherUserId}`,
-          },
-          (payload) => {
-            console.log('Profile updated in real-time:', payload);
-            setMatchedUserProfile(payload.new);
-          }
-        )
-        .subscribe();
-
-      return channel;
-    };
-
-    let channel: any = null;
-    setupRealtimeSubscription().then(ch => {
-      channel = ch;
-    });
-
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
       }
     };
   }, [matchId, currentUserId]);

@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -316,14 +317,25 @@ export const useUserPhotos = (userId: string | undefined) => {
     }
   };
 
+  // Use a ref to track if subscription is already set up
+  const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const instanceIdRef = useRef<string>(Math.random().toString(36).substring(7));
+
   useEffect(() => {
     fetchPhotos();
 
     // Subscribe to real-time updates for photos
     if (!userId) return;
 
+    // Clean up existing subscription before creating new one
+    if (subscriptionRef.current) {
+      supabase.removeChannel(subscriptionRef.current);
+      subscriptionRef.current = null;
+    }
+
+    const channelName = `user-photos-${userId}-${instanceIdRef.current}`;
     const channel = supabase
-      .channel(`user-photos-${userId}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -339,8 +351,13 @@ export const useUserPhotos = (userId: string | undefined) => {
       )
       .subscribe();
 
+    subscriptionRef.current = channel;
+
     return () => {
-      supabase.removeChannel(channel);
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
     };
   }, [userId]);
 
