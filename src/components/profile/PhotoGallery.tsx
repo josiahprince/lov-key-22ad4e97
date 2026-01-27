@@ -5,16 +5,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Star, Upload, Link } from 'lucide-react';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
+import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 
 interface PhotoGalleryProps {
   userId?: string;
   canViewPhotos?: boolean; // Whether photos should be blurred or not
   isMatchedUser?: boolean; // Whether this is a matched user's profile (disables editing)
+  matchId?: string; // Match ID for secure photo fetching
   onPhotoClick?: (photoIndex: number) => void; // Callback when a photo is clicked
 }
 
-const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, onPhotoClick }: PhotoGalleryProps) => {
-  const { photos, loading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto } = useUserPhotos(userId);
+const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, matchId, onPhotoClick }: PhotoGalleryProps) => {
+  // Use secure photos for matched users, regular photos for own profile
+  const { photos: userPhotos, loading: userLoading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto } = useUserPhotos(isMatchedUser ? undefined : userId);
+  const { photos: securePhotos, loading: secureLoading, canViewUnblurred } = useSecurePhotos({ 
+    userId: isMatchedUser ? userId : undefined, 
+    matchId, 
+    isOwnProfile: false 
+  });
+  
+  const photos = isMatchedUser ? securePhotos : userPhotos;
+  const loading = isMatchedUser ? secureLoading : userLoading;
+  const effectiveCanView = isMatchedUser ? (canViewPhotos && canViewUnblurred) : canViewPhotos;
+  
   const [showSocialOptions, setShowSocialOptions] = useState<number | null>(null);
   const [socialUrl, setSocialUrl] = useState('');
   const [uploading, setUploading] = useState<number | null>(null);
@@ -59,13 +72,14 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, onP
     }
   };
 
-  const mainPhoto = photos.find(photo => photo.is_main && photo.photo_url) || 
-                   photos.find(photo => photo.photo_url);
+  const mainPhoto = photos.find(photo => photo.is_main && (photo.signedUrl || photo.photo_url)) || 
+                   photos.find(photo => photo.signedUrl || photo.photo_url);
+  const mainPhotoUrl = mainPhoto?.signedUrl || mainPhoto?.photo_url;
   
   // For matched users, only show photos that exist
   const otherPhotos = isMatchedUser 
-    ? photos.filter(photo => !photo.is_main && photo.photo_url)
-    : photos.filter(photo => !photo.is_main || !photo.photo_url);
+    ? photos.filter(photo => !photo.is_main && (photo.signedUrl || photo.photo_url))
+    : photos.filter(photo => !photo.is_main || !(photo.signedUrl || photo.photo_url));
 
   if (loading) {
     return (
@@ -101,25 +115,25 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, onP
           <Star className="w-4 h-4 text-yellow-500" />
           <span className="text-sm font-medium text-gray-600">Main Profile Photo</span>
         </div>
-        {mainPhoto?.photo_url ? (
+        {mainPhotoUrl ? (
           <div 
             className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-rose-300 transition-colors"
             onClick={() => {
               if (onPhotoClick) {
-                const photoIndex = photos.findIndex(p => p.photo_url === mainPhoto.photo_url);
+                const photoIndex = photos.findIndex(p => (p.signedUrl || p.photo_url) === mainPhotoUrl);
                 if (photoIndex !== -1) onPhotoClick(photoIndex);
               }
             }}
           >
             <img 
-              src={mainPhoto.photo_url} 
+              src={mainPhotoUrl} 
               alt="Main profile" 
-              className={`w-full h-full object-cover rounded-lg ${!canViewPhotos ? 'filter blur-md' : ''}`}
+              className={`w-full h-full object-cover rounded-lg ${!effectiveCanView ? 'filter blur-md' : ''}`}
               onError={(e) => {
-                console.error('Error loading image:', mainPhoto.photo_url);
+                console.error('Error loading image:', mainPhotoUrl);
               }}
             />
-            {!isMatchedUser && (
+            {!isMatchedUser && mainPhoto && (
               <Button
                 size="sm"
                 variant="outline"
@@ -212,22 +226,22 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, onP
           <div className="grid grid-cols-3 gap-3">
             {otherPhotos.map((photo) => (
               <div key={photo.photo_slot} className="relative">
-                {photo.photo_url ? (
+                {(photo.signedUrl || photo.photo_url) ? (
                   <div 
                     className={`relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-rose-300 transition-colors ${!isMatchedUser ? 'group' : ''}`}
                     onClick={() => {
                       if (onPhotoClick) {
-                        const photoIndex = photos.findIndex(p => p.photo_url === photo.photo_url);
+                        const photoIndex = photos.findIndex(p => (p.signedUrl || p.photo_url) === (photo.signedUrl || photo.photo_url));
                         if (photoIndex !== -1) onPhotoClick(photoIndex);
                       }
                     }}
                   >
                     <img 
-                      src={photo.photo_url} 
+                      src={photo.signedUrl || photo.photo_url} 
                       alt={`Photo ${photo.photo_slot}`} 
-                      className={`w-full h-full object-cover rounded-lg ${!canViewPhotos ? 'filter blur-md' : ''}`}
+                      className={`w-full h-full object-cover rounded-lg ${!effectiveCanView ? 'filter blur-md' : ''}`}
                       onError={(e) => {
-                        console.error('Error loading image:', photo.photo_url);
+                        console.error('Error loading image:', photo.signedUrl || photo.photo_url);
                       }}
                     />
                     {!isMatchedUser && (

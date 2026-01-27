@@ -10,7 +10,7 @@ import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
 import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
-import { useUserPhotos } from '@/hooks/useUserPhotos';
+import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 
 const ProfileScreen = ({
   userProfile,
@@ -22,7 +22,7 @@ const ProfileScreen = ({
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-  const { photos } = useUserPhotos(currentUserId);
+  const { photos } = useSecurePhotos({ userId: currentUserId, isOwnProfile: true });
 
   useEffect(() => {
     const getCurrentUser = async () => {

@@ -9,7 +9,7 @@ import PhotoGallery from '@/components/profile/PhotoGallery';
 import MatchedUserDescriptionSection from '@/components/profile/MatchedUserDescriptionSection';
 import PhotoGalleryViewer from '@/components/profile/PhotoGalleryViewer';
 import { useMessages } from '@/hooks/useMessages';
-import { useUserPhotos } from '@/hooks/useUserPhotos';
+import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useMatchedUserProfile } from '@/hooks/useMatchedUserProfile';
 
 const MatchProfileView = () => {
@@ -29,8 +29,11 @@ const MatchProfileView = () => {
 
   const { matchedUserProfile, loading } = useMatchedUserProfile(matchId, currentUserId);
   const { messages } = useMessages(matchId || '', currentUserId || '');
-  const canViewPhotos = messages.length >= 60;
-  const { photos } = useUserPhotos(matchedUserProfile?.id);
+  const { photos, canViewUnblurred: canViewPhotos } = useSecurePhotos({
+    userId: matchedUserProfile?.id,
+    matchId: matchId,
+    isOwnProfile: false
+  });
 
   const handleBack = () => {
     navigate('/', { state: { screen: 'matches' } });
@@ -83,6 +86,7 @@ const MatchProfileView = () => {
             userProfile={matchedUserProfile} 
             isMatchedUser={true} 
             canViewPhotos={canViewPhotos}
+            matchId={matchId}
             onPhotoClick={() => {
               setSelectedPhotoIndex(0);
               setIsGalleryOpen(true);
@@ -94,6 +98,7 @@ const MatchProfileView = () => {
             userId={matchedUserProfile.id} 
             canViewPhotos={canViewPhotos} 
             isMatchedUser={true}
+            matchId={matchId}
             onPhotoClick={(index) => {
               setSelectedPhotoIndex(index);
               setIsGalleryOpen(true);

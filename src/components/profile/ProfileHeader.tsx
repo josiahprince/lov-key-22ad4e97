@@ -1,6 +1,6 @@
 
 import { Camera } from 'lucide-react';
-import { useUserPhotos } from '@/hooks/useUserPhotos';
+import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,14 +8,19 @@ interface ProfileHeaderProps {
   userProfile?: any;
   isMatchedUser?: boolean;
   canViewPhotos?: boolean;
+  matchId?: string;
   onPhotoClick?: () => void;
 }
 
-const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = true, onPhotoClick }: ProfileHeaderProps) => {
+const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = true, matchId, onPhotoClick }: ProfileHeaderProps) => {
   const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
   // Use matched user's ID for photos if viewing matched user, otherwise use current user
   const targetUserId = isMatchedUser ? userProfile?.id : currentUserId;
-  const { photos, loading } = useUserPhotos(targetUserId);
+  const { photos, loading, canViewUnblurred } = useSecurePhotos({ 
+    userId: targetUserId,
+    matchId: matchId,
+    isOwnProfile: !isMatchedUser
+  });
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -26,9 +31,10 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
     getCurrentUser();
   }, []);
 
-  // Find the main photo or the first photo with content
-  const mainPhoto = photos.find(photo => photo.is_main && photo.photo_url) || 
-                   photos.find(photo => photo.photo_url);
+  // Find the main photo or the first photo with content (use signedUrl if available)
+  const mainPhoto = photos.find(photo => photo.is_main && (photo.signedUrl || photo.photo_url)) || 
+                   photos.find(photo => photo.signedUrl || photo.photo_url);
+  const displayUrl = mainPhoto?.signedUrl || mainPhoto?.photo_url;
 
   console.log('Photos in ProfileHeader:', photos);
   console.log('Main photo:', mainPhoto);
@@ -54,24 +60,24 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
       <div className="relative mx-auto w-24 h-24">
         <div 
           className={`w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden ${
-            mainPhoto?.photo_url && onPhotoClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
+            displayUrl && onPhotoClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
           }`}
-          onClick={() => mainPhoto?.photo_url && onPhotoClick?.()}
+          onClick={() => displayUrl && onPhotoClick?.()}
         >
-          {mainPhoto?.photo_url ? (
+          {displayUrl ? (
             <div className="relative w-full h-full">
               <img 
-                src={mainPhoto.photo_url} 
+                src={displayUrl} 
                 alt="Profile" 
                 className={`w-full h-full object-cover rounded-full ${
-                  isMatchedUser && !canViewPhotos ? 'blur-md' : ''
+                  isMatchedUser && !canViewPhotos && !canViewUnblurred ? 'blur-md' : ''
                 }`}
                 onError={(e) => {
                   console.error('Error loading profile image:', e);
                   e.currentTarget.style.display = 'none';
                 }}
               />
-              {isMatchedUser && !canViewPhotos && (
+              {isMatchedUser && !canViewPhotos && !canViewUnblurred && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Camera className="w-8 h-8 text-white drop-shadow-lg" />
                 </div>
