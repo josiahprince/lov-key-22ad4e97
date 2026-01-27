@@ -79,3 +79,6 @@ verify_jwt = true
 
 [functions.cleanup-expired-matches]
 verify_jwt = false
+
+[functions.get-signed-photo-url]
+verify_jwt = false

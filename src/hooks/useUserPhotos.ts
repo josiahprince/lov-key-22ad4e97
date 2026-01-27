@@ -9,6 +9,8 @@ export interface UserPhoto {
   photo_url: string;
   photo_slot: number;
   is_main: boolean;
+  signedUrl?: string;
+  canViewUnblurred?: boolean;
 }
 
 export const useUserPhotos = (userId: string | undefined) => {

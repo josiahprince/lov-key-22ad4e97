@@ -9,6 +9,8 @@ interface UserPhoto {
   photo_url: string;
   photo_slot: number;
   is_main: boolean;
+  signedUrl?: string;
+  canViewUnblurred?: boolean;
 }
 
 interface PhotoGalleryViewerProps {
@@ -39,8 +41,8 @@ const PhotoGalleryViewer = ({
   const touchStartRef = useRef({ x: 0, y: 0, distance: 0 });
   const lastTapRef = useRef(0);
 
-  // Filter photos that have URLs
-  const validPhotos = photos.filter(photo => photo.photo_url);
+  // Filter photos that have URLs (use signedUrl if available, fall back to photo_url)
+  const validPhotos = photos.filter(photo => photo.signedUrl || photo.photo_url);
   
   // Reset zoom when changing slides
   const resetZoom = useCallback(() => {
@@ -179,10 +181,10 @@ const PhotoGalleryViewer = ({
                     }}
                   >
                     <img
-                      src={photo.photo_url}
+                      src={photo.signedUrl || photo.photo_url}
                       alt={`Photo ${photo.photo_slot}`}
                       className={`max-h-full max-w-full object-contain transition-transform ${
-                        !canViewPhotos ? 'blur-md' : ''
+                        !canViewPhotos && !photo.canViewUnblurred ? 'blur-md' : ''
                       }`}
                       style={{
                         transform: index === selectedIndex ? `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)` : 'none',
