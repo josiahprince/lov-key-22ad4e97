@@ -359,6 +359,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_expired_matches_and_inactive_chats: {
+        Args: never
+        Returns: undefined
+      }
       generate_daily_matches: {
         Args: never
         Returns: {
@@ -371,6 +375,13 @@ export type Database = {
       is_after_6am_in_timezone: {
         Args: { user_timezone: string }
         Returns: boolean
+      }
+      reset_daily_onboarding_flags: {
+        Args: never
+        Returns: {
+          users_checked: number
+          users_reset: number
+        }[]
       }
       should_show_onboarding: {
         Args: { user_id_param: string }
