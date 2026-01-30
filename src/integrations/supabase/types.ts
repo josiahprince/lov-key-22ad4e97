@@ -66,10 +66,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "matches_user_1_fkey"
+            columns: ["user_1"]
+            isOneToOne: false
+            referencedRelation: "profiles_matched_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "matches_user_2_fkey"
             columns: ["user_2"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_user_2_fkey"
+            columns: ["user_2"]
+            isOneToOne: false
+            referencedRelation: "profiles_matched_view"
             referencedColumns: ["id"]
           },
         ]
@@ -356,9 +370,84 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_matched_view: {
+        Row: {
+          age: number | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          id: string | null
+          interested_in:
+            | Database["public"]["Enums"]["interested_in_type"]
+            | null
+          interests: string[] | null
+          is_profile_complete: boolean | null
+          languages: string[] | null
+          languages_spoken: string[] | null
+          nickname: string | null
+          personality_prompts: Json | null
+          region: string | null
+          religion: string | null
+          sexual_orientation:
+            | Database["public"]["Enums"]["orientation_type"]
+            | null
+          updated_at: string | null
+        }
+        Insert: {
+          age?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string | null
+          interested_in?:
+            | Database["public"]["Enums"]["interested_in_type"]
+            | null
+          interests?: string[] | null
+          is_profile_complete?: boolean | null
+          languages?: string[] | null
+          languages_spoken?: string[] | null
+          nickname?: string | null
+          personality_prompts?: Json | null
+          region?: string | null
+          religion?: string | null
+          sexual_orientation?:
+            | Database["public"]["Enums"]["orientation_type"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          age?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          id?: string | null
+          interested_in?:
+            | Database["public"]["Enums"]["interested_in_type"]
+            | null
+          interests?: string[] | null
+          is_profile_complete?: boolean | null
+          languages?: string[] | null
+          languages_spoken?: string[] | null
+          nickname?: string | null
+          personality_prompts?: Json | null
+          region?: string | null
+          religion?: string | null
+          sexual_orientation?:
+            | Database["public"]["Enums"]["orientation_type"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      can_view_matched_profile: {
+        Args: { profile_id: string }
+        Returns: boolean
+      }
       cleanup_expired_matches_and_inactive_chats: {
         Args: never
         Returns: undefined
