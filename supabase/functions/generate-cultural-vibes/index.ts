@@ -124,8 +124,8 @@ Return ONLY the JSON array, no other text.`
       throw new Error(`Lovable AI error: ${response.status}`);
     }
 
-    const data = await response.json();
-    const content = data.choices[0].message.content;
+    const aiResponse = await response.json();
+    const content = aiResponse.choices[0].message.content;
     
     console.log('Raw AI response:', content);
 
