@@ -35,9 +35,9 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
         const otherUserId = match.user_1 === currentUserId ? match.user_2 : match.user_1;
         setMatchedUserId(otherUserId);
 
-        // Get the matched user's profile
+        // Get the matched user's profile from the secure view (excludes sensitive data)
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
+          .from('profiles_matched_view')
           .select('*')
           .eq('id', otherUserId)
           .single();
@@ -47,6 +47,7 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
         setMatchedUserProfile(profile);
 
         // Set up real-time subscription for the matched user's profile
+        // Note: We subscribe to the base table but only expose safe fields in state
         const channelName = `matched-profile-${otherUserId}-${instanceIdRef.current}`;
         const channel = supabase
           .channel(channelName)
@@ -58,9 +59,17 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
               table: 'profiles',
               filter: `id=eq.${otherUserId}`,
             },
-            (payload) => {
-              console.log('Profile updated in real-time:', payload);
-              setMatchedUserProfile(payload.new);
+            async () => {
+              // Re-fetch from secure view to get only safe fields
+              const { data: updatedProfile } = await supabase
+                .from('profiles_matched_view')
+                .select('*')
+                .eq('id', otherUserId)
+                .single();
+              if (updatedProfile) {
+                console.log('Profile updated in real-time (secure view):', updatedProfile);
+                setMatchedUserProfile(updatedProfile);
+              }
             }
           )
           .subscribe();
