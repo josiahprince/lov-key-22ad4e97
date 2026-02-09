@@ -23,6 +23,7 @@ export type Database = {
           id: string
           last_interaction_at: string | null
           match_score: number | null
+          matched_date: string | null
           matched_on: string
           status: string
           updated_at: string
@@ -37,6 +38,7 @@ export type Database = {
           id?: string
           last_interaction_at?: string | null
           match_score?: number | null
+          matched_date?: string | null
           matched_on?: string
           status?: string
           updated_at?: string
@@ -51,6 +53,7 @@ export type Database = {
           id?: string
           last_interaction_at?: string | null
           match_score?: number | null
+          matched_date?: string | null
           matched_on?: string
           status?: string
           updated_at?: string
