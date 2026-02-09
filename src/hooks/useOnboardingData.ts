@@ -223,27 +223,12 @@ export const useOnboardingData = () => {
       // Force update the local state immediately to prevent re-showing
       console.log('✅ Onboarding completed, flag set to false for today');
 
-      // Trigger daily match generation after successful onboarding
-      try {
-        console.log('Triggering daily match generation after onboarding completion...');
-        const { data: matchResult, error: matchError } = await supabase.functions.invoke('generate-daily-matches');
-        
-        if (matchError) {
-          console.error('Error generating matches:', matchError);
-        } else {
-          console.log('Match generation successful:', matchResult);
-          toast({
-            title: "Profile updated",
-            description: "Your preferences have been saved and new matches are being generated!",
-          });
-        }
-      } catch (error) {
-        console.error('Error invoking match generation:', error);
-        toast({
-          title: "Profile updated",
-          description: "Your preferences have been saved successfully.",
-        });
-      }
+      // Match generation is handled by the database cron job (runs periodically)
+      // Just show success message - matches will be generated automatically
+      toast({
+        title: "Profile updated",
+        description: "Your preferences have been saved! New matches will appear soon.",
+      });
 
       return result;
     } catch (error) {
