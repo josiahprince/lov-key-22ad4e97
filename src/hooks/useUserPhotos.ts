@@ -302,20 +302,44 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       if (setError) throw setError;
 
-      // Refresh photos after successful update
       await fetchPhotos();
 
-      toast({
-        title: "Success",
-        description: "Main photo updated"
-      });
+      toast({ title: "Success", description: "Main photo updated" });
     } catch (error) {
       console.error('Error setting main photo:', error);
-      toast({
-        title: "Error",
-        description: "Failed to set main photo",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to set main photo", variant: "destructive" });
+    }
+  };
+
+  const swapPhotoSlots = async (slotA: number, slotB: number) => {
+    if (!userId || slotA === slotB) return;
+
+    const photoA = photos.find(p => p.photo_slot === slotA && p.photo_url);
+    const photoB = photos.find(p => p.photo_slot === slotB && p.photo_url);
+
+    if (!photoA && !photoB) return;
+
+    try {
+      // Use a temporary slot to avoid unique constraint violations
+      const TEMP_SLOT = 99;
+
+      if (photoA && photoB) {
+        // Swap both photos: A → temp, B → A, temp → B
+        await supabase.from('user_photos').update({ photo_slot: TEMP_SLOT }).eq('id', photoA.id);
+        await supabase.from('user_photos').update({ photo_slot: slotA }).eq('id', photoB.id);
+        await supabase.from('user_photos').update({ photo_slot: slotB }).eq('id', photoA.id);
+      } else if (photoA && !photoB) {
+        // Move A into empty slot B
+        await supabase.from('user_photos').update({ photo_slot: slotB }).eq('id', photoA.id);
+      } else if (!photoA && photoB) {
+        // Move B into empty slot A
+        await supabase.from('user_photos').update({ photo_slot: slotA }).eq('id', photoB.id);
+      }
+
+      await fetchPhotos();
+    } catch (error) {
+      console.error('Error swapping photo slots:', error);
+      toast({ title: "Error", description: "Failed to reorder photos", variant: "destructive" });
     }
   };
 
@@ -370,6 +394,7 @@ export const useUserPhotos = (userId: string | undefined) => {
     addPhotoFromUrl,
     removePhoto,
     setMainPhoto,
+    swapPhotoSlots,
     refetch: fetchPhotos
   };
 };
