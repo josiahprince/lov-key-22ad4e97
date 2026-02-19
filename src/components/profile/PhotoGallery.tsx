@@ -19,7 +19,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
   // Use user photos hook for upload/delete/manage operations (own profile only)
   const { photos: userPhotos, loading: userLoading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto } = useUserPhotos(isMatchedUser ? undefined : userId);
   // Always use secure photos to get valid signed URLs (private bucket requires signed URLs)
-  const { photos: securePhotos, loading: secureLoading, canViewUnblurred } = useSecurePhotos({ 
+  const { photos: securePhotos, loading: secureLoading, canViewUnblurred, refetch: refetchSecurePhotos, clearCache } = useSecurePhotos({ 
     userId: userId,
     matchId, 
     isOwnProfile: !isMatchedUser
@@ -40,24 +40,24 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
   const [socialUrl, setSocialUrl] = useState('');
   const [uploading, setUploading] = useState<number | null>(null);
 
-  console.log('PhotoGallery - userId:', userId);
-  console.log('PhotoGallery - photos:', photos);
+  // Helper to refresh secure photos (clears cache then refetches signed URLs)
+  const refreshSecurePhotos = () => {
+    if (userId) clearCache(userId);
+    refetchSecurePhotos();
+  };
 
   const handleFileUpload = async (slot: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    
     if (!file) return;
-
-    console.log('File selected for upload:', file.name, 'to slot:', slot);
 
     setUploading(slot);
     const result = await uploadPhoto(file, slot);
     setUploading(null);
-    
-    // Reset the input value
     event.target.value = '';
     
-    console.log('Upload result:', result);
+    if (result) {
+      refreshSecurePhotos();
+    }
   };
 
   const triggerFileInput = (slot: number) => {
@@ -74,6 +74,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
         await addPhotoFromUrl(socialUrl, slot);
         setSocialUrl('');
         setShowSocialOptions(null);
+        refreshSecurePhotos();
       } catch {
         alert('Please enter a valid URL');
       }
@@ -146,7 +147,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                 size="sm"
                 variant="outline"
                 className="absolute top-1 right-1 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500 z-20 group-hover:ring-2 group-hover:ring-red-300 group-hover:shadow-lg transition-all duration-200"
-                onClick={() => removePhoto(mainPhoto.photo_slot)}
+                onClick={async () => { await removePhoto(mainPhoto.photo_slot); refreshSecurePhotos(); }}
                 disabled={uploading === mainPhoto.photo_slot}
               >
                 ×
@@ -259,9 +260,10 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                           size="sm"
                           variant="outline"
                           className="absolute -top-2 -left-2 w-6 h-6 p-0 bg-white border-yellow-300 hover:bg-yellow-50 z-10"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            setMainPhoto(photo.photo_slot);
+                            await setMainPhoto(photo.photo_slot);
+                            refreshSecurePhotos();
                           }}
                           disabled={uploading === photo.photo_slot}
                           title="Set as main photo"
@@ -273,9 +275,10 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                           size="sm"
                           variant="outline"
                           className="absolute -bottom-2 -right-2 w-6 h-6 p-0 bg-red-500 hover:bg-red-600 text-white border-red-500 z-10"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            removePhoto(photo.photo_slot);
+                            await removePhoto(photo.photo_slot);
+                            refreshSecurePhotos();
                           }}
                           disabled={uploading === photo.photo_slot}
                           title="Remove photo"
