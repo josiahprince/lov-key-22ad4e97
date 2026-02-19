@@ -16,15 +16,23 @@ interface PhotoGalleryProps {
 }
 
 const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, matchId, onPhotoClick }: PhotoGalleryProps) => {
-  // Use secure photos for matched users, regular photos for own profile
+  // Use user photos hook for upload/delete/manage operations (own profile only)
   const { photos: userPhotos, loading: userLoading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto } = useUserPhotos(isMatchedUser ? undefined : userId);
+  // Always use secure photos to get valid signed URLs (private bucket requires signed URLs)
   const { photos: securePhotos, loading: secureLoading, canViewUnblurred } = useSecurePhotos({ 
-    userId: isMatchedUser ? userId : undefined, 
+    userId: userId,
     matchId, 
-    isOwnProfile: false 
+    isOwnProfile: !isMatchedUser
   });
   
-  const photos = isMatchedUser ? securePhotos : userPhotos;
+  // For own profile: merge userPhotos (for slot/edit management) with securePhotos (for signed URLs display)
+  // For matched users: use securePhotos directly
+  const photos = isMatchedUser 
+    ? securePhotos 
+    : userPhotos.map(up => {
+        const secure = securePhotos.find(sp => sp.photo_slot === up.photo_slot);
+        return secure ? { ...up, signedUrl: secure.signedUrl, canViewUnblurred: true } : up;
+      });
   const loading = isMatchedUser ? secureLoading : userLoading;
   const effectiveCanView = isMatchedUser ? (canViewPhotos && canViewUnblurred) : canViewPhotos;
   
