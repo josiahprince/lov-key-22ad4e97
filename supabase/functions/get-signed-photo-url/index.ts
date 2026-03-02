@@ -33,9 +33,9 @@ Deno.serve(async (req) => {
 
     // Verify the user's token
     const token = authHeader.replace('Bearer ', '');
-    const { data: claims, error: claimsError } = await supabaseUser.auth.getClaims(token);
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser(token);
     
-    if (claimsError || !claims?.claims) {
+    if (userError || !user) {
       console.warn('Invalid JWT token for get-signed-photo-url');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const currentUserId = claims.claims.sub;
+    const currentUserId = user.id;
 
     // Parse request body
     const { targetUserId, matchId, photoPath } = await req.json();
