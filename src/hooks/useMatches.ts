@@ -215,21 +215,20 @@ export const useMatches = () => {
       console.log('Processing match for user:', matchUserId);
 
       try {
-        // Fetch profile data for the match
+        // Fetch matched user's safe profile data (RLS-friendly)
         const { data: matchProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, age, city, region, country, interests')
+          .from('profiles_matched_view')
+          .select('id, nickname, age, city, region, country')
           .eq('id', matchUserId)
           .maybeSingle();
 
         if (profileError) {
-          console.error('Error fetching profile for user:', matchUserId, profileError);
-          continue;
+          console.error('Error fetching matched profile for user:', matchUserId, profileError);
         }
 
+        // Don't drop the match card if profile fields are partially unavailable
         if (!matchProfile) {
-          console.warn('No profile found for user:', matchUserId);
-          continue;
+          console.warn('No matched profile view row found for user:', matchUserId);
         }
 
         // Fetch onboarding data for the match - get the most recent non-pending record
