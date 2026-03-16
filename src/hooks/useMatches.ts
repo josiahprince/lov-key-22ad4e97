@@ -263,7 +263,7 @@ export const useMatches = () => {
         processedMatches.push({
           id: match.id,
           userId: matchUserId, // Add the matched user's ID
-          name: matchProfile.first_name || 'Unknown User',
+          name: matchProfile?.nickname || 'Unknown User',
           age: matchProfile.age,
           mood: matchOnboarding?.mood || 'chill',
           memes: memeInfo,
