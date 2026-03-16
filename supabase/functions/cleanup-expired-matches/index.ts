@@ -31,12 +31,12 @@ Deno.serve(async (req) => {
 
     console.log('Starting cleanup of expired matches and inactive chats...');
 
-    // Clean up expired matches (24-hour expiration for matches with no action)
+    // Clean up expired matches (24-hour expiration for matches with no action or pending)
     const { data: expiredMatches, error: expiredError } = await supabase
       .from('matches')
       .delete()
       .lt('expires_at', new Date().toISOString())
-      .eq('chat_request_status', 'none')
+      .in('chat_request_status', ['none', 'pending'])
       .eq('status', 'active')
       .select('id');
 
