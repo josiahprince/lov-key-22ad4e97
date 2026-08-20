@@ -40,7 +40,7 @@ const AuthScreen = ({
         if (error) throw error;
       }
       onAuthSuccess();
-    } catch (error: any) {
+    } catch (error) {
       setError(error.message);
     } finally {
       setLoading(false);

@@ -2,9 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit2, MapPin, Calendar, User } from 'lucide-react';
+import type { ProfileLike } from '@/types/domain';
 
 interface BasicInfoCardProps {
-  userProfile: any;
+  userProfile: ProfileLike | null;
   onEdit?: () => void;
 }
 

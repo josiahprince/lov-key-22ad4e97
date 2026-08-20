@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
+import type { MatchRow } from '@/types/domain';
 
 interface MatchProfile {
   id: string;
@@ -21,51 +24,22 @@ interface MatchProfile {
 }
 
 export const useMatches = () => {
+  const { user } = useAuth();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Remove local calculation since we now use the score from the database
-
-  const getMemeDisplayInfo = (selectedMemes: string[]) => {
-    const memeMap: { [key: string]: { emoji: string; title: string } } = {
-      'meme1': { emoji: '☕', title: 'Coffee Lover' },
-      'meme2': { emoji: '📚', title: 'Book Worm' },
-      'meme3': { emoji: '🌱', title: 'Plant Parent' },
-      'meme4': { emoji: '🦉', title: 'Night Owl' },
-      'meme5': { emoji: '🍜', title: 'Foodie' },
-      'meme6': { emoji: '🏏', title: 'Cricket Fanatic' },
-      'meme7': { emoji: '🌧️', title: 'Monsoon Mood' },
-      'meme8': { emoji: '🚇', title: 'Metro Survivor' },
-      'meme9': { emoji: '🥟', title: 'Street Food Explorer' },
-      'meme10': { emoji: '🎬', title: 'Bollywood Buff' },
-      'meme11': { emoji: '🚗', title: 'Traffic Philosopher' },
-      'meme12': { emoji: '🎉', title: 'Festival Enthusiast' },
-      'meme13': { emoji: '🏆', title: 'IPL Loyalist' },
-      'meme14': { emoji: '🦄', title: 'Startup Dreamer' },
-      'meme15': { emoji: '📱', title: 'Meme Connoisseur' }
-    };
-
-    if (!selectedMemes || selectedMemes.length === 0) {
-      return [];
+  const fetchTodayMatches = useCallback(async () => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to view matches",
+        variant: "destructive"
+      });
+      return;
     }
-
-    return selectedMemes.map(meme => memeMap[meme]).filter(Boolean);
-  };
-
-  const fetchTodayMatches = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please log in to view matches",
-          variant: "destructive"
-        });
-        return;
-      }
 
       // Fetch active matches (including accepted ones to show "Go to Chats" button)
       // Only exclude chats that have messages (they belong in the chats screen)
@@ -174,9 +148,9 @@ export const useMatches = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, toast]);
 
-  const processMatches = async (matchesData: any[], currentUserId: string) => {
+  const processMatches = async (matchesData: MatchRow[], currentUserId: string) => {
     const processedMatches: MatchProfile[] = [];
 
     for (const match of matchesData) {
@@ -189,55 +163,36 @@ export const useMatches = () => {
 
       try {
         // Fetch matched user's safe profile data (RLS-friendly)
-        const { data: matchProfile, error: profileError } = await supabase
-          .from('profiles_matched_view')
-          .select('id, nickname, age, city, region, country')
-          .eq('id', matchUserId)
-          .maybeSingle();
+        const { data: matchProfile, error: profileError } = await fetchMatchedViewProfile(matchUserId);
 
         if (profileError) { /* no-op */ }
 
-        // Don't drop the match card if profile fields are partially unavailable
-        if (!matchProfile) { /* no-op */ }
-
         // Fetch onboarding data for the match - get the most recent non-pending record
-        const { data: matchOnboarding, error: onboardingError } = await supabase
-          .from('user_onboarding')
-          .select('*')
-          .eq('user_id', matchUserId)
-          .neq('mood', 'pending_daily_update')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
 
         if (onboardingError) { /* no-op */ }
 
         // Fetch main photo for the match
-        const { data: matchPhoto, error: photoError } = await supabase
-          .from('user_photos')
-          .select('photo_url')
-          .eq('user_id', matchUserId)
-          .eq('is_main', true)
-          .maybeSingle();
+        const { data: matchPhoto, error: photoError } = await fetchMainPhotoUrl(matchUserId);
 
         if (photoError) { /* no-op */ }
 
         // Show matches even with incomplete data
         const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
-        
+
         processedMatches.push({
           id: match.id,
           userId: matchUserId, // Add the matched user's ID
           name: matchProfile?.nickname || 'Unknown User',
-          age: matchProfile.age,
+          age: matchProfile?.age,
           mood: matchOnboarding?.mood || 'chill',
           memes: memeInfo,
           promptAnswer: matchOnboarding?.perfect_sunday || "",
           compatibility: match.match_score || 75,
           mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
-          city: matchProfile.city || 'Unknown',
-          region: matchProfile.region,
-          country: matchProfile.country,
+          city: matchProfile?.city || 'Unknown',
+          region: matchProfile?.region,
+          country: matchProfile?.country,
           chatRequestStatus: match.chat_request_status || 'none',
           chatRequestSender: match.chat_request_sender,
           expiresAt: match.expires_at
@@ -253,7 +208,7 @@ export const useMatches = () => {
 
   useEffect(() => {
     fetchTodayMatches();
-  }, []);
+  }, [fetchTodayMatches]);
 
   return {
     matches,

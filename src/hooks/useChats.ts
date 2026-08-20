@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl } from '@/lib/matchQueries';
+import type { MatchRow } from '@/types/domain';
 
 interface ChatProfile {
   id: string; // match ID
@@ -18,44 +21,17 @@ interface ChatProfile {
 }
 
 export const useChats = () => {
+  const { user } = useAuth();
   const [chats, setChats] = useState<ChatProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const getMemeDisplayInfo = (selectedMemes: string[]) => {
-    const memeMap: { [key: string]: { emoji: string; title: string } } = {
-      'meme1': { emoji: '☕', title: 'Coffee Lover' },
-      'meme2': { emoji: '📚', title: 'Book Worm' },
-      'meme3': { emoji: '🌱', title: 'Plant Parent' },
-      'meme4': { emoji: '🦉', title: 'Night Owl' },
-      'meme5': { emoji: '🍜', title: 'Foodie' },
-      'meme6': { emoji: '🏏', title: 'Cricket Fanatic' },
-      'meme7': { emoji: '🌧️', title: 'Monsoon Mood' },
-      'meme8': { emoji: '🚇', title: 'Metro Survivor' },
-      'meme9': { emoji: '🥟', title: 'Street Food Explorer' },
-      'meme10': { emoji: '🎬', title: 'Bollywood Buff' },
-      'meme11': { emoji: '🚗', title: 'Traffic Philosopher' },
-      'meme12': { emoji: '🎉', title: 'Festival Enthusiast' },
-      'meme13': { emoji: '🏆', title: 'IPL Loyalist' },
-      'meme14': { emoji: '🦄', title: 'Startup Dreamer' },
-      'meme15': { emoji: '📱', title: 'Meme Connoisseur' }
-    };
-
-    if (!selectedMemes || selectedMemes.length === 0) {
-      return [];
-    }
-
-    return selectedMemes.map(meme => memeMap[meme]).filter(Boolean);
-  };
-
   const fetchChats = useCallback(async () => {
+    if (!user) {
+      return;
+    }
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        return;
-      }
 
       // Fetch all accepted chat requests (active chats only, not inactive due to 48h rule)
       const { data: chatMatches, error: chatsError } = await supabase
@@ -85,9 +61,9 @@ export const useChats = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, user]);
 
-  const processChats = async (chatMatches: any[], currentUserId: string) => {
+  const processChats = async (chatMatches: MatchRow[], currentUserId: string) => {
     const processedChats: ChatProfile[] = [];
 
     for (const match of chatMatches) {
@@ -128,25 +104,15 @@ export const useChats = () => {
         if (profileError) { /* no-op */ }
 
         // Fetch onboarding data for the match - exclude pending records
-        const { data: matchOnboardingData, error: onboardingError } = await supabase
-          .from('user_onboarding')
-          .select('*')
-          .eq('user_id', matchUserId)
-          .neq('mood', 'pending_daily_update')
-          .order('created_at', { ascending: false })
-          .limit(1);
+        const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
 
         if (onboardingError) { /* no-op */ }
 
-        // Handle multiple records properly by taking the first (most recent) one
-        const matchOnboarding = matchOnboardingData && matchOnboardingData.length > 0 ? matchOnboardingData[0] : null;
-
         // Skip if onboarding data has pending values
         if (matchOnboarding && (
-          matchOnboarding.mood === 'pending_daily_update' ||
-          (matchOnboarding.selected_memes && 
-           matchOnboarding.selected_memes.length === 1 && 
-           matchOnboarding.selected_memes[0] === 'pending')
+          matchOnboarding.selected_memes &&
+           matchOnboarding.selected_memes.length === 1 &&
+           matchOnboarding.selected_memes[0] === 'pending'
         )) {
           continue;
         }
@@ -159,12 +125,7 @@ export const useChats = () => {
         };
 
         // Fetch main photo for the match
-        const { data: matchPhoto, error: photoError } = await supabase
-          .from('user_photos')
-          .select('photo_url')
-          .eq('user_id', matchUserId)
-          .eq('is_main', true)
-          .maybeSingle();
+        const { data: matchPhoto, error: photoError } = await fetchMainPhotoUrl(matchUserId);
 
         if (photoError) { /* no-op */ }
 

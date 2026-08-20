@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileInfo from './profile/ProfileInfo';
 import PhotoGallery from './profile/PhotoGallery';
@@ -11,26 +11,23 @@ import PrivacyCards from './profile/PrivacyCards';
 import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
+import { useAuth } from '@/hooks/useAuth';
+import type { ProfileLike } from '@/types/domain';
 
 const ProfileScreen = ({
-  userProfile,
-  onSignOut
+  userProfile
 }: {
-  userProfile: any;
-  onSignOut: () => void;
+  userProfile: ProfileLike | null;
 }) => {
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const { user } = useAuth();
+  const currentUserId = user?.id;
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const { photos } = useSecurePhotos({ userId: currentUserId, isOwnProfile: true });
 
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id);
-    };
-    getCurrentUser();
-  }, []);
+  const onSignOut = () => {
+    supabase.auth.signOut();
+  };
 
   // If userProfile is not available, show loading
   if (!userProfile) {

@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchMatchedViewProfile } from '@/lib/matchQueries';
+import type { MatchedProfile } from '@/types/domain';
 
 export const useMatchedUserProfile = (matchId: string | undefined, currentUserId: string | undefined) => {
-  const [matchedUserProfile, setMatchedUserProfile] = useState<any>(null);
+  const [matchedUserProfile, setMatchedUserProfile] = useState<MatchedProfile | null>(null);
   const [matchedUserId, setMatchedUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -36,11 +38,7 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
         setMatchedUserId(otherUserId);
 
         // Get the matched user's profile from the secure view (excludes sensitive data)
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles_matched_view')
-          .select('*')
-          .eq('id', otherUserId)
-          .single();
+        const { data: profile, error: profileError } = await fetchMatchedViewProfile(otherUserId);
 
         if (profileError) throw profileError;
 
@@ -61,11 +59,7 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
             },
             async () => {
               // Re-fetch from secure view to get only safe fields
-              const { data: updatedProfile } = await supabase
-                .from('profiles_matched_view')
-                .select('*')
-                .eq('id', otherUserId)
-                .single();
+              const { data: updatedProfile } = await fetchMatchedViewProfile(otherUserId);
               if (updatedProfile) {
                 setMatchedUserProfile(updatedProfile);
               }

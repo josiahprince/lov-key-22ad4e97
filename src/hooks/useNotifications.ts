@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Notification {
   id: string;
@@ -13,19 +14,17 @@ interface Notification {
 }
 
 export const useNotifications = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    if (!user) {
+      return;
+    }
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        return;
-      }
-
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -43,7 +42,7 @@ export const useNotifications = () => {
     } catch (error) { /* no-op */ } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -64,7 +63,6 @@ export const useNotifications = () => {
 
   const markAllAsRead = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const { error } = await supabase
@@ -86,42 +84,40 @@ export const useNotifications = () => {
   useEffect(() => {
     fetchNotifications();
 
+    if (!user) return;
+
     // Set up real-time subscription for new notifications
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) return;
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const newNotification = payload.new as Notification;
 
-      const channel = supabase
-        .channel('notifications-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'notifications',
-            filter: `user_id=eq.${data.user.id}`
-          },
-          (payload) => {
-            const newNotification = payload.new as Notification;
-            
-            // Add to notifications list
-            setNotifications(prev => [newNotification, ...prev]);
-            setUnreadCount(prev => prev + 1);
+          // Add to notifications list
+          setNotifications(prev => [newNotification, ...prev]);
+          setUnreadCount(prev => prev + 1);
 
-            // Show toast notification
-            toast({
-              title: newNotification.title,
-              description: newNotification.message,
-              duration: 5000,
-            });
-          }
-        )
-        .subscribe();
+          // Show toast notification
+          toast({
+            title: newNotification.title,
+            description: newNotification.message,
+            duration: 5000,
+          });
+        }
+      )
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    });
-  }, [toast]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, toast, fetchNotifications]);
 
   return {
     notifications,

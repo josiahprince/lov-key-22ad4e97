@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock, Send, Images, Eye, ArrowLeft } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ChatScreenProps {
   matchId: string;
@@ -16,22 +16,12 @@ interface ChatScreenProps {
 }
 
 const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, onBackToChats }: ChatScreenProps) => {
-  const [currentUserId, setCurrentUserId] = useState<string>('');
+  const { user } = useAuth();
+  const currentUserId = user?.id ?? '';
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
   const [photoRequestSent, setPhotoRequestSent] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Get current user
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setCurrentUserId(user.id);
-      }
-    };
-    getCurrentUser();
-  }, []);
 
   const { messages, loading, messageCounts, sendMessage, canViewPhotos } = useMessages(matchId, currentUserId);
 

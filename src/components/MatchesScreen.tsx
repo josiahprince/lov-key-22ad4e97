@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Heart, X, MessageCircle, Loader2, Send, Check, Clock } from 'lucide-react';
 import { useMatches } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { formatDistanceToNow } from 'date-fns';
+import type { ProfileLike } from '@/types/domain';
 interface MatchProfile {
   id: string;
   userId: string; // The matched user's ID
@@ -28,20 +30,14 @@ interface MatchProfile {
   expiresAt?: string;
 }
 interface MatchesScreenProps {
-  userProfile: any;
-  onStartChat?: (matchData: {
-    matchId: string;
-    matchedUserId: string;
-    matchedUserName: string;
-    matchedUserVibes: string;
-  }) => void;
+  userProfile: ProfileLike | null;
   onNavigateToChats?: () => void;
 }
 const MatchesScreen = ({
   userProfile,
-  onStartChat,
   onNavigateToChats
 }: MatchesScreenProps) => {
+  const { user } = useAuth();
   const [skippedProfiles, setSkippedProfiles] = useState<string[]>([]);
   const [processingRequests, setProcessingRequests] = useState<string[]>([]);
   const {
@@ -53,7 +49,7 @@ const MatchesScreen = ({
     toast
   } = useToast();
   const navigate = useNavigate();
-  const handleViewProfile = (match: any) => {
+  const handleViewProfile = (match: MatchProfile) => {
     navigate(`/match/${match.id}`);
   };
   const handleSkip = async (profileId: string) => {
@@ -69,16 +65,11 @@ const MatchesScreen = ({
       if (error) { /* no-op */ }
     } catch (error) { /* no-op */ }
   };
-  const handleSendChatRequest = async (match: any) => {
+  const handleSendChatRequest = async (match: MatchProfile) => {
     if (processingRequests.includes(match.id)) return;
+    if (!user) return;
     try {
       setProcessingRequests(prev => [...prev, match.id]);
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
-      if (!user) return;
       const {
         error
       } = await supabase.from('matches').update({
@@ -102,7 +93,7 @@ const MatchesScreen = ({
       setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
   };
-  const handleAcceptChatRequest = async (match: any) => {
+  const handleAcceptChatRequest = async (match: MatchProfile) => {
     if (processingRequests.includes(match.id)) return;
     try {
       setProcessingRequests(prev => [...prev, match.id]);
@@ -157,7 +148,7 @@ const MatchesScreen = ({
       setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
   };
-  const getChatButtonContent = (match: any) => {
+  const getChatButtonContent = (match: MatchProfile) => {
     const currentUserId = userProfile?.id; // Use userProfile passed as prop
     const isProcessing = processingRequests.includes(match.id);
     if (isProcessing) {

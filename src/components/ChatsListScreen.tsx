@@ -141,7 +141,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
                 className="flex-1 bg-rose-500 hover:bg-rose-600 text-white rounded-xl"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const vibesText = chat.memes.map((m: any) => m.title).join(' • ');
+                  const vibesText = chat.memes.map((m) => m.title).join(' • ');
                   onStartChat({
                     matchId: chat.id,
                     matchedUserId: chat.userId,

@@ -57,7 +57,7 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
           if (payload.eventType === 'DELETE') {
             setDescription('');
           } else {
-            setDescription((payload.new as any)?.description || '');
+            setDescription((payload.new as { description?: string })?.description || '');
           }
         }
       )

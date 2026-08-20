@@ -2,8 +2,10 @@ import { Card } from '@/components/ui/card';
 import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import type { MappedOnboardingData } from '@/types/domain';
 interface VibeCardProps {
-  onboardingData: any;
+  onboardingData: MappedOnboardingData;
   isMatchedUser?: boolean;
   matchedUserId?: string;
 }
@@ -12,6 +14,7 @@ const VibeCard = ({
   isMatchedUser = false,
   matchedUserId
 }: VibeCardProps) => {
+  const { user } = useAuth();
   const [userCountry, setUserCountry] = useState<string | null>(null);
   const {
     vibes: availableVibes
@@ -26,25 +29,18 @@ const VibeCard = ({
         if (data?.country) {
           setUserCountry(data.country);
         }
-      } else {
+      } else if (user) {
         // Get current user's country
         const {
-          data: {
-            user
-          }
-        } = await supabase.auth.getUser();
-        if (user) {
-          const {
-            data
-          } = await supabase.from('profiles').select('country').eq('id', user.id).single();
-          if (data?.country) {
-            setUserCountry(data.country);
-          }
+          data
+        } = await supabase.from('profiles').select('country').eq('id', user.id).single();
+        if (data?.country) {
+          setUserCountry(data.country);
         }
       }
     };
     fetchCountry();
-  }, [isMatchedUser, matchedUserId]);
+  }, [isMatchedUser, matchedUserId, user]);
   const getMoodIcon = (mood: string) => {
     switch (mood) {
       case 'happy':

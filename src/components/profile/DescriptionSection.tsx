@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserDescription } from '@/hooks/useUserDescription';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 interface DescriptionSectionProps {
   initialDescription?: string;
@@ -11,19 +11,12 @@ interface DescriptionSectionProps {
 }
 
 const DescriptionSection = ({ initialDescription, onSave }: DescriptionSectionProps) => {
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const { user } = useAuth();
+  const currentUserId = user?.id;
   const [localDescription, setLocalDescription] = useState('');
   const [saveTimeout, setSaveTimeout] = useState<NodeJS.Timeout | null>(null);
-  
-  const { description, loading, saving, saveDescription } = useUserDescription(currentUserId);
 
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id);
-    };
-    getCurrentUser();
-  }, []);
+  const { description, loading, saving, saveDescription } = useUserDescription(currentUserId);
 
   useEffect(() => {
     setLocalDescription(description);
