@@ -7,8 +7,17 @@ import { Heart, Smile, Meh, Frown, Zap, Coffee, Flame } from 'lucide-react';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
 import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
-const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }) => {
+interface OnboardingCompletionData {
+  mood: string;
+  memes: string[];
+  promptAnswer: string;
+  createdAt: Date;
+}
+
+const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingCompletionData) => void }) => {
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [mood, setMood] = useState('');
   const [selectedMemes, setSelectedMemes] = useState<string[]>([]);
@@ -31,23 +40,22 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
 
   // Fetch user's country on component mount
   useEffect(() => {
+    if (!user) return;
+
     const fetchUserCountry = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('country')
-          .eq('id', user.id)
-          .single();
-        
-        if (profile?.country) {
-          setUserCountry(profile.country);
-        }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('country')
+        .eq('id', user.id)
+        .single();
+
+      if (profile?.country) {
+        setUserCountry(profile.country);
       }
     };
 
     fetchUserCountry();
-  }, []);
+  }, [user]);
 
   // Load existing data when component mounts (only once)
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
@@ -12,32 +12,27 @@ import { useMessages } from '@/hooks/useMessages';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useMatchedUserProfile } from '@/hooks/useMatchedUserProfile';
 
-const MatchProfileView = () => {
+interface MatchedProfileViewProps {
+  backTo: string;
+  backLabel: string;
+}
+
+const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
   const { matchId } = useParams();
   const navigate = useNavigate();
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const { user } = useAuth();
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
-  
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id);
-    };
-    getCurrentUser();
-  }, []);
 
-  const { matchedUserProfile, loading } = useMatchedUserProfile(matchId, currentUserId);
-  const { messages } = useMessages(matchId || '', currentUserId || '');
+  const { matchedUserProfile, loading } = useMatchedUserProfile(matchId, user?.id);
+  const { messages } = useMessages(matchId || '', user?.id || '');
   const { photos, canViewUnblurred: canViewPhotos } = useSecurePhotos({
     userId: matchedUserProfile?.id,
     matchId: matchId,
     isOwnProfile: false
   });
 
-  const handleBack = () => {
-    navigate('/', { state: { screen: 'matches' } });
-  };
+  const handleBack = () => navigate(backTo);
 
   if (loading) {
     return (
@@ -57,7 +52,7 @@ const MatchProfileView = () => {
           <p className="text-gray-600">Profile not found</p>
           <Button onClick={handleBack} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Matches
+            {backLabel}
           </Button>
         </div>
       </div>
@@ -82,9 +77,9 @@ const MatchProfileView = () => {
             <h1 className="text-xl font-bold text-gray-800">Profile</h1>
           </div>
 
-          <ProfileHeader 
-            userProfile={matchedUserProfile} 
-            isMatchedUser={true} 
+          <ProfileHeader
+            userProfile={matchedUserProfile}
+            isMatchedUser={true}
             canViewPhotos={canViewPhotos}
             matchId={matchId}
             onPhotoClick={() => {
@@ -94,9 +89,9 @@ const MatchProfileView = () => {
           />
           <ProfileInfo userProfile={matchedUserProfile} isMatchedUser={true} matchedUserId={matchedUserProfile.id} />
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
-          <PhotoGallery 
-            userId={matchedUserProfile.id} 
-            canViewPhotos={canViewPhotos} 
+          <PhotoGallery
+            userId={matchedUserProfile.id}
+            canViewPhotos={canViewPhotos}
             isMatchedUser={true}
             matchId={matchId}
             onPhotoClick={(index) => {
@@ -104,7 +99,7 @@ const MatchProfileView = () => {
               setIsGalleryOpen(true);
             }}
           />
-          
+
           {!canViewPhotos && (
             <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-center">
               <p className="text-sm text-rose-700">
@@ -117,7 +112,7 @@ const MatchProfileView = () => {
           )}
         </div>
       </div>
-      
+
       <PhotoGalleryViewer
         photos={photos}
         initialIndex={selectedPhotoIndex}
@@ -129,4 +124,4 @@ const MatchProfileView = () => {
   );
 };
 
-export default MatchProfileView;
+export default MatchedProfileView;

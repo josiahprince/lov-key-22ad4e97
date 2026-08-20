@@ -1,11 +1,11 @@
 
 import { Camera } from 'lucide-react';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
-import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import type { ProfileLike } from '@/types/domain';
 
 interface ProfileHeaderProps {
-  userProfile?: any;
+  userProfile?: ProfileLike | null;
   isMatchedUser?: boolean;
   canViewPhotos?: boolean;
   matchId?: string;
@@ -13,22 +13,14 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = true, matchId, onPhotoClick }: ProfileHeaderProps) => {
-  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+  const { user } = useAuth();
   // Use matched user's ID for photos if viewing matched user, otherwise use current user
-  const targetUserId = isMatchedUser ? userProfile?.id : currentUserId;
-  const { photos, loading, canViewUnblurred } = useSecurePhotos({ 
+  const targetUserId = isMatchedUser ? userProfile?.id : user?.id;
+  const { photos, loading, canViewUnblurred } = useSecurePhotos({
     userId: targetUserId,
     matchId: matchId,
     isOwnProfile: !isMatchedUser
   });
-
-  useEffect(() => {
-    const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setCurrentUserId(user?.id);
-    };
-    getCurrentUser();
-  }, []);
 
   // Find the main photo or the first photo with content (use signedUrl if available)
   const mainPhoto = photos.find(photo => photo.is_main && (photo.signedUrl || photo.photo_url)) || 

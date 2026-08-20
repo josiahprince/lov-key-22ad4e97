@@ -1,14 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchLatestOnboarding } from '@/lib/matchQueries';
+import type { OnboardingRow, MappedOnboardingData } from '@/types/domain';
 
-interface OnboardingData {
-  id?: string;
-  mood: string;
-  selectedMemes: string[];
-  perfectSunday: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+type OnboardingData = MappedOnboardingData;
 
 export const useMatchedUserOnboardingData = (userId: string | undefined) => {
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
@@ -16,7 +11,7 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
   const subscriptionRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const instanceIdRef = useRef<string>(Math.random().toString(36).substring(7));
 
-  const mapDataToOnboarding = (data: any): OnboardingData => ({
+  const mapDataToOnboarding = (data: OnboardingRow): OnboardingData => ({
     id: data.id,
     mood: data.mood,
     selectedMemes: data.selected_memes,
@@ -33,14 +28,7 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
 
     const fetchOnboardingData = async () => {
       try {
-        const { data, error } = await supabase
-          .from('user_onboarding')
-          .select('*')
-          .eq('user_id', userId)
-          .neq('mood', 'pending_daily_update')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const { data, error } = await fetchLatestOnboarding(userId);
 
         if (error) { /* no-op */ }
 
@@ -75,8 +63,8 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
         (payload) => {
           if (payload.eventType === 'DELETE') {
             setOnboardingData(null);
-          } else if (payload.new && (payload.new as any).mood !== 'pending_daily_update') {
-            setOnboardingData(mapDataToOnboarding(payload.new));
+          } else if (payload.new && (payload.new as OnboardingRow).mood !== 'pending_daily_update') {
+            setOnboardingData(mapDataToOnboarding(payload.new as OnboardingRow));
           }
         }
       )

@@ -1,20 +1,15 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import type { PostgrestError } from '@supabase/supabase-js';
+import type { MappedOnboardingData } from '@/types/domain';
 
-interface OnboardingData {
-  id?: string;
-  mood: string;
-  selectedMemes: string[];
-  perfectSunday: string;
-  createdAt?: string;
-  updatedAt?: string;
-  lastOnboardingDate?: string;
-  onboardingShownToday?: boolean;
-}
+type OnboardingData = MappedOnboardingData;
 
 export const useOnboardingData = () => {
+  const { user } = useAuth();
   const [onboardingData, setOnboardingData] = useState<OnboardingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
@@ -37,14 +32,12 @@ export const useOnboardingData = () => {
     }
   };
 
-  const fetchOnboardingData = async () => {
+  const fetchOnboardingData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
       // First, ensure user has timezone set and capture it
       const timezone = await detectAndUpdateTimezone(user.id);
 
@@ -65,8 +58,8 @@ export const useOnboardingData = () => {
           ]),
           timeoutPromise
         ]) as [
-          { data: boolean | null; error: any },
-          { data: string | null; error: any }
+          { data: boolean | null; error: PostgrestError | null },
+          { data: string | null; error: PostgrestError | null }
         ];
         
         isAfter6am = results[0]?.data ?? true;
@@ -133,7 +126,7 @@ export const useOnboardingData = () => {
         const serverResult = await Promise.race([
           supabase.rpc('should_show_onboarding', { user_id_param: user.id }),
           timeoutPromise
-        ]) as { data: boolean | null; error: any };
+        ]) as { data: boolean | null; error: PostgrestError | null };
         
         if (serverResult && typeof serverResult.data === 'boolean') {
           serverDecision = serverResult.data;
@@ -146,11 +139,10 @@ export const useOnboardingData = () => {
     } catch (error) { /* no-op */ } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   const saveOnboardingData = async (data: Omit<OnboardingData, 'id' | 'createdAt' | 'updatedAt' | 'lastOnboardingDate' | 'onboardingShownToday'>) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       // Get user's timezone for date calculation
@@ -219,28 +211,12 @@ export const useOnboardingData = () => {
   };
 
   useEffect(() => {
-    let isMounted = true;
-    let hasInitialized = false;
-    
-    const initOnboarding = async () => {
-      if (hasInitialized) return; // Prevent duplicate initialization
-      hasInitialized = true;
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (isMounted && user) {
-        await fetchOnboardingData();
-      } else if (isMounted) {
-        // No user, set loading to false immediately
-        setLoading(false);
-      }
-    };
-    
-    initOnboarding();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    if (user) {
+      fetchOnboardingData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, fetchOnboardingData]);
 
   return {
     onboardingData,

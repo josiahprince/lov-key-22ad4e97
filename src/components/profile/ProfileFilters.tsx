@@ -9,8 +9,10 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { X, SlidersHorizontal } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import type { ProfileLike } from '@/types/domain';
 
 type GenderType = Database['public']['Enums']['gender_type'];
 type OrientationType = Database['public']['Enums']['orientation_type'];
@@ -27,7 +29,8 @@ interface FilterPreferences {
   interests: string[];
 }
 
-const ProfileFilters = ({ userProfile }: { userProfile: any }) => {
+const ProfileFilters = ({ userProfile }: { userProfile: ProfileLike | null }) => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<FilterPreferences>({
     age_min: 18,
@@ -67,7 +70,6 @@ const ProfileFilters = ({ userProfile }: { userProfile: any }) => {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
       // Convert personality prompts back to object format
@@ -98,7 +100,7 @@ const ProfileFilters = ({ userProfile }: { userProfile: any }) => {
       });
 
       setOpen(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update preferences. Please try again.",

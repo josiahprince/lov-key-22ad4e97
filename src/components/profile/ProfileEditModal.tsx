@@ -8,21 +8,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
+import type { ProfileLike } from '@/types/domain';
 
 type GenderType = Database['public']['Enums']['gender_type'];
 
 interface ProfileEditModalProps {
   isOpen: boolean;
   onClose: () => void;
-  userProfile: any;
+  userProfile: ProfileLike | null;
 }
 
 const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProps) => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const [dateOfBirth, setDateOfBirth] = useState<Date | undefined>(
@@ -62,7 +65,6 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
       const profileData = {
@@ -90,7 +92,7 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
 
       onClose();
       window.location.reload(); // Refresh to show updated data
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",

@@ -36,7 +36,7 @@ export interface ProfileFormData {
 
 interface ProfileSetupContextType {
   formData: ProfileFormData;
-  updateField: (field: keyof ProfileFormData, value: any) => void;
+  updateField: (field: keyof ProfileFormData, value: ProfileFormData[keyof ProfileFormData]) => void;
   validateStep: (step: number) => boolean;
   dobError: string | null;
 }
@@ -95,12 +95,12 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     return age;
   };
 
-  const updateField = (field: keyof ProfileFormData, value: any) => {
+  const updateField = (field: keyof ProfileFormData, value: ProfileFormData[keyof ProfileFormData]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Validate age when date of birth is updated
     if (field === 'date_of_birth' && value) {
-      const age = calculateAge(value);
+      const age = calculateAge(value as string);
       if (age < 18) {
         setDobError('You must be at least 18 years old to use this app.');
       } else {
@@ -111,10 +111,11 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
 
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 1:
+      case 1: {
         const hasBasicInfo = Boolean(formData.first_name && formData.last_name && formData.nickname && formData.date_of_birth);
         const isOldEnough = formData.date_of_birth ? calculateAge(formData.date_of_birth) >= 18 : false;
         return hasBasicInfo && isOldEnough && !dobError;
+      }
       case 2:
         return Boolean(formData.gender && formData.sexual_orientation && formData.interested_in && 
                       formData.min_age_preference >= 18 && formData.max_age_preference <= 90 &&

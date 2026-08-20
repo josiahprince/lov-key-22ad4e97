@@ -5,9 +5,10 @@ import VibeCard from './VibeCard';
 import BasicInfoCard from './BasicInfoCard';
 import ProfileEditModal from './ProfileEditModal';
 import { useState } from 'react';
+import type { ProfileLike } from '@/types/domain';
 
 interface ProfileInfoProps {
-  userProfile: any;
+  userProfile: ProfileLike | null;
   isMatchedUser?: boolean;
   matchedUserId?: string;
 }

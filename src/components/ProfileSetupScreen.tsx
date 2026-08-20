@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
+import type { ProfileLike } from '@/types/domain';
 import { ProfileSetupProvider, useProfileSetup } from './profile-setup/ProfileSetupContext';
 import BasicInfoStep from './profile-setup/BasicInfoStep';
 import GenderOrientationStep from './profile-setup/GenderOrientationStep';
@@ -16,10 +18,11 @@ type OrientationType = Database['public']['Enums']['orientation_type'];
 type InterestedInType = Database['public']['Enums']['interested_in_type'];
 
 interface ProfileSetupScreenProps {
-  onComplete: (profile: any) => void;
+  onComplete: (profile: ProfileLike) => void;
 }
 
 const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -40,7 +43,6 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
       const profileData = {
@@ -80,7 +82,7 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
       });
 
       onComplete(profileData);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to save profile. Please try again.",
