@@ -23,14 +23,10 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
           .eq('user_id', userId)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching description:', error);
-        } else {
+        if (error) { /* no-op */ } else {
           setDescription(data?.description || '');
         }
-      } catch (error) {
-        console.error('Unexpected error fetching description:', error);
-      } finally {
+      } catch (error) { /* no-op */ } finally {
         setLoading(false);
       }
     };
@@ -58,7 +54,6 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log('Description updated in real-time:', payload);
           if (payload.eventType === 'DELETE') {
             setDescription('');
           } else {

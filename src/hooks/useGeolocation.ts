@@ -57,7 +57,6 @@ export const useGeolocation = () => {
         fullAddress,
       };
     } catch (error) {
-      console.error('Reverse geocoding error:', error);
       throw new Error('Failed to get location details');
     }
   };

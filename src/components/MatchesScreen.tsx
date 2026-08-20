@@ -66,12 +66,8 @@ const MatchesScreen = ({
       } = await supabase.from('matches').update({
         status: 'skipped'
       }).eq('id', profileId);
-      if (error) {
-        console.error('Error updating match status:', error);
-      }
-    } catch (error) {
-      console.error('Error skipping match:', error);
-    }
+      if (error) { /* no-op */ }
+    } catch (error) { /* no-op */ }
   };
   const handleSendChatRequest = async (match: any) => {
     if (processingRequests.includes(match.id)) return;
@@ -90,7 +86,6 @@ const MatchesScreen = ({
         chat_request_sender: user.id
       }).eq('id', match.id);
       if (error) {
-        console.error('Error sending chat request:', error);
         toast({
           title: "Error",
           description: "Failed to send chat request. Please try again.",
@@ -103,9 +98,7 @@ const MatchesScreen = ({
         });
         refetch(); // Refresh matches to show updated status
       }
-    } catch (error) {
-      console.error('Error sending chat request:', error);
-    } finally {
+    } catch (error) { /* no-op */ } finally {
       setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
   };
@@ -113,7 +106,6 @@ const MatchesScreen = ({
     if (processingRequests.includes(match.id)) return;
     try {
       setProcessingRequests(prev => [...prev, match.id]);
-      console.log('Accepting chat request for match:', match.id);
       const {
         data,
         error
@@ -124,12 +116,7 @@ const MatchesScreen = ({
         last_interaction_at: new Date().toISOString()
       }).eq('id', match.id).select(); // Add select to get the updated data back
 
-      console.log('Update result:', {
-        data,
-        error
-      });
       if (error) {
-        console.error('Error accepting chat request:', error);
         toast({
           title: "Error",
           description: "Failed to accept chat request. Please try again.",
@@ -138,7 +125,6 @@ const MatchesScreen = ({
         return;
       }
       if (!data || data.length === 0) {
-        console.error('No data returned from update, possible permission issue');
         toast({
           title: "Error",
           description: "Failed to update chat request. Please try again.",
@@ -159,11 +145,9 @@ const MatchesScreen = ({
 
       // Navigate to chats screen after accepting
       if (onNavigateToChats) {
-        console.log('Navigating to chats screen after accepting request');
         onNavigateToChats();
       }
     } catch (error) {
-      console.error('Error accepting chat request:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred. Please try again.",
@@ -263,7 +247,6 @@ const MatchesScreen = ({
                 </div>
               </div>
               <div className="text-right">
-                
                 
               </div>
             </div>

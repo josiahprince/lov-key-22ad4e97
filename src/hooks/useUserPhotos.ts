@@ -1,5 +1,4 @@
 
-
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -40,7 +39,6 @@ export const useUserPhotos = (userId: string | undefined) => {
     }
 
     try {
-      console.log('Fetching photos for user:', userId);
       
       const { data, error } = await supabase
         .from('user_photos')
@@ -49,7 +47,6 @@ export const useUserPhotos = (userId: string | undefined) => {
         .order('photo_slot');
 
       if (error) {
-        console.error('Error fetching photos:', error);
         toast({
           title: "Error",
           description: "Failed to load photos",
@@ -58,19 +55,15 @@ export const useUserPhotos = (userId: string | undefined) => {
         return;
       }
 
-      console.log('Fetched photos from DB:', data);
       const photoSlots = initializePhotoSlots(data || []);
       setPhotos(photoSlots);
-    } catch (error) {
-      console.error('Unexpected error fetching photos:', error);
-    } finally {
+    } catch (error) { /* no-op */ } finally {
       setLoading(false);
     }
   };
 
   const uploadPhoto = async (file: File, slot: number) => {
     if (!userId) {
-      console.error('No user ID available for upload');
       toast({
         title: "Error",
         description: "Please sign in to upload photos",
@@ -80,7 +73,6 @@ export const useUserPhotos = (userId: string | undefined) => {
     }
 
     try {
-      console.log('Starting upload for slot:', slot, 'file:', file.name);
       
       // Validate file type - Enhanced to support more formats
       const allowedTypes = [
@@ -114,8 +106,6 @@ export const useUserPhotos = (userId: string | undefined) => {
       // Use the new profile-photos bucket for all photos
       const bucketName = 'profile-photos';
 
-      console.log('Uploading to bucket:', bucketName, 'with filename:', fileName);
-
       // Delete existing photo in this slot first
       const existingPhoto = photos.find(p => p.photo_slot === slot && p.photo_url);
       if (existingPhoto && existingPhoto.photo_url.includes('supabase')) {
@@ -130,17 +120,12 @@ export const useUserPhotos = (userId: string | undefined) => {
         });
 
       if (uploadError) {
-        console.error('Storage upload error:', uploadError);
         throw uploadError;
       }
-
-      console.log('Upload successful:', uploadData);
 
       const { data: { publicUrl } } = supabase.storage
         .from(bucketName)
         .getPublicUrl(fileName);
-
-      console.log('Generated public URL:', publicUrl);
 
       // Save to database
       const { data, error: dbError } = await supabase
@@ -155,11 +140,8 @@ export const useUserPhotos = (userId: string | undefined) => {
         .single();
 
       if (dbError) {
-        console.error('Database error:', dbError);
         throw dbError;
       }
-
-      console.log('Database save successful:', data);
 
       // Refresh photos after successful upload
       await fetchPhotos();
@@ -171,7 +153,6 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       return publicUrl;
     } catch (error) {
-      console.error('Upload error:', error);
       toast({
         title: "Error",
         description: "Failed to upload photo. Please try again.",
@@ -192,7 +173,6 @@ export const useUserPhotos = (userId: string | undefined) => {
     }
 
     try {
-      console.log('Adding photo from URL:', url, 'to slot:', slot);
       
       const { data, error } = await supabase
         .from('user_photos')
@@ -207,8 +187,6 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       if (error) throw error;
 
-      console.log('Photo from URL added successfully:', data);
-
       // Refresh photos after successful addition
       await fetchPhotos();
 
@@ -217,7 +195,6 @@ export const useUserPhotos = (userId: string | undefined) => {
         description: "Photo added successfully"
       });
     } catch (error) {
-      console.error('Error adding photo:', error);
       toast({
         title: "Error",
         description: "Failed to add photo",
@@ -233,7 +210,6 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!photo || !photo.photo_url) return;
 
     try {
-      console.log('Removing photo from slot:', slot);
       
       // Delete from database first
       const { error: dbError } = await supabase
@@ -257,9 +233,7 @@ export const useUserPhotos = (userId: string | undefined) => {
           .from(bucketName)
           .remove([fullPath]);
 
-        if (storageError) {
-          console.error('Storage deletion error:', storageError);
-        }
+        if (storageError) { /* no-op */ }
       }
 
       // Refresh photos after successful removal
@@ -270,7 +244,6 @@ export const useUserPhotos = (userId: string | undefined) => {
         description: "Photo removed successfully"
       });
     } catch (error) {
-      console.error('Error removing photo:', error);
       toast({
         title: "Error",
         description: "Failed to remove photo",
@@ -283,7 +256,6 @@ export const useUserPhotos = (userId: string | undefined) => {
     if (!userId) return;
 
     try {
-      console.log('Setting main photo to slot:', slot);
       
       // First, set all photos to not main
       const { error: resetError } = await supabase
@@ -306,7 +278,6 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       toast({ title: "Success", description: "Main photo updated" });
     } catch (error) {
-      console.error('Error setting main photo:', error);
       toast({ title: "Error", description: "Failed to set main photo", variant: "destructive" });
     }
   };
@@ -338,7 +309,6 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       await fetchPhotos();
     } catch (error) {
-      console.error('Error swapping photo slots:', error);
       toast({ title: "Error", description: "Failed to reorder photos", variant: "destructive" });
     }
   };
@@ -371,7 +341,6 @@ export const useUserPhotos = (userId: string | undefined) => {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          console.log('Photos updated in real-time');
           fetchPhotos();
         }
       )

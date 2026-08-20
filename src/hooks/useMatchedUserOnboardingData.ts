@@ -42,16 +42,12 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
           .limit(1)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching matched user onboarding data:', error);
-        }
+        if (error) { /* no-op */ }
 
         if (data) {
           setOnboardingData(mapDataToOnboarding(data));
         }
-      } catch (error) {
-        console.error('Error in fetchMatchedUserOnboardingData:', error);
-      } finally {
+      } catch (error) { /* no-op */ } finally {
         setLoading(false);
       }
     };

@@ -53,7 +53,6 @@ export const useMessages = (matchId: string, currentUserId: string) => {
         fromOtherUser
       });
     } catch (error) {
-      console.error('Error fetching messages:', error);
       toast({
         title: "Error",
         description: "Failed to load messages",
@@ -107,7 +106,6 @@ export const useMessages = (matchId: string, currentUserId: string) => {
 
       return true;
     } catch (error) {
-      console.error('Error sending message:', error);
       toast({
         title: "Error",
         description: "Failed to send message",
@@ -141,16 +139,13 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           filter: `match_id=eq.${matchId}`
         },
         (payload) => {
-          console.log('Realtime message INSERT received:', payload);
           const newMessage = payload.new as Message;
           
           setMessages(prev => {
             // Avoid duplicates
             if (prev.some(msg => msg.id === newMessage.id)) {
-              console.log('Duplicate message ignored:', newMessage.id);
               return prev;
             }
-            console.log('Adding new message to state:', newMessage.id);
             return [...prev, newMessage];
           });
           
@@ -175,7 +170,6 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           filter: `match_id=eq.${matchId}`
         },
         (payload) => {
-          console.log('Realtime message UPDATE received:', payload);
           const updatedMessage = payload.new as Message;
           setMessages(prev => 
             prev.map(msg => msg.id === updatedMessage.id ? updatedMessage : msg)
@@ -191,7 +185,6 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           filter: `match_id=eq.${matchId}`
         },
         (payload) => {
-          console.log('Realtime message DELETE received:', payload);
           const deletedMessage = payload.old as Message;
           setMessages(prev => prev.filter(msg => msg.id !== deletedMessage.id));
           
@@ -208,14 +201,10 @@ export const useMessages = (matchId: string, currentUserId: string) => {
         }
       )
       .subscribe((status, err) => {
-        console.log('Messages realtime subscription status:', status);
-        if (err) {
-          console.error('Messages realtime subscription error:', err);
-        }
+        if (err) { /* no-op */ }
       });
 
     return () => {
-      console.log('Cleaning up messages realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [matchId, currentUserId]);

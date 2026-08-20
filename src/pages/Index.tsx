@@ -33,7 +33,6 @@ const Index = () => {
   // Handle navigation from match profile back to matches
   useEffect(() => {
     if (location.state?.screen) {
-      console.log('Navigation state detected, setting screen to:', location.state.screen);
       setCurrentScreen(location.state.screen);
       // Clear the state to prevent it from persisting
       window.history.replaceState({}, '', location.pathname);
@@ -41,7 +40,6 @@ const Index = () => {
   }, [location.state?.screen]);
 
   useEffect(() => {
-    console.log('Index component mounted, setting up auth listener...');
     
     // Set up auth state listener
     const {
@@ -49,18 +47,15 @@ const Index = () => {
         subscription
       }
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        console.log('User found, checking profile status...');
         // Use setTimeout to prevent blocking the auth state change
         setTimeout(() => {
           checkProfileStatus(session.user.id);
         }, 0);
       } else {
-        console.log('No user, resetting profile state');
         setProfileComplete(false);
         setUserProfile(null);
         setLoading(false);
@@ -69,17 +64,13 @@ const Index = () => {
 
     // Check for existing session
     const initializeAuth = async () => {
-      console.log('Checking for existing session...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error('Error getting session:', error);
           setLoading(false);
           return;
         }
 
-        console.log('Session check result:', session?.user?.id);
-        
         if (session?.user) {
           setSession(session);
           setUser(session.user);
@@ -90,7 +81,6 @@ const Index = () => {
           setLoading(false);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
         setLoading(false);
       }
     };
@@ -98,7 +88,6 @@ const Index = () => {
     initializeAuth();
     
     return () => {
-      console.log('Cleaning up auth subscription');
       subscription.unsubscribe();
     };
   }, []);
@@ -107,42 +96,29 @@ const Index = () => {
   useEffect(() => {
     // Only make screen decisions when both loading states are complete
     if (loading || onboardingLoading) {
-      console.log('Still loading...', { loading, onboardingLoading });
       return;
     }
 
     // Only proceed if profile is complete
     if (!profileComplete) {
-      console.log('Profile not complete, will show profile setup');
       return;
     }
 
     // Don't override user-initiated navigation (like back from profile view)
     if (location.state?.screen && currentScreen !== '') {
-      console.log('Navigation state present, skipping auto screen decision');
       return;
     }
 
     // Now make the onboarding decision
-    console.log('Making onboarding decision:', { 
-      shouldShowOnboarding, 
-      loading, 
-      onboardingLoading, 
-      profileComplete,
-      currentScreen 
-    });
 
     if (shouldShowOnboarding) {
-      console.log('✅ SHOWING ONBOARDING SCREEN');
       setCurrentScreen('onboarding');
     } else if (!currentScreen || currentScreen === '') {
-      console.log('✅ SHOWING MATCHES SCREEN (default)');
       setCurrentScreen('matches');
     }
   }, [loading, onboardingLoading, profileComplete, shouldShowOnboarding]);
 
   const checkProfileStatus = async (userId: string) => {
-    console.log('Checking profile status for user:', userId);
     
     try {
       const { data: profile, error } = await supabase
@@ -151,10 +127,7 @@ const Index = () => {
         .eq('id', userId)
         .maybeSingle();
 
-      console.log('Profile query result:', { profile, error });
-
       if (error) {
-        console.error('Error checking profile status:', error);
         // If there's an error fetching profile, assume incomplete
         setProfileComplete(false);
         setCurrentScreen('profile-setup');
@@ -163,57 +136,47 @@ const Index = () => {
       }
 
       if (profile) {
-        console.log('Profile found:', profile);
         
         // Check if profile is complete
         const isComplete = profile.is_profile_complete === true;
-        console.log('Profile complete status:', isComplete);
         
         if (isComplete) {
           setUserProfile(profile);
           setProfileComplete(true);
           // Don't set screen here - let useEffect handle it after onboarding data loads
-          console.log('Profile is complete, waiting for onboarding data to determine screen...');
         } else {
           setProfileComplete(false);
           setCurrentScreen('profile-setup');
         }
       } else {
-        console.log('No profile found, showing profile setup');
         setProfileComplete(false);
         setCurrentScreen('profile-setup');
       }
     } catch (error) {
-      console.error('Unexpected error checking profile status:', error);
       // On unexpected error, show profile setup to be safe
       setProfileComplete(false);
       setCurrentScreen('profile-setup');
     } finally {
-      console.log('Setting loading to false');
       setLoading(false);
     }
   };
 
   const handleAuthSuccess = () => {
-    console.log('Auth success callback triggered');
     // Auth state will be updated by the listener
   };
 
   const handleProfileSetupComplete = (profile: any) => {
-    console.log('Profile setup completed:', profile);
     setUserProfile(profile);
     setProfileComplete(true);
     setCurrentScreen('onboarding');
   };
 
   const handleOnboardingComplete = async (profile: any) => {
-    console.log('Onboarding completed:', profile);
     
     // Navigate to matches screen immediately
     setCurrentScreen('matches');
     
     // Generate matches in background (already handled by useOnboardingData hook)
-    console.log('Match generation triggered by onboarding completion');
   };
 
   const handleStartChat = (matchData: {
@@ -222,25 +185,21 @@ const Index = () => {
     matchedUserName: string;
     matchedUserVibes: string;
   }) => {
-    console.log('Navigating to chat screen with data:', matchData);
     setCurrentChat(matchData);
     setCurrentScreen('chat');
   };
 
   const handleBackToChats = () => {
-    console.log('Navigating back to chats screen');
     setCurrentScreen('chats');
     setCurrentChat(null);
   };
 
   const handleNavigateToChats = () => {
-    console.log('Navigating to chats screen');
     setCurrentScreen('chats');
     setCurrentChat(null); // Clear any previous chat state
   };
 
   const handleSignOut = async () => {
-    console.log('Signing out user');
     setLoading(true);
     await supabase.auth.signOut();
     setCurrentScreen('onboarding');
@@ -248,8 +207,6 @@ const Index = () => {
     setProfileComplete(false);
     setLoading(false);
   };
-
-  console.log('Current render state:', { loading, user: !!user, profileComplete, currentScreen });
 
   if (loading) {
     return (
@@ -264,18 +221,15 @@ const Index = () => {
 
   // Show auth screen if user is not authenticated
   if (!user) {
-    console.log('Rendering auth screen');
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
   }
 
   // Show profile setup if user hasn't completed their profile
   if (!profileComplete) {
-    console.log('Rendering profile setup screen');
     return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
   }
 
   const renderScreen = () => {
-    console.log('Rendering screen:', currentScreen);
     switch (currentScreen) {
       case 'onboarding':
         return (

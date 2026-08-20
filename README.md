@@ -1,73 +1,51 @@
-# Welcome to your Lovable project
+# LovKey
 
-## Project info
+A dating app that matches on personality and vibe first — chat unlocks before photos. Built with React, Vite, TypeScript, Tailwind, shadcn/ui, and Supabase (auth, Postgres, storage, edge functions).
 
-**URL**: https://lovable.dev/projects/0dd4a781-7485-414d-8fcd-31e09d2116e4
+## Stack
 
-## How can I edit this code?
+- **Frontend**: Vite + React 18 + TypeScript, React Router, TanStack Query
+- **UI**: Tailwind CSS + shadcn/ui (Radix primitives)
+- **Backend**: Supabase — Postgres (with RLS), Auth, Storage, scheduled Postgres functions (`pg_cron`) for daily matching/onboarding resets, and two edge functions (`generate-cultural-vibes`, `get-signed-photo-url`)
 
-There are several ways of editing your application.
+## Local setup
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/0dd4a781-7485-414d-8fcd-31e09d2116e4) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requires Node.js & npm.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+# 1. Install dependencies
 npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 2. Copy the env template and fill in your Supabase project's values
+cp .env.example .env
+
+# 3. Start the dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+`.env` holds your Supabase project URL, project ID, and publishable (anon) key — get these from your Supabase project's API settings. `.env` is gitignored; never commit it.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project layout
 
-**Use GitHub Codespaces**
+```
+src/
+  pages/            Route-level pages (Index, MatchProfileView, ChatProfileView, NotFound)
+  components/        Screen-level components (AuthScreen, OnboardingScreen, MatchesScreen, ChatScreen, ...)
+    profile/         Profile screen subcomponents
+    profile-setup/    Profile setup flow subcomponents
+    ui/              shadcn/ui primitives in use
+  hooks/             Data-fetching and feature hooks (useMatches, useChats, useMessages, ...)
+  integrations/supabase/  Supabase client and generated DB types
+  lib/               Shared utilities
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+supabase/
+  functions/         Edge functions (generate-cultural-vibes, get-signed-photo-url)
+  migrations/        SQL migration history for the Supabase project
+```
 
-## What technologies are used for this project?
+## Scripts
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0dd4a781-7485-414d-8fcd-31e09d2116e4) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- `npm run dev` — start the dev server
+- `npm run build` — production build
+- `npm run lint` — run ESLint
+- `npm run preview` — preview a production build locally

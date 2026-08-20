@@ -23,7 +23,6 @@ export const useNotifications = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('No user found for notifications');
         return;
       }
 
@@ -35,16 +34,13 @@ export const useNotifications = () => {
         .limit(20);
 
       if (error) {
-        console.error('Error fetching notifications:', error);
         throw error;
       }
 
       const typedData = (data || []) as Notification[];
       setNotifications(typedData);
       setUnreadCount(typedData.filter(n => !n.is_read).length);
-    } catch (error) {
-      console.error('Error in fetchNotifications:', error);
-    } finally {
+    } catch (error) { /* no-op */ } finally {
       setLoading(false);
     }
   };
@@ -63,9 +59,7 @@ export const useNotifications = () => {
         prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-    }
+    } catch (error) { /* no-op */ }
   };
 
   const markAllAsRead = async () => {
@@ -86,9 +80,7 @@ export const useNotifications = () => {
         prev.map(n => ({ ...n, is_read: true }))
       );
       setUnreadCount(0);
-    } catch (error) {
-      console.error('Error marking all notifications as read:', error);
-    }
+    } catch (error) { /* no-op */ }
   };
 
   useEffect(() => {
@@ -109,7 +101,6 @@ export const useNotifications = () => {
             filter: `user_id=eq.${data.user.id}`
           },
           (payload) => {
-            console.log('New notification received:', payload);
             const newNotification = payload.new as Notification;
             
             // Add to notifications list

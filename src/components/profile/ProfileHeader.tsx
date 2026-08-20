@@ -25,7 +25,6 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
   useEffect(() => {
     const getCurrentUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      console.log('Current user in ProfileHeader:', user?.id);
       setCurrentUserId(user?.id);
     };
     getCurrentUser();
@@ -35,9 +34,6 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
   const mainPhoto = photos.find(photo => photo.is_main && (photo.signedUrl || photo.photo_url)) || 
                    photos.find(photo => photo.signedUrl || photo.photo_url);
   const displayUrl = mainPhoto?.signedUrl || mainPhoto?.photo_url;
-
-  console.log('Photos in ProfileHeader:', photos);
-  console.log('Main photo:', mainPhoto);
 
   if (loading) {
     return (
@@ -73,7 +69,6 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
                   isMatchedUser && !canViewPhotos && !canViewUnblurred ? 'blur-md' : ''
                 }`}
                 onError={(e) => {
-                  console.error('Error loading profile image:', e);
                   e.currentTarget.style.display = 'none';
                 }}
               />
