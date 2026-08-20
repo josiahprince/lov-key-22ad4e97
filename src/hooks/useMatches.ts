@@ -59,7 +59,6 @@ export const useMatches = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('No user found for matches');
         toast({
           title: "Authentication required",
           description: "Please log in to view matches",
@@ -67,10 +66,6 @@ export const useMatches = () => {
         });
         return;
       }
-
-      console.log('Fetching matches for user:', user.id);
-
-      console.log('Fetching active matches (excluding accepted chats and expired matches)');
 
       // Fetch active matches (including accepted ones to show "Go to Chats" button)
       // Only exclude chats that have messages (they belong in the chats screen)
@@ -81,8 +76,6 @@ export const useMatches = () => {
         .eq('status', 'active') // Only active status for matches screen (chatting status goes to chats)
         .gt('expires_at', new Date().toISOString()) // Only non-expired matches
         .limit(10);
-
-      console.log('Matches query result:', { todayMatches, matchesError });
 
       if (matchesError) {
         throw matchesError;
@@ -98,16 +91,12 @@ export const useMatches = () => {
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .gte('matched_on', todayStart.toISOString());
 
-      if (todayMatchesError) {
-        console.error('Error checking today\'s matches:', todayMatchesError);
-      }
+      if (todayMatchesError) { /* no-op */ }
 
       const matchesCreatedToday = todayCreatedMatches?.length || 0;
-      console.log(`User has ${matchesCreatedToday} matches created today`);
 
       // If user already has 2 matches created today, don't generate more (regardless of status)
       if (matchesCreatedToday >= 2) {
-        console.log('User already has 2 matches created today, not generating more');
         if (todayMatches && todayMatches.length > 0) {
           await processMatches(todayMatches, user.id);
         } else {
@@ -119,7 +108,6 @@ export const useMatches = () => {
       // If we get here, user has less than 2 matches created today
       // Check if we should generate new ones
       if (!todayMatches || todayMatches.length === 0) {
-        console.log('No active matches found and less than 2 matches created today, checking if new ones can be generated');
         
         // Check how many active chats the user has
         const { data: activeChats, error: chatsError } = await supabase
@@ -129,15 +117,11 @@ export const useMatches = () => {
           .in('status', ['active', 'chatting'])
           .eq('chat_request_status', 'accepted');
 
-        if (chatsError) {
-          console.error('Error checking active chats:', chatsError);
-        }
+        if (chatsError) { /* no-op */ }
 
         const activeChatCount = activeChats?.length || 0;
-        console.log(`User has ${activeChatCount} active chats`);
         
         if (activeChatCount >= 6) {
-          console.log('User has 6+ active chats, not generating new matches');
           toast({
             title: "Chat limit reached",
             description: "You have 6 active chats. New matches will be available when some chats expire (48 hours of inactivity).",
@@ -148,15 +132,11 @@ export const useMatches = () => {
         }
 
         // Try to generate new matches using the RPC function
-        console.log('Calling generate_daily_matches RPC');
         const { data: generationResult, error: generateError } = await supabase
           .rpc('generate_daily_matches');
         
-        if (generateError) {
-          console.error('Error generating matches:', generateError);
-        } else if (generationResult && generationResult.length > 0) {
+        if (generateError) { /* no-op */ } else if (generationResult && generationResult.length > 0) {
           const result = generationResult[0];
-          console.log('Match generation result:', result);
           
           // Check if the current user was skipped due to chat limit
           if (result.users_skipped_chat_limit > 0 && result.matches_created === 0) {
@@ -176,20 +156,16 @@ export const useMatches = () => {
           .eq('status', 'active')
           .gt('expires_at', new Date().toISOString());
 
-        console.log('New matches after generation:', newMatches);
-
         if (newMatches) {
           await processMatches(newMatches, user.id);
         } else {
           setMatches([]);
         }
       } else {
-        console.log('Found existing active matches:', todayMatches.length);
         await processMatches(todayMatches, user.id);
       }
 
     } catch (error) {
-      console.error('Error fetching matches:', error);
       toast({
         title: "Error",
         description: "Failed to load matches. Please try again.",
@@ -202,7 +178,6 @@ export const useMatches = () => {
 
   const processMatches = async (matchesData: any[], currentUserId: string) => {
     const processedMatches: MatchProfile[] = [];
-    console.log('Processing matches:', matchesData.length);
 
     for (const match of matchesData) {
       // Stop if we already have 2 matches
@@ -212,8 +187,6 @@ export const useMatches = () => {
       const isUser1 = match.user_1 === currentUserId;
       const matchUserId = isUser1 ? match.user_2 : match.user_1;
 
-      console.log('Processing match for user:', matchUserId);
-
       try {
         // Fetch matched user's safe profile data (RLS-friendly)
         const { data: matchProfile, error: profileError } = await supabase
@@ -222,14 +195,10 @@ export const useMatches = () => {
           .eq('id', matchUserId)
           .maybeSingle();
 
-        if (profileError) {
-          console.error('Error fetching matched profile for user:', matchUserId, profileError);
-        }
+        if (profileError) { /* no-op */ }
 
         // Don't drop the match card if profile fields are partially unavailable
-        if (!matchProfile) {
-          console.warn('No matched profile view row found for user:', matchUserId);
-        }
+        if (!matchProfile) { /* no-op */ }
 
         // Fetch onboarding data for the match - get the most recent non-pending record
         const { data: matchOnboarding, error: onboardingError } = await supabase
@@ -241,9 +210,7 @@ export const useMatches = () => {
           .limit(1)
           .maybeSingle();
 
-        if (onboardingError) {
-          console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
-        }
+        if (onboardingError) { /* no-op */ }
 
         // Fetch main photo for the match
         const { data: matchPhoto, error: photoError } = await supabase
@@ -253,9 +220,7 @@ export const useMatches = () => {
           .eq('is_main', true)
           .maybeSingle();
 
-        if (photoError) {
-          console.error('Error fetching photo for user:', matchUserId, photoError);
-        }
+        if (photoError) { /* no-op */ }
 
         // Show matches even with incomplete data
         const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
@@ -278,14 +243,11 @@ export const useMatches = () => {
           expiresAt: match.expires_at
         });
         
-        console.log('Successfully processed match:', processedMatches.length);
       } catch (error) {
-        console.error('Error processing match for user:', matchUserId, error);
         continue;
       }
     }
 
-    console.log('Final processed matches count:', processedMatches.length);
     setMatches(processedMatches);
   };
 

@@ -54,11 +54,8 @@ export const useChats = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        console.log('No user found for chats');
         return;
       }
-
-      console.log('🔍 Fetching chats for user:', user.id);
 
       // Fetch all accepted chat requests (active chats only, not inactive due to 48h rule)
       const { data: chatMatches, error: chatsError } = await supabase
@@ -69,26 +66,17 @@ export const useChats = () => {
         .in('status', ['active', 'chatting']) // Only active chats, inactive ones are removed by database function
         .order('last_interaction_at', { ascending: false });
 
-      console.log('📊 Chat matches query result:', { 
-        count: chatMatches?.length, 
-        matches: chatMatches,
-        error: chatsError 
-      });
-
       if (chatsError) {
         throw chatsError;
       }
 
       if (chatMatches && chatMatches.length > 0) {
-        console.log(`Processing ${chatMatches.length} chat matches`);
         await processChats(chatMatches, user.id);
       } else {
-        console.log('No chat matches found, setting empty array');
         setChats([]);
       }
 
     } catch (error) {
-      console.error('Error fetching chats:', error);
       toast({
         title: "Error",
         description: "Failed to load chats. Please try again.",
@@ -110,9 +98,7 @@ export const useChats = () => {
         .eq('match_id', match.id)
         .limit(1);
 
-      if (messagesError) {
-        console.error('Error checking messages for match:', match.id, messagesError);
-      }
+      if (messagesError) { /* no-op */ }
 
       // If there are messages, keep the chat active regardless of time
       // If no messages, apply the 48-hour rule for chat requests that were accepted but never used
@@ -131,7 +117,6 @@ export const useChats = () => {
       const matchUserId = isUser1 ? match.user_2 : match.user_1;
 
       try {
-        console.log('👤 Fetching profile for matched user:', matchUserId);
         
         // Fetch profile data for the match
         const { data: matchProfile, error: profileError } = await supabase
@@ -140,15 +125,7 @@ export const useChats = () => {
           .eq('id', matchUserId)
           .maybeSingle();
 
-        console.log('👤 Profile fetch result:', { 
-          matchUserId, 
-          profileData: matchProfile, 
-          error: profileError 
-        });
-
-        if (profileError) {
-          console.error('❌ Error fetching profile for user:', matchUserId, profileError);
-        }
+        if (profileError) { /* no-op */ }
 
         // Fetch onboarding data for the match - exclude pending records
         const { data: matchOnboardingData, error: onboardingError } = await supabase
@@ -159,9 +136,7 @@ export const useChats = () => {
           .order('created_at', { ascending: false })
           .limit(1);
 
-        if (onboardingError) {
-          console.error('Error fetching onboarding for user:', matchUserId, onboardingError);
-        }
+        if (onboardingError) { /* no-op */ }
 
         // Handle multiple records properly by taking the first (most recent) one
         const matchOnboarding = matchOnboardingData && matchOnboardingData.length > 0 ? matchOnboardingData[0] : null;
@@ -191,9 +166,7 @@ export const useChats = () => {
           .eq('is_main', true)
           .maybeSingle();
 
-        if (photoError) {
-          console.error('Error fetching photo for user:', matchUserId, photoError);
-        }
+        if (photoError) { /* no-op */ }
 
         const memeInfo = getMemeDisplayInfo((matchOnboarding || defaultOnboardingData).selected_memes || []);
         
@@ -212,21 +185,12 @@ export const useChats = () => {
           hasUnreadMessages: false
         };
         
-        console.log('✅ Processed chat data for match:', match.id, {
-          matchProfile: matchProfile,
-          matchOnboarding: matchOnboarding?.mood,
-          memeInfo: memeInfo.length,
-          finalChatData: chatProfileData
-        });
-        
         processedChats.push(chatProfileData);
       } catch (error) {
-        console.error('Error processing chat for user:', matchUserId, error);
         continue;
       }
     }
 
-    console.log('💬 Final processed chats:', processedChats);
     setChats(processedChats);
   };
 
@@ -245,17 +209,14 @@ export const useChats = () => {
           table: 'matches'
         },
         (payload) => {
-          console.log('🔄 Matches table updated, refetching chats:', payload);
           // Refetch chats when matches are updated with longer delay for DB propagation
           setTimeout(() => fetchChats(), 800);
         }
       )
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
       });
 
     return () => {
-      console.log('Cleaning up matches subscription');
       supabase.removeChannel(matchesChannel);
     };
   }, [fetchChats]);

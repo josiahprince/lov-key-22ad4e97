@@ -35,7 +35,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
 
   const { messages, loading, messageCounts, sendMessage, canViewPhotos } = useMessages(matchId, currentUserId);
 
-
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,7 +65,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     setPhotoRequestSent(true);
     await sendMessage("Would you like to share more photos?", matchedUserId);
   };
-
 
   const canRequestPhotos = messageCounts.total >= 60;
 

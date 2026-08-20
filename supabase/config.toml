@@ -65,19 +65,7 @@ enable_confirmations = false
 enabled = true
 ip_version = "ipv4"
 
-[functions.generate-daily-matches]
-verify_jwt = false
-
-[functions.reset-daily-onboarding]
-verify_jwt = false
-
-[functions.check-daily-onboarding]
-verify_jwt = false
-
 [functions.generate-cultural-vibes]
-verify_jwt = false
-
-[functions.cleanup-expired-matches]
 verify_jwt = false
 
 [functions.get-signed-photo-url]

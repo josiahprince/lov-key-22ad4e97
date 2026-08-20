@@ -67,7 +67,6 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        console.error('No session for signed URL request');
         return null;
       }
 
@@ -80,7 +79,6 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
       });
 
       if (response.error) {
-        console.error('Error getting signed URL:', response.error);
         return null;
       }
 
@@ -95,7 +93,6 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
 
       return { signedUrl, canViewUnblurred: canView };
     } catch (error) {
-      console.error('Failed to get signed URL:', error);
       return null;
     }
   }, []);
@@ -118,7 +115,6 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
         .order('photo_slot');
 
       if (error) {
-        console.error('Error fetching photos:', error);
         setPhotos([]);
         return;
       }
@@ -154,7 +150,6 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
       setPhotos(photosWithSignedUrls);
       setCanViewUnblurred(firstCanViewUnblurred);
     } catch (error) {
-      console.error('Unexpected error fetching secure photos:', error);
       setPhotos([]);
     } finally {
       setLoading(false);

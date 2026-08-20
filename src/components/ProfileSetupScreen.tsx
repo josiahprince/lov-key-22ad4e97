@@ -81,7 +81,6 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
 
       onComplete(profileData);
     } catch (error: any) {
-      console.error('Error saving profile:', error);
       toast({
         title: "Error",
         description: "Failed to save profile. Please try again.",

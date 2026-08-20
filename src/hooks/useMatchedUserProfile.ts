@@ -67,7 +67,6 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
                 .eq('id', otherUserId)
                 .single();
               if (updatedProfile) {
-                console.log('Profile updated in real-time (secure view):', updatedProfile);
                 setMatchedUserProfile(updatedProfile);
               }
             }
@@ -75,9 +74,7 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
           .subscribe();
 
         subscriptionRef.current = channel;
-      } catch (error) {
-        console.error('Error fetching matched user profile:', error);
-      } finally {
+      } catch (error) { /* no-op */ } finally {
         setLoading(false);
       }
     };

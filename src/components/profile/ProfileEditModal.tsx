@@ -91,7 +91,6 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
       onClose();
       window.location.reload(); // Refresh to show updated data
     } catch (error: any) {
-      console.error('Error updating profile:', error);
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",

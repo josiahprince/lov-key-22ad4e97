@@ -17,7 +17,6 @@ const LANGUAGE_OPTIONS = [
   'Thai', 'Vietnamese', 'Indonesian', 'Tagalog', 'Swahili'
 ];
 
-
 const InterestsStep = () => {
   const { formData, updateField } = useProfileSetup();
 
@@ -38,7 +37,6 @@ const InterestsStep = () => {
       updateField('languages_spoken', [...currentLanguages, language]);
     }
   };
-
 
   return (
     <div className="space-y-8">

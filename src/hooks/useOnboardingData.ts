@@ -31,10 +31,8 @@ export const useOnboardingData = () => {
         .update({ timezone })
         .eq('id', userId);
         
-      console.log(`Updated timezone to ${timezone} for user ${userId}`);
       return timezone;
     } catch (error) {
-      console.error('Error detecting/updating timezone:', error);
       return 'Asia/Kolkata'; // Fallback
     }
   };
@@ -74,7 +72,6 @@ export const useOnboardingData = () => {
         isAfter6am = results[0]?.data ?? true;
         todayInTz = results[1]?.data ?? todayInTz;
       } catch (rpcError) {
-        console.warn('RPC calls failed or timed out, using defaults:', rpcError);
         // Continue with defaults
       }
 
@@ -100,9 +97,7 @@ export const useOnboardingData = () => {
         hasAnyRecord = !!anyRecord;
       }
 
-      if (error) {
-        console.error('Error fetching onboarding data:', error);
-      }
+      if (error) { /* no-op */ }
 
       if (data) {
         setOnboardingData({
@@ -143,29 +138,12 @@ export const useOnboardingData = () => {
         if (serverResult && typeof serverResult.data === 'boolean') {
           serverDecision = serverResult.data;
         }
-      } catch (shouldShowError) {
-        console.warn('should_show_onboarding RPC failed or timed out, using computed fallback:', shouldShowError);
-      }
+      } catch (shouldShowError) { /* no-op */ }
 
       const finalDecision = serverDecision || computedShouldShow;
 
-      console.log('🔍 Onboarding decision details:', { 
-        computedShouldShow, 
-        serverDecision, 
-        isAfter6am, 
-        todayInTz,
-        lastOnboardingDate: data?.last_onboarding_date,
-        onboardingShownToday: data?.onboarding_shown_today,
-        hasValidData: !!data && data.mood !== 'pending_daily_update',
-        hasAnyRecord,
-        finalDecision
-      });
-
-      console.log(`🎯 Setting shouldShowOnboarding to: ${finalDecision}`);
       setShouldShowOnboarding(finalDecision);
-    } catch (error) {
-      console.error('Error in fetchOnboardingData:', error);
-    } finally {
+    } catch (error) { /* no-op */ } finally {
       setLoading(false);
     }
   };
@@ -221,7 +199,6 @@ export const useOnboardingData = () => {
       setShouldShowOnboarding(false);
       
       // Force update the local state immediately to prevent re-showing
-      console.log('✅ Onboarding completed, flag set to false for today');
 
       // Match generation is handled by the database cron job (runs periodically)
       // Just show success message - matches will be generated automatically
@@ -232,7 +209,6 @@ export const useOnboardingData = () => {
 
       return result;
     } catch (error) {
-      console.error('Error saving onboarding data:', error);
       toast({
         title: "Error",
         description: "Failed to save your preferences. Please try again.",

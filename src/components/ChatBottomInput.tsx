@@ -40,7 +40,6 @@ const ChatBottomInput = () => {
         });
 
       if (error) {
-        console.error('Error sending message:', error);
         toast.error('Failed to send message');
         return;
       }
@@ -51,7 +50,6 @@ const ChatBottomInput = () => {
       refetch();
       
     } catch (error) {
-      console.error('Error sending message:', error);  
       toast.error('Failed to send message');
     }
   };

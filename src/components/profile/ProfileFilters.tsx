@@ -51,7 +51,6 @@ const ProfileFilters = ({ userProfile }: { userProfile: any }) => {
 
   useEffect(() => {
     if (userProfile) {
-      console.log('ProfileFilters loading user profile:', userProfile);
       setFilters({
         age_min: userProfile.min_age_preference || 18,
         age_max: userProfile.max_age_preference || 65,
@@ -100,7 +99,6 @@ const ProfileFilters = ({ userProfile }: { userProfile: any }) => {
 
       setOpen(false);
     } catch (error: any) {
-      console.error('Error updating filters:', error);
       toast({
         title: "Error",
         description: "Failed to update preferences. Please try again.",

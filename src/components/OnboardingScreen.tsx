@@ -41,7 +41,6 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
           .single();
         
         if (profile?.country) {
-          console.log('User country:', profile.country);
           setUserCountry(profile.country);
         }
       }
@@ -111,9 +110,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
       });
 
       onComplete(profileData);
-    } catch (error) {
-      console.error('Error completing onboarding:', error);
-    }
+    } catch (error) { /* no-op */ }
   };
 
   const handleProceedWithExisting = async () => {
@@ -124,9 +121,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (profile: any) => void }
           selectedMemes: onboardingData.selectedMemes,
           perfectSunday: onboardingData.perfectSunday,
         });
-      } catch (e) {
-        console.error('Failed to mark onboarding as shown with existing data', e);
-      }
+      } catch (e) { /* no-op */ }
       const profileData = {
         mood: onboardingData.mood,
         memes: onboardingData.selectedMemes,

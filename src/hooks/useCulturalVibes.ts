@@ -47,20 +47,16 @@ export const useCulturalVibes = (country?: string | null) => {
           const { vibes: cachedVibes, timestamp } = JSON.parse(cached);
           // Use cache if less than 24 hours old
           if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-            console.log('Using cached vibes for', country);
             setVibes(cachedVibes);
             return;
           }
-        } catch (e) {
-          console.error('Error parsing cached vibes:', e);
-        }
+        } catch (e) { /* no-op */ }
       }
 
       setLoading(true);
       setError(null);
 
       try {
-        console.log('Fetching cultural vibes for country:', country);
         
         const { data, error: functionError } = await supabase.functions.invoke('generate-cultural-vibes', {
           body: { country }
@@ -71,7 +67,6 @@ export const useCulturalVibes = (country?: string | null) => {
         }
 
         if (data?.vibes && Array.isArray(data.vibes) && data.vibes.length > 0) {
-          console.log('Successfully fetched cultural vibes:', data.vibes.length);
           setVibes(data.vibes);
           
           // Cache the vibes
@@ -80,11 +75,9 @@ export const useCulturalVibes = (country?: string | null) => {
             timestamp: Date.now()
           }));
         } else {
-          console.warn('No vibes returned, using defaults');
           setVibes(DEFAULT_VIBES);
         }
       } catch (err) {
-        console.error('Error fetching cultural vibes:', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch vibes');
         setVibes(DEFAULT_VIBES); // Fallback to default vibes
       } finally {
