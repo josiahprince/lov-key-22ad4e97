@@ -305,14 +305,14 @@ const MatchesScreen = ({
 
       {visibleMatches.length === 0 && <Card className="p-4 text-center space-y-2 bg-gray-50">
           <p className="text-sm text-gray-600">No more matches for today</p>
-          <p className="text-xs text-gray-500">New matches arrive daily at 9 AM</p>
+          <p className="text-xs text-gray-500">New matches arrive daily at 6 AM UTC</p>
         </Card>}
 
       <Card className="p-4 bg-rose-50 border-rose-200">
         <div className="text-center space-y-2">
           <Heart className="w-5 h-5 mx-auto text-rose-500" />
           <p className="text-sm text-gray-700">
-            New matches arrive daily at 9 AM
+            New matches arrive daily at 6 AM UTC
           </p>
           <p className="text-xs text-gray-600">
             Quality over quantity - each match is carefully selected
