@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLogger';
 
 interface Message {
   id: string;
@@ -201,7 +202,9 @@ export const useMessages = (matchId: string, currentUserId: string) => {
         }
       )
       .subscribe((status, err) => {
-        if (err) { /* no-op */ }
+        if (err) {
+          logError(`useMessages:subscription:${matchId}`, err);
+        }
       });
 
     return () => {

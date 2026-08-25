@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/errorLogger';
 
 export interface SecurePhoto {
   id: string;
@@ -93,6 +94,7 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
 
       return { signedUrl, canViewUnblurred: canView };
     } catch (error) {
+      logError(`useSecurePhotos:getSignedUrl:${targetUserId}`, error);
       return null;
     }
   }, []);
@@ -150,6 +152,7 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
       setPhotos(photosWithSignedUrls);
       setCanViewUnblurred(firstCanViewUnblurred);
     } catch (error) {
+      logError(`useSecurePhotos:fetchPhotos:${userId}`, error);
       setPhotos([]);
     } finally {
       setLoading(false);

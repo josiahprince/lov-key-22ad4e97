@@ -7,6 +7,7 @@ import { useMatches } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLogger';
 import { formatDistanceToNow } from 'date-fns';
 import type { ProfileLike } from '@/types/domain';
 interface MatchProfile {
@@ -62,8 +63,12 @@ const MatchesScreen = ({
       } = await supabase.from('matches').update({
         status: 'skipped'
       }).eq('id', profileId);
-      if (error) { /* no-op */ }
-    } catch (error) { /* no-op */ }
+      if (error) {
+        logError(`MatchesScreen:skip:${profileId}`, error);
+      }
+    } catch (error) {
+      logError(`MatchesScreen:handleSkip:${profileId}`, error);
+    }
   };
   const handleSendChatRequest = async (match: MatchProfile) => {
     if (processingRequests.includes(match.id)) return;
@@ -89,7 +94,9 @@ const MatchesScreen = ({
         });
         refetch(); // Refresh matches to show updated status
       }
-    } catch (error) { /* no-op */ } finally {
+    } catch (error) {
+      logError(`MatchesScreen:handleSendChatRequest:${match.id}`, error);
+    } finally {
       setProcessingRequests(prev => prev.filter(id => id !== match.id));
     }
   };

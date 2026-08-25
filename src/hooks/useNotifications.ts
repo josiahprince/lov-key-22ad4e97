@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { logError } from '@/lib/errorLogger';
 
 interface Notification {
   id: string;
@@ -39,7 +40,9 @@ export const useNotifications = () => {
       const typedData = (data || []) as Notification[];
       setNotifications(typedData);
       setUnreadCount(typedData.filter(n => !n.is_read).length);
-    } catch (error) { /* no-op */ } finally {
+    } catch (error) {
+      logError("useNotifications:fetchNotifications", error);
+    } finally {
       setLoading(false);
     }
   }, [user]);
@@ -58,7 +61,9 @@ export const useNotifications = () => {
         prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
-    } catch (error) { /* no-op */ }
+    } catch (error) {
+      logError("useNotifications:markAsRead", error);
+    }
   };
 
   const markAllAsRead = async () => {
@@ -78,7 +83,9 @@ export const useNotifications = () => {
         prev.map(n => ({ ...n, is_read: true }))
       );
       setUnreadCount(0);
-    } catch (error) { /* no-op */ }
+    } catch (error) {
+      logError("useNotifications:markAllAsRead", error);
+    }
   };
 
   useEffect(() => {

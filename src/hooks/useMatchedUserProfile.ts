@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchMatchedViewProfile } from '@/lib/matchQueries';
+import { logError } from '@/lib/errorLogger';
 import type { MatchedProfile } from '@/types/domain';
 
 export const useMatchedUserProfile = (matchId: string | undefined, currentUserId: string | undefined) => {
@@ -68,7 +69,9 @@ export const useMatchedUserProfile = (matchId: string | undefined, currentUserId
           .subscribe();
 
         subscriptionRef.current = channel;
-      } catch (error) { /* no-op */ } finally {
+      } catch (error) {
+        logError(`useMatchedUserProfile:fetchProfile:${matchId}`, error);
+      } finally {
         setLoading(false);
       }
     };

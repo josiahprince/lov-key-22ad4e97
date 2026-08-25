@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLogger';
 
 export interface UserPhoto {
   id: string;
@@ -57,7 +58,9 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       const photoSlots = initializePhotoSlots(data || []);
       setPhotos(photoSlots);
-    } catch (error) { /* no-op */ } finally {
+    } catch (error) {
+      logError("useUserPhotos:fetchPhotos", error);
+    } finally {
       setLoading(false);
     }
   };
@@ -233,7 +236,9 @@ export const useUserPhotos = (userId: string | undefined) => {
           .from(bucketName)
           .remove([fullPath]);
 
-        if (storageError) { /* no-op */ }
+        if (storageError) {
+          logError(`useUserPhotos:removeStorage:${fullPath}`, storageError);
+        }
       }
 
       // Refresh photos after successful removal
