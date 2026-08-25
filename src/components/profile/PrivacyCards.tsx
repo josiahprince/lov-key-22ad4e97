@@ -11,7 +11,7 @@ const PrivacyCards = () => {
           <div className="flex-1">
             <h4 className="font-medium text-blue-800">Photo Privacy</h4>
             <p className="text-sm text-blue-600">
-              Your main photo stays blurred until both people exchange 30 messages
+              Your main photo stays blurred until both people exchange 60 messages
             </p>
           </div>
         </div>
@@ -22,7 +22,7 @@ const PrivacyCards = () => {
           <Heart className="w-6 h-6 mx-auto text-rose-500" />
           <h4 className="font-medium text-rose-800">Privacy First</h4>
           <p className="text-sm text-rose-600">
-            Additional photos are revealed only when your match requests to see them after 30 messages
+            Additional photos are revealed only when your match requests to see them after 60 messages
           </p>
         </div>
       </Card>
