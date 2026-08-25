@@ -16,6 +16,7 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
     id: data.id,
     mood: data.mood,
     selectedMemes: data.selected_memes,
+    selectedMemesDisplay: data.selected_memes_display as OnboardingData['selectedMemesDisplay'],
     perfectSunday: data.perfect_sunday,
     createdAt: data.created_at,
     updatedAt: data.updated_at,

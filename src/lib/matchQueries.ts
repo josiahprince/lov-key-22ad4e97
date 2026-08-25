@@ -1,6 +1,10 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { SelectedMemeDisplay } from '@/types/domain';
 
-const MEME_MAP: Record<string, { emoji: string; title: string }> = {
+// Legacy fallback only: rows saved before selected_memes_display existed have
+// no persisted title/emoji, so this static table is the best-effort recovery
+// for those. It won't match ids from AI-generated per-country vibes.
+const LEGACY_MEME_MAP: Record<string, { emoji: string; title: string }> = {
   meme1: { emoji: '☕', title: 'Coffee Lover' },
   meme2: { emoji: '📚', title: 'Book Worm' },
   meme3: { emoji: '🌱', title: 'Plant Parent' },
@@ -18,9 +22,27 @@ const MEME_MAP: Record<string, { emoji: string; title: string }> = {
   meme15: { emoji: '📱', title: 'Meme Connoisseur' },
 };
 
-export const getMemeDisplayInfo = (selectedMemes: string[] | null | undefined) => {
+const isSelectedMemeDisplayArray = (value: unknown): value is SelectedMemeDisplay[] =>
+  Array.isArray(value) &&
+  value.every(
+    (item) =>
+      !!item &&
+      typeof item === 'object' &&
+      typeof (item as Record<string, unknown>).title === 'string' &&
+      typeof (item as Record<string, unknown>).emoji === 'string'
+  );
+
+// Prefers the exact vibe text/emoji persisted at selection time. Falls back to
+// the legacy static map (by id) only for rows saved before that column existed.
+export const getMemeDisplayInfo = (
+  selectedMemes: string[] | null | undefined,
+  selectedMemesDisplay?: unknown
+) => {
+  if (isSelectedMemeDisplayArray(selectedMemesDisplay) && selectedMemesDisplay.length > 0) {
+    return selectedMemesDisplay.map(({ emoji, title }) => ({ emoji, title }));
+  }
   if (!selectedMemes || selectedMemes.length === 0) return [];
-  return selectedMemes.map((meme) => MEME_MAP[meme]).filter(Boolean);
+  return selectedMemes.map((meme) => LEGACY_MEME_MAP[meme]).filter(Boolean);
 };
 
 // Most recent onboarding record for a user, excluding placeholder "pending" rows.

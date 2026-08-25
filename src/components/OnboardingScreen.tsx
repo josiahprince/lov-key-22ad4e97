@@ -111,10 +111,17 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
         createdAt: new Date(),
       };
 
+      // Persist the exact vibe text/emoji the user saw, since it's
+      // AI-generated per country and can't be recovered from the id later.
+      const selectedMemesDisplay = memes
+        .filter((m) => selectedMemes.includes(m.id))
+        .map((m) => ({ id: m.id, title: m.title, emoji: m.emoji }));
+
       // Save to database - this persists the data until tomorrow
       await saveOnboardingData({
         mood,
         selectedMemes,
+        selectedMemesDisplay,
         perfectSunday: promptAnswer,
       });
 
@@ -130,6 +137,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
         await saveOnboardingData({
           mood: onboardingData.mood,
           selectedMemes: onboardingData.selectedMemes,
+          selectedMemesDisplay: onboardingData.selectedMemesDisplay,
           perfectSunday: onboardingData.perfectSunday,
         });
       } catch (e) {

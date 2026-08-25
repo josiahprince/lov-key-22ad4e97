@@ -11,12 +11,22 @@ export type MatchRow = Database['public']['Tables']['matches']['Row'];
 // accept this permissive shape covering fields from both.
 export type ProfileLike = Partial<Profile> & Partial<MatchedProfile>;
 
+// The exact vibe a user picked at onboarding time, persisted alongside its id
+// since cultural vibes are AI-generated per country and can't be reconstructed
+// from the id alone later (they're only cached client-side, for 24h).
+export interface SelectedMemeDisplay {
+  id: string;
+  title: string;
+  emoji: string;
+}
+
 // The camelCase shape both useOnboardingData and useMatchedUserOnboardingData
 // map their `user_onboarding` rows into.
 export interface MappedOnboardingData {
   id?: string;
   mood: string;
   selectedMemes: string[];
+  selectedMemesDisplay?: SelectedMemeDisplay[];
   perfectSunday: string;
   createdAt?: string;
   updatedAt?: string;
