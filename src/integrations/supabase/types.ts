@@ -312,6 +312,7 @@ export type Database = {
           onboarding_shown_today: boolean | null
           perfect_sunday: string
           selected_memes: string[]
+          selected_memes_display: Json | null
           updated_at: string
           user_id: string
         }
@@ -324,6 +325,7 @@ export type Database = {
           onboarding_shown_today?: boolean | null
           perfect_sunday: string
           selected_memes: string[]
+          selected_memes_display?: Json | null
           updated_at?: string
           user_id: string
         }
@@ -336,6 +338,7 @@ export type Database = {
           onboarding_shown_today?: boolean | null
           perfect_sunday?: string
           selected_memes?: string[]
+          selected_memes_display?: Json | null
           updated_at?: string
           user_id?: string
         }

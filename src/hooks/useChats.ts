@@ -139,7 +139,10 @@ export const useChats = () => {
           logError(`useChats:photo:${matchUserId}`, photoError);
         }
 
-        const memeInfo = getMemeDisplayInfo((matchOnboarding || defaultOnboardingData).selected_memes || []);
+        const memeInfo = getMemeDisplayInfo(
+          (matchOnboarding || defaultOnboardingData).selected_memes || [],
+          matchOnboarding?.selected_memes_display
+        );
         
         const chatProfileData = {
           id: match.id,

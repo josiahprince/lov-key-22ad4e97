@@ -54,10 +54,9 @@ const ProfileInfo = ({ userProfile, isMatchedUser = false, matchedUserId }: Prof
       
       {/* Onboarding Data Card */}
       {onboardingData && !onboardingLoading && (
-        <VibeCard 
-          onboardingData={onboardingData} 
+        <VibeCard
+          onboardingData={onboardingData}
           isMatchedUser={isMatchedUser}
-          matchedUserId={matchedUserId}
         />
       )}
 

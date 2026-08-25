@@ -191,7 +191,7 @@ export const useMatches = () => {
         }
 
         // Show matches even with incomplete data
-        const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
+        const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || [], matchOnboarding?.selected_memes_display);
 
         processedMatches.push({
           id: match.id,
