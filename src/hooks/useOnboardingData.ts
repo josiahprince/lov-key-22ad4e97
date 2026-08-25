@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { logError } from '@/lib/errorLogger';
 import type { PostgrestError } from '@supabase/supabase-js';
 import type { MappedOnboardingData } from '@/types/domain';
 
@@ -90,7 +91,9 @@ export const useOnboardingData = () => {
         hasAnyRecord = !!anyRecord;
       }
 
-      if (error) { /* no-op */ }
+      if (error) {
+        logError("useOnboardingData:fetchOnboarding", error);
+      }
 
       if (data) {
         setOnboardingData({
@@ -131,12 +134,16 @@ export const useOnboardingData = () => {
         if (serverResult && typeof serverResult.data === 'boolean') {
           serverDecision = serverResult.data;
         }
-      } catch (shouldShowError) { /* no-op */ }
+      } catch (shouldShowError) {
+        logError("useOnboardingData:shouldShowOnboarding", shouldShowError);
+      }
 
       const finalDecision = serverDecision || computedShouldShow;
 
       setShouldShowOnboarding(finalDecision);
-    } catch (error) { /* no-op */ } finally {
+    } catch (error) {
+      logError("useOnboardingData:fetchOnboardingData", error);
+    } finally {
       setLoading(false);
     }
   }, [user]);

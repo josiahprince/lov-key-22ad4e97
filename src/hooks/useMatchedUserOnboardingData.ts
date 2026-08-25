@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchLatestOnboarding } from '@/lib/matchQueries';
+import { logError } from '@/lib/errorLogger';
 import type { OnboardingRow, MappedOnboardingData } from '@/types/domain';
 
 type OnboardingData = MappedOnboardingData;
@@ -30,12 +31,16 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
       try {
         const { data, error } = await fetchLatestOnboarding(userId);
 
-        if (error) { /* no-op */ }
+        if (error) {
+          logError(`useMatchedUserOnboardingData:fetch:${userId}`, error);
+        }
 
         if (data) {
           setOnboardingData(mapDataToOnboarding(data));
         }
-      } catch (error) { /* no-op */ } finally {
+      } catch (error) {
+        logError(`useMatchedUserOnboardingData:fetchOnboardingData:${userId}`, error);
+      } finally {
         setLoading(false);
       }
     };

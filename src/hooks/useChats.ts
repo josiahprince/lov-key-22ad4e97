@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl } from '@/lib/matchQueries';
+import { logError } from '@/lib/errorLogger';
 import type { MatchRow } from '@/types/domain';
 
 interface ChatProfile {
@@ -74,7 +75,9 @@ export const useChats = () => {
         .eq('match_id', match.id)
         .limit(1);
 
-      if (messagesError) { /* no-op */ }
+      if (messagesError) {
+        logError(`useChats:messages:${match.id}`, messagesError);
+      }
 
       // If there are messages, keep the chat active regardless of time
       // If no messages, apply the 48-hour rule for chat requests that were accepted but never used
@@ -83,7 +86,7 @@ export const useChats = () => {
         const hoursAgo = (Date.now() - lastInteraction.getTime()) / (1000 * 60 * 60);
         
         if (hoursAgo > 48) {
-          // Silently skip expired chats that never had messages
+          logError(`useChats:expiredChat:${match.id}`, "Chat expired after 48 hours without messages");
           continue;
         }
       }
@@ -101,12 +104,16 @@ export const useChats = () => {
           .eq('id', matchUserId)
           .maybeSingle();
 
-        if (profileError) { /* no-op */ }
+        if (profileError) {
+          logError(`useChats:profile:${matchUserId}`, profileError);
+        }
 
         // Fetch onboarding data for the match - exclude pending records
         const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
 
-        if (onboardingError) { /* no-op */ }
+        if (onboardingError) {
+          logError(`useChats:onboarding:${matchUserId}`, onboardingError);
+        }
 
         // Skip if onboarding data has pending values
         if (matchOnboarding && (
@@ -114,6 +121,7 @@ export const useChats = () => {
            matchOnboarding.selected_memes.length === 1 &&
            matchOnboarding.selected_memes[0] === 'pending'
         )) {
+          logError(`useChats:pendingData:${matchUserId}`, "Skipping chat with pending onboarding data");
           continue;
         }
 
@@ -127,7 +135,9 @@ export const useChats = () => {
         // Fetch main photo for the match
         const { data: matchPhoto, error: photoError } = await fetchMainPhotoUrl(matchUserId);
 
-        if (photoError) { /* no-op */ }
+        if (photoError) {
+          logError(`useChats:photo:${matchUserId}`, photoError);
+        }
 
         const memeInfo = getMemeDisplayInfo((matchOnboarding || defaultOnboardingData).selected_memes || []);
         
@@ -148,6 +158,7 @@ export const useChats = () => {
         
         processedChats.push(chatProfileData);
       } catch (error) {
+        logError(`useChats:processChat:${matchUserId}`, error);
         continue;
       }
     }
@@ -175,6 +186,9 @@ export const useChats = () => {
         }
       )
       .subscribe((status) => {
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          logError("useChats:subscription", `Subscription status: ${status}`);
+        }
       });
 
     return () => {

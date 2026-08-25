@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
+import { logError } from '@/lib/errorLogger';
 import type { MatchRow } from '@/types/domain';
 
 interface MatchProfile {
@@ -65,7 +66,9 @@ export const useMatches = () => {
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
         .gte('matched_on', todayStart.toISOString());
 
-      if (todayMatchesError) { /* no-op */ }
+      if (todayMatchesError) {
+        logError("useMatches:todayMatches", todayMatchesError);
+      }
 
       const matchesCreatedToday = todayCreatedMatches?.length || 0;
 
@@ -91,7 +94,9 @@ export const useMatches = () => {
           .in('status', ['active', 'chatting'])
           .eq('chat_request_status', 'accepted');
 
-        if (chatsError) { /* no-op */ }
+        if (chatsError) {
+          logError("useMatches:activeChats", chatsError);
+        }
 
         const activeChatCount = activeChats?.length || 0;
         
@@ -109,7 +114,9 @@ export const useMatches = () => {
         const { data: generationResult, error: generateError } = await supabase
           .rpc('generate_daily_matches');
         
-        if (generateError) { /* no-op */ } else if (generationResult && generationResult.length > 0) {
+        if (generateError) {
+          logError("useMatches:generateDaily", generateError);
+        } else if (generationResult && generationResult.length > 0) {
           const result = generationResult[0];
           
           // Check if the current user was skipped due to chat limit
@@ -165,17 +172,23 @@ export const useMatches = () => {
         // Fetch matched user's safe profile data (RLS-friendly)
         const { data: matchProfile, error: profileError } = await fetchMatchedViewProfile(matchUserId);
 
-        if (profileError) { /* no-op */ }
+        if (profileError) {
+          logError(`useMatches:profile:${matchUserId}`, profileError);
+        }
 
         // Fetch onboarding data for the match - get the most recent non-pending record
         const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
 
-        if (onboardingError) { /* no-op */ }
+        if (onboardingError) {
+          logError(`useMatches:onboarding:${matchUserId}`, onboardingError);
+        }
 
         // Fetch main photo for the match
         const { data: matchPhoto, error: photoError } = await fetchMainPhotoUrl(matchUserId);
 
-        if (photoError) { /* no-op */ }
+        if (photoError) {
+          logError(`useMatches:photo:${matchUserId}`, photoError);
+        }
 
         // Show matches even with incomplete data
         const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || []);
@@ -199,6 +212,7 @@ export const useMatches = () => {
         });
         
       } catch (error) {
+        logError(`useMatches:processMatch:${matchUserId}`, error);
         continue;
       }
     }

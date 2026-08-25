@@ -8,6 +8,7 @@ import { useOnboardingData } from '@/hooks/useOnboardingData';
 import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { logError } from '@/lib/errorLogger';
 
 interface OnboardingCompletionData {
   mood: string;
@@ -118,7 +119,9 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
       });
 
       onComplete(profileData);
-    } catch (error) { /* no-op */ }
+    } catch (error) {
+      logError("OnboardingScreen:handleComplete", error);
+    }
   };
 
   const handleProceedWithExisting = async () => {
@@ -129,7 +132,9 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
           selectedMemes: onboardingData.selectedMemes,
           perfectSunday: onboardingData.perfectSunday,
         });
-      } catch (e) { /* no-op */ }
+      } catch (e) {
+        logError("OnboardingScreen:handleProceedWithExisting", e);
+      }
       const profileData = {
         mood: onboardingData.mood,
         memes: onboardingData.selectedMemes,

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { logError } from '@/lib/errorLogger';
 
 export const useUserDescription = (userId: string | undefined) => {
   const [description, setDescription] = useState('');
@@ -40,7 +41,9 @@ export const useUserDescription = (userId: string | undefined) => {
         setDescription('');
         setExistingRecordId(null);
       }
-    } catch (error) { /* no-op */ } finally {
+    } catch (error) {
+      logError(`useUserDescription:fetchDescription:${userId}`, error);
+    } finally {
       setLoading(false);
     }
   };

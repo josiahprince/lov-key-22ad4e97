@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/errorLogger';
 
 export interface Vibe {
   id: string;
@@ -50,7 +51,9 @@ export const useCulturalVibes = (country?: string | null) => {
             setVibes(cachedVibes);
             return;
           }
-        } catch (e) { /* no-op */ }
+        } catch (e) {
+          logError(`useCulturalVibes:parseCache:${country}`, e);
+        }
       }
 
       setLoading(true);

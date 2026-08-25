@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/errorLogger';
 
 interface MatchedUserDescriptionSectionProps {
   userId: string;
@@ -23,10 +24,14 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
           .eq('user_id', userId)
           .maybeSingle();
 
-        if (error) { /* no-op */ } else {
+        if (error) {
+          logError(`MatchedUserDescriptionSection:fetch:${userId}`, error);
+        } else {
           setDescription(data?.description || '');
         }
-      } catch (error) { /* no-op */ } finally {
+      } catch (error) {
+        logError(`MatchedUserDescriptionSection:fetchDescription:${userId}`, error);
+      } finally {
         setLoading(false);
       }
     };
