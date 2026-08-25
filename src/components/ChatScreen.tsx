@@ -56,8 +56,6 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     await sendMessage("Would you like to share more photos?", matchedUserId);
   };
 
-  const canRequestPhotos = messageCounts.total >= 60;
-
   return (
     <div className="flex flex-col h-screen">
       {/* Header - More compact */}
@@ -114,8 +112,8 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
           <div className="mt-2 p-2 bg-yellow-50 rounded-lg">
             <p className="text-xs text-yellow-700">
               <Eye className="w-3 h-3 inline mr-1" />
-              Photos will be revealed after 60 total messages with at least 30 from each person. 
-              Current: {messageCounts.total} total ({messageCounts.fromCurrentUser} from you, {messageCounts.fromOtherUser} from them)
+              Photos will be revealed after exchanging 60 messages.
+              Current: {messageCounts.total}/60
             </p>
           </div>
         )}
