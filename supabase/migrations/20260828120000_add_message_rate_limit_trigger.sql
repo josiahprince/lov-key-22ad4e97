@@ -1,4 +1,4 @@
--- Enforce the 15-second-per-conversation message rate limit server-side.
+-- Enforce the 10-second-per-conversation message rate limit server-side.
 -- The client (ChatScreen.tsx) already gates this via local state, but that's
 -- trivially bypassable (direct sendMessage()/insert() calls skip it), so the
 -- real limit needs to live in the DB. Scoped per (match_id, sender_id) so it
@@ -15,7 +15,7 @@ BEGIN
   WHERE match_id = NEW.match_id
     AND sender_id = NEW.sender_id;
 
-  IF last_sent_at IS NOT NULL AND NEW.created_at - last_sent_at < INTERVAL '15 seconds' THEN
+  IF last_sent_at IS NOT NULL AND NEW.created_at - last_sent_at < INTERVAL '10 seconds' THEN
     RAISE EXCEPTION 'rate_limit_exceeded: wait a moment before sending another message';
   END IF;
 
