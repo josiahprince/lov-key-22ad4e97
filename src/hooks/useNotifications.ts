@@ -6,7 +6,7 @@ import { logError } from '@/lib/errorLogger';
 
 interface Notification {
   id: string;
-  type: 'new_match' | 'chat_accepted';
+  type: 'new_match' | 'chat_accepted' | 'new_message';
   title: string;
   message: string;
   match_id: string | null;
