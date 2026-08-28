@@ -107,9 +107,14 @@ export const useMessages = (matchId: string, currentUserId: string) => {
 
       return true;
     } catch (error) {
+      logError(`useMessages:sendMessage:${matchId}`, error);
+      const isRateLimited =
+        error instanceof Error && error.message.includes('rate_limit_exceeded');
       toast({
-        title: "Error",
-        description: "Failed to send message",
+        title: isRateLimited ? "Slow down" : "Error",
+        description: isRateLimited
+          ? "You're sending messages too quickly. Please wait a moment."
+          : "Failed to send message",
         variant: "destructive"
       });
       return false;
