@@ -3,9 +3,27 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, Send, Images, Eye, ArrowLeft } from 'lucide-react';
+import { Clock, Send, Images, Eye, ArrowLeft, MoreVertical } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
+import { useBlockUser } from '@/hooks/useBlockUser';
+import BlockReportModal from '@/components/BlockReportModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ChatScreenProps {
   matchId: string;
@@ -21,9 +39,18 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
   const [photoRequestSent, setPhotoRequestSent] = useState(false);
+  const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const { messages, loading, messageCounts, sendMessage, canViewPhotos } = useMessages(matchId, currentUserId);
+  const { blockUser, blocking } = useBlockUser();
+
+  const handleConfirmBlock = async () => {
+    const success = await blockUser(matchedUserId);
+    setIsBlockConfirmOpen(false);
+    if (success) onBackToChats?.();
+  };
 
   // Auto-scroll to bottom when messages change
   const scrollToBottom = () => {
@@ -94,18 +121,35 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
             </div>
           </div>
           
-          {canViewPhotos() && (
-            <Button
-              onClick={handlePhotoRequest}
-              disabled={photoRequestSent}
-              size="sm"
-              variant="outline"
-              className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs px-2 py-1"
-            >
-              <Images className="w-3 h-3 mr-1" />
-              {photoRequestSent ? 'Requested' : 'View Photos'}
-            </Button>
-          )}
+          <div className="flex items-center space-x-1">
+            {canViewPhotos() && (
+              <Button
+                onClick={handlePhotoRequest}
+                disabled={photoRequestSent}
+                size="sm"
+                variant="outline"
+                className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs px-2 py-1"
+              >
+                <Images className="w-3 h-3 mr-1" />
+                {photoRequestSent ? 'Requested' : 'View Photos'}
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsBlockConfirmOpen(true)}>
+                  Block
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsReportOpen(true)}>
+                  Report
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         
         {!canViewPhotos() && (
@@ -195,6 +239,33 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
         </ScrollArea>
       </div>
 
+      <AlertDialog open={isBlockConfirmOpen} onOpenChange={setIsBlockConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Block {matchedUserName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They won't be able to contact you again, and you won't be matched with them in the future.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmBlock} disabled={blocking}>
+              Block
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <BlockReportModal
+        isOpen={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        targetUserId={matchedUserId}
+        targetUserName={matchedUserName}
+        matchId={matchId}
+        onSubmitted={(blocked) => {
+          if (blocked) onBackToChats?.();
+        }}
+      />
     </div>
   );
 };

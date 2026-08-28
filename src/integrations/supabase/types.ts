@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           chat_request_sender: string | null
@@ -278,6 +299,53 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          match_id: string | null
+          message_snapshot: Json | null
+          reason: string
+          reported_id: string
+          reporter_id: string
+          reviewed_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          match_id?: string | null
+          message_snapshot?: Json | null
+          reason: string
+          reported_id: string
+          reporter_id: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          match_id?: string | null
+          message_snapshot?: Json | null
+          reason?: string
+          reported_id?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_descriptions: {
         Row: {
           created_at: string
@@ -450,6 +518,10 @@ export type Database = {
       }
     }
     Functions: {
+      block_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
       can_view_matched_profile: {
         Args: { profile_id: string }
         Returns: boolean
@@ -464,6 +536,14 @@ export type Database = {
           matches_created: number
           users_processed: number
           users_skipped_chat_limit: number
+        }[]
+      }
+      get_blocked_users: {
+        Args: never
+        Returns: {
+          blocked_id: string
+          nickname: string | null
+          blocked_at: string
         }[]
       }
       get_date_in_timezone: { Args: { user_timezone: string }; Returns: string }
@@ -481,6 +561,20 @@ export type Database = {
       should_show_onboarding: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      submit_report: {
+        Args: {
+          reported_user_id: string
+          p_match_id: string | null
+          p_reason: string
+          p_details?: string | null
+          also_block?: boolean
+        }
+        Returns: string
+      }
+      unblock_user: {
+        Args: { target_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

@@ -70,3 +70,6 @@ verify_jwt = false
 
 [functions.get-signed-photo-url]
 verify_jwt = false
+
+[functions.notify-report-alert]
+verify_jwt = false

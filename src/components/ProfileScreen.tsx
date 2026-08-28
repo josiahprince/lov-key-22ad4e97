@@ -8,6 +8,7 @@ import ProfileInfo from './profile/ProfileInfo';
 import PhotoGallery from './profile/PhotoGallery';
 import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
+import BlockedUsersSection from './profile/BlockedUsersSection';
 import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
@@ -102,6 +103,7 @@ const ProfileScreen = ({
         }}
       />
       <PrivacyCards />
+      <BlockedUsersSection />
 
       <PhotoGalleryViewer
         photos={photos}
