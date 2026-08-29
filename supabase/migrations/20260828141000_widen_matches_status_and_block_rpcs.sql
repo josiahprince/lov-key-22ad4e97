@@ -15,13 +15,18 @@
 -- Supabase SQL editor, before migrations were tracked here).
 -- MatchesScreen.tsx's handleSkip() already writes status='skipped' today,
 -- so the live constraint is evidently wider than the 3 values documented
--- elsewhere. Rather than guess the exact current definition, drop-if-exists
--- and re-add covering every value referenced anywhere in this app plus
--- 'blocked'.
+-- elsewhere. Confirmed against live data
+-- (SELECT DISTINCT status FROM public.matches) on 2026-08-29: production
+-- rows also include 'expired' (9 rows) -- a legacy value no current code
+-- path writes anymore (probably from an older generate_daily_matches that
+-- marked rows 'expired' instead of deleting them), but still present on
+-- existing rows, so the CHECK must permit it or ALTER TABLE fails against
+-- live data. 'rejected' has zero live rows but is kept for the same
+-- defensive reason as before -- it costs nothing to allow.
 ALTER TABLE public.matches DROP CONSTRAINT IF EXISTS matches_status_check;
 ALTER TABLE public.matches
   ADD CONSTRAINT matches_status_check
-  CHECK (status IN ('active', 'chatting', 'inactive', 'skipped', 'rejected', 'blocked'));
+  CHECK (status IN ('active', 'chatting', 'inactive', 'skipped', 'rejected', 'expired', 'blocked'));
 
 -- block_user(): atomically records the block and neutralizes any existing
 -- match row between the two users by flipping it to 'blocked'.
