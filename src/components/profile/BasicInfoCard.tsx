@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Edit2, MapPin, Calendar, User } from 'lucide-react';
 import type { ProfileLike } from '@/types/domain';
 
@@ -45,6 +46,9 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
     }
     return '';
   };
+
+  const interests = userProfile.interests || [];
+  const languages = userProfile.languages_spoken || userProfile.languages || [];
 
   return (
     <Card className="w-full">
@@ -123,6 +127,30 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
                   </p>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Interests Section */}
+        {interests.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Interests</h3>
+            <div className="flex flex-wrap gap-2">
+              {interests.map((interest) => (
+                <Badge key={interest} variant="secondary">{interest}</Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Languages Section */}
+        {languages.length > 0 && (
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Languages</h3>
+            <div className="flex flex-wrap gap-2">
+              {languages.map((language) => (
+                <Badge key={language} variant="secondary">{language}</Badge>
+              ))}
             </div>
           </div>
         )}

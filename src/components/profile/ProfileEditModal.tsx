@@ -215,7 +215,6 @@ const ProfileEditModal = ({ isOpen, onClose, userProfile }: ProfileEditModalProp
             <Button
               type="submit"
               disabled={loading}
-              className="bg-rose-500 hover:bg-rose-600"
             >
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>

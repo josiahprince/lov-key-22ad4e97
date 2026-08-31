@@ -9,6 +9,7 @@ import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { logError } from '@/lib/errorLogger';
+import LoadingState from '@/components/LoadingState';
 
 interface OnboardingCompletionData {
   mood: string;
@@ -156,10 +157,10 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
   if (loading || vibesLoading) {
     return (
       <div className="px-4 flex flex-col justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
-        <p className="mt-4 text-gray-600">
-          {vibesLoading ? 'Preparing your personalized vibes...' : 'Loading your preferences...'}
-        </p>
+        <LoadingState
+          variant="spinner"
+          label={vibesLoading ? 'Preparing your personalized vibes...' : 'Loading your preferences...'}
+        />
       </div>
     );
   }
@@ -194,7 +195,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
               <h3 className="text-sm font-medium text-gray-700 mb-2">Your Vibes</h3>
               <div className="space-y-1">
                 {currentMemesData.map((meme) => (
-                  <Card key={meme.id} className="p-2 bg-rose-50 border-rose-200">
+                  <Card key={meme.id} className="p-2 bg-accent border-primary/20">
                     <div className="flex items-center space-x-2">
                       <div className="text-base">{meme.emoji}</div>
                       <div>
@@ -216,9 +217,9 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
           </div>
 
           <div className="flex space-x-2">
-            <Button 
+            <Button
               onClick={handleProceedWithExisting}
-              className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
+              className="flex-1 py-2 rounded-xl"
             >
               Continue with these
             </Button>
@@ -267,10 +268,10 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
               </div>
             </div>
             
-            <Button 
-              onClick={() => setStep(2)} 
+            <Button
+              onClick={() => setStep(2)}
               disabled={!mood}
-              className="w-full bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl transition-all duration-200"
+              className="w-full py-2 rounded-xl transition-all duration-200"
             >
               Next
             </Button>
@@ -283,7 +284,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
             <div className="text-center space-y-1">
               <h2 className="text-lg font-bold text-gray-800">Pick your vibes</h2>
               <p className="text-xs text-gray-600">Choose up to 3 that represent you today</p>
-              <p className="text-xs text-rose-600">{selectedMemes.length}/3 selected</p>
+              <p className="text-xs text-primary">{selectedMemes.length}/3 selected</p>
             </div>
             
             <div className="space-y-1 max-h-52 overflow-y-auto">
@@ -292,7 +293,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
                   key={meme.id}
                   className={`p-2 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
                     selectedMemes.includes(meme.id)
-                      ? 'bg-rose-50 border-rose-200 text-rose-700' 
+                      ? 'bg-accent border-primary/20 text-accent-foreground'
                       : 'bg-gray-50 hover:bg-gray-100'
                   }`}
                   onClick={() => handleMemeToggle(meme.id)}
@@ -316,10 +317,10 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
               >
                 Back
               </Button>
-              <Button 
-                onClick={() => setStep(3)} 
+              <Button
+                onClick={() => setStep(3)}
                 disabled={selectedMemes.length === 0}
-                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
+                className="flex-1 py-2 rounded-xl"
               >
                 Next
               </Button>
@@ -331,14 +332,14 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
         return (
           <div className="space-y-4 animate-fade-in">
             <div className="space-y-3">
-              <h3 className="text-lg font-bold text-gray-800 text-center bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+              <h3 className="text-lg font-bold text-center bg-gradient-to-r from-primary via-primary/70 to-orange-500 bg-clip-text text-transparent">
                 Describe your perfect Sunday
               </h3>
               <Textarea
                 placeholder="Maybe sleeping in, reading a book, trying a new recipe, or exploring a local market..."
                 value={promptAnswer}
                 onChange={(e) => setPromptAnswer(e.target.value)}
-                className="min-h-[80px] rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200 text-sm"
+                className="min-h-[80px] rounded-xl text-sm"
               />
               <p className="text-xs text-gray-500 text-center">
                 Be yourself! There's no wrong answer here.
@@ -353,10 +354,10 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
               >
                 Back
               </Button>
-              <Button 
-                onClick={handleComplete} 
+              <Button
+                onClick={handleComplete}
                 disabled={!promptAnswer.trim()}
-                className="flex-1 bg-rose-500 hover:bg-rose-600 text-white py-2 rounded-xl"
+                className="flex-1 py-2 rounded-xl"
               >
                 Complete
               </Button>
@@ -377,7 +378,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
             <div
               key={i}
               className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                i <= step ? 'bg-rose-400' : 'bg-gray-200'
+                i <= step ? 'bg-primary' : 'bg-gray-200'
               }`}
             />
           ))}

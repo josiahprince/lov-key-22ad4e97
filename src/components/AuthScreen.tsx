@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
+import GradientShell from '@/components/GradientShell';
 const AuthScreen = ({
   onAuthSuccess
 }: {
@@ -46,42 +47,42 @@ const AuthScreen = ({
       setLoading(false);
     }
   };
-  return <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center p-4">
+  return <GradientShell centered>
       <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-16 h-16" />
           </div>
-          <h1 className="font-bold text-destructive bg-accent text-3xl font-sans">LovKey</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="font-bold text-primary text-3xl font-sans">LovKey</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             {isLogin ? 'Welcome back!' : 'Create your account'}
           </p>
         </div>
 
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
-            <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200" />
-          </div>
-          
-          <div>
-            <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className="rounded-xl border-gray-200 focus:border-rose-300 focus:ring-rose-200" />
+            <Input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} required className="rounded-xl" />
           </div>
 
-          {error && <div className="text-sm text-red-600 bg-red-50 p-3 rounded-xl">
+          <div>
+            <Input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} className="rounded-xl" />
+          </div>
+
+          {error && <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-xl">
               {error}
             </div>}
 
-          <Button type="submit" disabled={loading} className="w-full bg-rose-500 hover:bg-rose-600 text-white py-3 rounded-xl transition-all duration-200">
+          <Button type="submit" disabled={loading} className="w-full py-3 rounded-xl transition-all duration-200">
             {loading ? 'Loading...' : isLogin ? 'Sign In' : 'Sign Up'}
           </Button>
         </form>
 
         <div className="mt-6 text-center">
-          <button onClick={() => setIsLogin(!isLogin)} className="text-sm text-rose-600 hover:text-rose-700 transition-colors">
+          <button onClick={() => setIsLogin(!isLogin)} className="text-sm text-primary hover:text-primary/80 transition-colors">
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
           </button>
         </div>
       </Card>
-    </div>;
+    </GradientShell>;
 };
 export default AuthScreen;

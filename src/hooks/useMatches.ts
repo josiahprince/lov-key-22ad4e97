@@ -15,7 +15,7 @@ interface MatchProfile {
   memes: { emoji: string; title: string }[];
   promptAnswer: string;
   compatibility: number;
-  mainPhoto: string;
+  mainPhoto: string | null;
   city?: string;
   region?: string;
   country?: string;
@@ -202,7 +202,7 @@ export const useMatches = () => {
           memes: memeInfo,
           promptAnswer: matchOnboarding?.perfect_sunday || "",
           compatibility: match.match_score || 75,
-          mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
+          mainPhoto: matchPhoto?.photo_url || null,
           city: matchProfile?.city || 'Unknown',
           region: matchProfile?.region,
           country: matchProfile?.country,

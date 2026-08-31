@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Plus, Star, Upload, Link, GripVertical } from 'lucide-react';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
+import LoadingState from '@/components/LoadingState';
 
 interface PhotoGalleryProps {
   userId?: string;
@@ -112,18 +113,15 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
   if (loading) {
     return (
       <Card className="p-6 space-y-4">
-        <h3 className="font-medium text-gray-700">Photo Gallery</h3>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto"></div>
-          <p className="mt-2 text-gray-500">Loading photos...</p>
-        </div>
+        <h3 className="font-medium text-foreground/80">Photo Gallery</h3>
+        <LoadingState variant="spinner" label="Loading photos..." />
       </Card>
     );
   }
 
   return (
     <Card className="p-6 space-y-4">
-      <h3 className="font-medium text-gray-700">Photo Gallery</h3>
+      <h3 className="font-medium text-foreground/80">Photo Gallery</h3>
 
       {/* Hidden file inputs */}
       {!isMatchedUser && photos.map((photo) => (
@@ -174,8 +172,8 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                         onDragEnd={handleDragEnd}
                         className={[
                           'relative w-full aspect-square bg-gray-100 rounded-lg border-2 transition-all duration-150 group cursor-grab active:cursor-grabbing select-none',
-                          isActive ? 'opacity-40 scale-95 border-rose-400' : '',
-                          isOver ? 'border-rose-500 ring-2 ring-rose-300 scale-105' : (!isActive ? 'border-gray-200 hover:border-rose-300' : ''),
+                          isActive ? 'opacity-40 scale-95 border-primary/60' : '',
+                          isOver ? 'border-primary ring-2 ring-primary/30 scale-105' : (!isActive ? 'border-gray-200 hover:border-primary/40' : ''),
                         ].join(' ')}
                         onClick={() => {
                           if (isDraggingSlot !== null) return;
@@ -259,19 +257,19 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                       <div
                         className={[
                           'relative w-full aspect-square bg-gray-100 rounded-lg border-2 border-dashed transition-all duration-150 group',
-                          isOver ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-300 scale-105' : 'border-gray-300 hover:border-rose-300',
+                          isOver ? 'border-primary bg-accent ring-2 ring-primary/30 scale-105' : 'border-gray-300 hover:border-primary/40',
                         ].join(' ')}
                       >
                         <div className="w-full h-full flex items-center justify-center">
                           {uploading === photo.photo_slot ? (
                             <div className="text-center">
-                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-rose-500 mx-auto mb-1"></div>
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mx-auto mb-1"></div>
                               <span className="text-xs text-gray-500">Uploading…</span>
                             </div>
                           ) : isOver ? (
                             <div className="text-center">
-                              <Plus className="w-5 h-5 text-rose-400 mx-auto mb-1" />
-                              <span className="text-xs text-rose-500">Drop here</span>
+                              <Plus className="w-5 h-5 text-primary/70 mx-auto mb-1" />
+                              <span className="text-xs text-primary">Drop here</span>
                             </div>
                           ) : (
                             <Plus className="w-5 h-5 text-gray-400" />
@@ -319,7 +317,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                             <Button
                               size="sm"
                               onClick={() => handleSocialUpload(photo.photo_slot)}
-                              className="bg-rose-500 hover:bg-rose-600 text-white text-xs flex-1"
+                              className="text-xs flex-1"
                             >
                               Add
                             </Button>
@@ -351,7 +349,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                 <span className="text-sm font-medium text-gray-600">Main Profile Photo</span>
               </div>
               <div
-                className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-rose-300 transition-colors"
+                className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-primary/40 transition-colors"
                 onClick={() => {
                   if (onPhotoClick) {
                     const idx = photos.findIndex(p => (p.signedUrl || p.photo_url) === mainPhotoUrl);
@@ -375,7 +373,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                 {otherPhotos.map((photo) => (
                   <div
                     key={photo.photo_slot}
-                    className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-rose-300 transition-colors"
+                    className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-primary/40 transition-colors"
                     onClick={() => {
                       if (onPhotoClick) {
                         const idx = photos.findIndex(p => p.photo_slot === photo.photo_slot);

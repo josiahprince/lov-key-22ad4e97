@@ -2,7 +2,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical } from 'lucide-react';
+import GradientShell from '@/components/GradientShell';
+import ScreenHeader from '@/components/ScreenHeader';
+import LoadingState from '@/components/LoadingState';
+import PhotoUnlockNotice from '@/components/PhotoUnlockNotice';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileInfo from '@/components/profile/ProfileInfo';
 import PhotoGallery from '@/components/profile/PhotoGallery';
@@ -64,63 +68,52 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-rose-500 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading profile...</p>
-        </div>
-      </div>
+      <GradientShell centered>
+        <LoadingState variant="skeleton" shape="avatar-text" />
+      </GradientShell>
     );
   }
 
   if (!matchedUserProfile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center">
+      <GradientShell centered>
         <div className="text-center">
-          <p className="text-gray-600">Profile not found</p>
+          <p className="text-muted-foreground">Profile not found</p>
           <Button onClick={handleBack} className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             {backLabel}
           </Button>
         </div>
-      </div>
+      </GradientShell>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50">
-      <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
+    <GradientShell withCard>
         <div className="p-4 pb-20 space-y-6">
           {/* Header with Back button */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Button
-                onClick={handleBack}
-                variant="outline"
-                size="sm"
-                className="flex items-center space-x-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
-              </Button>
-              <h1 className="text-xl font-bold text-gray-800">Profile</h1>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsBlockConfirmOpen(true)}>
-                  Block
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsReportOpen(true)}>
-                  Report
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <ScreenHeader
+            onBack={handleBack}
+            backLabel={backLabel}
+            title="Profile"
+            actions={
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsBlockConfirmOpen(true)}>
+                    Block
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsReportOpen(true)}>
+                    Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            }
+          />
 
           <ProfileHeader
             userProfile={matchedUserProfile}
@@ -146,17 +139,9 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
           />
 
           {!canViewPhotos && (
-            <div className="bg-rose-50 border border-rose-200 rounded-lg p-4 text-center">
-              <p className="text-sm text-rose-700">
-                Photos will be revealed after exchanging 60 messages
-              </p>
-              <p className="text-xs text-rose-600 mt-1">
-                Current messages: {messages.length}/60
-              </p>
-            </div>
+            <PhotoUnlockNotice current={messages.length} variant="card" />
           )}
         </div>
-      </div>
 
       <PhotoGalleryViewer
         photos={photos}
@@ -193,7 +178,7 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
           if (blocked) navigate(backTo);
         }}
       />
-    </div>
+    </GradientShell>
   );
 };
 

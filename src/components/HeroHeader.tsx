@@ -4,7 +4,7 @@ const HeroHeader = () => (
       <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-20 h-20" />
     </div>
 
-    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-rose-600 via-pink-600 to-orange-500 bg-clip-text text-transparent">
+    <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-primary/70 to-orange-500 bg-clip-text text-transparent">
       Welcome to LovKey
     </h1>
 
@@ -12,7 +12,7 @@ const HeroHeader = () => (
       Low-key matching minds — before photos.
     </p>
 
-    <div className="w-24 h-1 bg-gradient-to-r from-rose-500 to-orange-500 mx-auto rounded-full"></div>
+    <div className="w-24 h-1 bg-gradient-to-r from-primary to-orange-500 mx-auto rounded-full"></div>
   </div>
 );
 

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl } from '@/lib/matchQueries';
+import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
 import type { MatchRow } from '@/types/domain';
 
@@ -13,7 +13,7 @@ interface ChatProfile {
   age?: number;
   mood: string;
   memes: { emoji: string; title: string }[];
-  mainPhoto: string;
+  mainPhoto: string | null;
   city?: string;
   region?: string;
   country?: string;
@@ -97,12 +97,8 @@ export const useChats = () => {
 
       try {
         
-        // Fetch profile data for the match
-        const { data: matchProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('id, first_name, last_name, age, city, region, country')
-          .eq('id', matchUserId)
-          .maybeSingle();
+        // Fetch matched user's safe profile data (RLS-friendly)
+        const { data: matchProfile, error: profileError } = await fetchMatchedViewProfile(matchUserId);
 
         if (profileError) {
           logError(`useChats:profile:${matchUserId}`, profileError);
@@ -147,11 +143,11 @@ export const useChats = () => {
         const chatProfileData = {
           id: match.id,
           userId: matchUserId,
-          name: matchProfile?.first_name || 'Unknown User',
+          name: matchProfile?.nickname || 'Unknown User',
           age: matchProfile?.age,
           mood: (matchOnboarding || defaultOnboardingData).mood || 'chill',
           memes: memeInfo,
-          mainPhoto: matchPhoto?.photo_url || `https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=150&h=150&fit=crop&crop=face`,
+          mainPhoto: matchPhoto?.photo_url || null,
           city: matchProfile?.city || 'Unknown',
           region: matchProfile?.region,
           country: matchProfile?.country,

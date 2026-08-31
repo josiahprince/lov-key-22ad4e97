@@ -74,7 +74,7 @@ const DescriptionSection = ({ initialDescription, onSave }: DescriptionSectionPr
         value={localDescription}
         onChange={(e) => handleDescriptionChange(e.target.value)}
         placeholder="Tell others about yourself..."
-        className="min-h-[100px] resize-none border-gray-200 focus:border-rose-300 focus:ring-rose-200"
+        className="min-h-[100px] resize-none"
         maxLength={500}
       />
       
