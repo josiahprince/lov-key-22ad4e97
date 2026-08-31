@@ -3,12 +3,14 @@ import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
+import ScreenHeader from '@/components/ScreenHeader';
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileInfo from './profile/ProfileInfo';
 import PhotoGallery from './profile/PhotoGallery';
 import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
 import BlockedUsersSection from './profile/BlockedUsersSection';
+import NotificationsSection from './profile/NotificationsSection';
 import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
@@ -30,31 +32,25 @@ const ProfileScreen = ({
     supabase.auth.signOut();
   };
 
+  const signOutAction = (
+    <Button
+      onClick={onSignOut}
+      variant="outline"
+      size="sm"
+      className="flex items-center space-x-2"
+    >
+      <LogOut className="w-4 h-4" />
+      <span>Sign Out</span>
+    </Button>
+  );
+
   // If userProfile is not available, show loading
   if (!userProfile) {
     return (
       <div className="p-4 pb-20 space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
-              alt="LovKey Logo" 
-              className="w-8 h-8"
-            />
-            <h1 className="text-xl font-bold text-gray-800">LovKey</h1>
-          </div>
-          <Button
-            onClick={onSignOut}
-            variant="outline"
-            size="sm"
-            className="flex items-center space-x-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </Button>
-        </div>
+        <ScreenHeader logo actions={signOutAction} />
         <div className="text-center">
-          <p className="text-gray-600">Loading profile...</p>
+          <p className="text-muted-foreground">Loading profile...</p>
         </div>
       </div>
     );
@@ -62,31 +58,17 @@ const ProfileScreen = ({
 
   return (
     <div className="p-4 pb-20 space-y-6">
-      {/* Header with Sign Out button */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <img 
-            src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
-            alt="LovKey Logo" 
-            className="w-8 h-8"
-          />
-          <h1 className="text-xl font-bold text-gray-800">LovKey</h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          <ProfileFilters userProfile={userProfile} />
-          <Button
-            onClick={onSignOut}
-            variant="outline"
-            size="sm"
-            className="flex items-center space-x-2"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
-          </Button>
-        </div>
-      </div>
+      <ScreenHeader
+        logo
+        actions={
+          <>
+            <ProfileFilters userProfile={userProfile} />
+            {signOutAction}
+          </>
+        }
+      />
 
-      <ProfileHeader 
+      <ProfileHeader
         userProfile={userProfile} 
         onPhotoClick={() => {
           setSelectedPhotoIndex(0);
@@ -103,7 +85,12 @@ const ProfileScreen = ({
         }}
       />
       <PrivacyCards />
-      <BlockedUsersSection />
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Account</h3>
+        <NotificationsSection />
+        <BlockedUsersSection />
+      </div>
 
       <PhotoGalleryViewer
         photos={photos}

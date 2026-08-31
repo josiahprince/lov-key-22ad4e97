@@ -3,11 +3,14 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Clock, Send, Images, Eye, ArrowLeft, MoreVertical } from 'lucide-react';
+import { Clock, Send, Images, MoreVertical } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
 import { useBlockUser } from '@/hooks/useBlockUser';
 import BlockReportModal from '@/components/BlockReportModal';
+import ScreenHeader from '@/components/ScreenHeader';
+import PhotoUnlockNotice from '@/components/PhotoUnlockNotice';
+import LoadingState from '@/components/LoadingState';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,10 +33,11 @@ interface ChatScreenProps {
   matchedUserId: string;
   matchedUserName: string;
   matchedUserVibes: string;
+  matchedUserPhoto?: string | null;
   onBackToChats?: () => void;
 }
 
-const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, onBackToChats }: ChatScreenProps) => {
+const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, matchedUserPhoto, onBackToChats }: ChatScreenProps) => {
   const { user } = useAuth();
   const currentUserId = user?.id ?? '';
   const [newMessage, setNewMessage] = useState('');
@@ -86,109 +90,47 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
   return (
     <div className="flex flex-col h-screen">
       {/* Header - More compact */}
-      <div className="p-3 bg-white border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            {onBackToChats && (
-              <Button
-                onClick={onBackToChats}
-                variant="ghost"
-                size="sm"
-                className="p-1 h-8 w-8"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-            )}
-            <div className="flex items-center space-x-2">
-              <div className="relative">
-                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-gray-200">
-                  <img 
-                    src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=100&h=100&fit=crop&crop=face"
-                    alt={matchedUserName}
-                    className={`w-full h-full object-cover ${!canViewPhotos() ? 'filter blur-sm' : ''}`}
-                  />
-                </div>
-                {!canViewPhotos() && (
-                  <div className="absolute inset-0 w-8 h-8 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center opacity-80">
-                    <span className="text-xs">📚</span>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h2 className="font-semibold text-gray-800 text-sm">{matchedUserName}</h2>
-                <p className="text-xs text-gray-600">{matchedUserVibes}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-1">
-            {canViewPhotos() && (
-              <Button
-                onClick={handlePhotoRequest}
-                disabled={photoRequestSent}
-                size="sm"
-                variant="outline"
-                className="text-rose-600 border-rose-200 hover:bg-rose-50 text-xs px-2 py-1"
-              >
-                <Images className="w-3 h-3 mr-1" />
-                {photoRequestSent ? 'Requested' : 'View Photos'}
-              </Button>
-            )}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
-                  <MoreVertical className="w-4 h-4" />
+      <div className="p-3 bg-white border-b border-border">
+        <ScreenHeader
+          onBack={onBackToChats}
+          avatar={{ src: matchedUserPhoto ?? undefined, alt: matchedUserName, blurred: !canViewPhotos() }}
+          title={matchedUserName}
+          subtitle={matchedUserVibes}
+          actions={
+            <>
+              {canViewPhotos() && (
+                <Button
+                  onClick={handlePhotoRequest}
+                  disabled={photoRequestSent}
+                  size="sm"
+                  variant="outline"
+                  className="text-primary border-primary/20 hover:bg-accent text-xs px-2 py-1"
+                >
+                  <Images className="w-3 h-3 mr-1" />
+                  {photoRequestSent ? 'Requested' : 'View Photos'}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsBlockConfirmOpen(true)}>
-                  Block
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsReportOpen(true)}>
-                  Report
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        
-        {!canViewPhotos() && (
-          <div className="mt-2 p-2 bg-yellow-50 rounded-lg">
-            <p className="text-xs text-yellow-700">
-              <Eye className="w-3 h-3 inline mr-1" />
-              Photos will be revealed after exchanging 60 messages.
-              Current: {messageCounts.total}/60
-            </p>
-          </div>
-        )}
-      </div>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setIsBlockConfirmOpen(true)}>
+                    Block
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsReportOpen(true)}>
+                    Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          }
+        />
 
-      {/* Message Input - Placed at top for visibility */}
-      <div className="p-4 bg-white border-b border-gray-200 shadow-sm">
-        <div className="flex space-x-3 items-center">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={canSend ? "Type your message..." : "Wait a moment before sending..."}
-            disabled={!canSend}
-            className="flex-1 rounded-xl border-gray-300 focus:border-rose-400 focus:ring-rose-200 h-11 text-sm px-4 disabled:bg-gray-100"
-            onKeyPress={(e) => e.key === 'Enter' && canSend && newMessage.trim() && handleSendMessage()}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!canSend || !newMessage.trim()}
-            className="rounded-xl bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 disabled:bg-gray-300 h-11 min-w-[50px] transition-colors"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-        
-        {!canSend && (
-          <div className="mt-2 text-center">
-            <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              ⏱️ Next message unlocks in a few seconds
-            </span>
-          </div>
+        {!canViewPhotos() && (
+          <PhotoUnlockNotice current={messageCounts.total} className="mt-2" />
         )}
       </div>
 
@@ -197,10 +139,7 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
         <ScrollArea className="h-full">
           <div className="p-3 space-y-3">
             {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500 mx-auto"></div>
-                <p className="mt-2 text-gray-500">Loading messages...</p>
-              </div>
+              <LoadingState variant="skeleton" shape="message" />
             ) : (
               <>
                 {messages.map((message) => (
@@ -211,32 +150,61 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
                     <div
                       className={`max-w-[80%] p-3 rounded-xl text-sm ${
                         message.sender_id === currentUserId
-                          ? 'bg-rose-500 text-white rounded-br-sm'
-                          : 'bg-blue-100 text-gray-800 rounded-bl-sm'
+                          ? 'bg-primary text-primary-foreground rounded-br-sm'
+                          : 'bg-muted text-foreground rounded-bl-sm'
                       }`}
                     >
                       <p className="break-words">{message.content}</p>
                     </div>
                   </div>
                 ))}
-                
+
                 {!canSend && (
                   <div className="text-center py-4">
-                    <Card className="inline-flex items-center space-x-2 p-2 bg-yellow-50 border-yellow-200">
-                      <Clock className="w-3 h-3 text-yellow-600" />
-                      <span className="text-xs text-yellow-700">
+                    <Card className="inline-flex items-center space-x-2 p-2 bg-accent border-primary/20">
+                      <Clock className="w-3 h-3 text-primary" />
+                      <span className="text-xs text-accent-foreground">
                         Take your time... next message unlocks soon
                       </span>
                     </Card>
                   </div>
                 )}
-                
+
                 {/* Invisible element to scroll to */}
                 <div ref={messagesEndRef} />
               </>
             )}
           </div>
         </ScrollArea>
+      </div>
+
+      {/* Message Input - anchored to bottom, below the message list */}
+      <div className="p-4 bg-white border-t border-border shadow-sm">
+        <div className="flex space-x-3 items-center">
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder={canSend ? "Type your message..." : "Wait a moment before sending..."}
+            disabled={!canSend}
+            className="flex-1 rounded-xl h-11 text-sm px-4"
+            onKeyPress={(e) => e.key === 'Enter' && canSend && newMessage.trim() && handleSendMessage()}
+          />
+          <Button
+            onClick={handleSendMessage}
+            disabled={!canSend || !newMessage.trim()}
+            className="rounded-xl px-4 py-2 h-11 min-w-[50px] transition-colors"
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {!canSend && (
+          <div className="mt-2 text-center">
+            <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
+              ⏱️ Next message unlocks in a few seconds
+            </span>
+          </div>
+        )}
       </div>
 
       <AlertDialog open={isBlockConfirmOpen} onOpenChange={setIsBlockConfirmOpen}>

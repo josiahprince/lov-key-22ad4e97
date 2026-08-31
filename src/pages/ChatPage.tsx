@@ -6,6 +6,7 @@ interface ChatNavState {
   matchedUserId: string;
   matchedUserName: string;
   matchedUserVibes: string;
+  matchedUserPhoto?: string | null;
 }
 
 const ChatPage = () => {
@@ -32,6 +33,7 @@ const ChatPage = () => {
       matchedUserId={state.matchedUserId}
       matchedUserName={state.matchedUserName}
       matchedUserVibes={state.matchedUserVibes}
+      matchedUserPhoto={state.matchedUserPhoto}
       onBackToChats={() => navigate('/chats')}
     />
   );

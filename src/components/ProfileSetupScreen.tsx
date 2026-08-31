@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import type { ProfileLike } from '@/types/domain';
 import { ProfileSetupProvider, useProfileSetup } from './profile-setup/ProfileSetupContext';
+import GradientShell from '@/components/GradientShell';
 import BasicInfoStep from './profile-setup/BasicInfoStep';
 import GenderOrientationStep from './profile-setup/GenderOrientationStep';
 import LocationStep from './profile-setup/LocationStep';
@@ -109,23 +110,23 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-orange-50 to-pink-50 flex items-center justify-center p-4">
+    <GradientShell centered>
       <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
-            <img 
-              src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" 
-              alt="LovKey Logo" 
+            <img
+              src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png"
+              alt="LovKey Logo"
               className="w-16 h-16"
             />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Complete Your Profile</h1>
-          <p className="text-sm text-gray-600 mt-2">
+          <h1 className="text-2xl font-bold text-foreground">Complete Your Profile</h1>
+          <p className="text-sm text-muted-foreground mt-2">
             Step {currentStep} of 4
           </p>
           <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-            <div 
-              className="bg-rose-500 h-2 rounded-full transition-all duration-300"
+            <div
+              className="bg-primary h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / 4) * 100}%` }}
             />
           </div>
@@ -143,12 +144,12 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
               Back
             </Button>
           )}
-          
+
           {currentStep < 4 ? (
             <Button
               onClick={handleNext}
               disabled={!validateStep(currentStep)}
-              className="flex-1 bg-rose-500 hover:bg-rose-600"
+              className="flex-1"
             >
               Next
             </Button>
@@ -156,14 +157,14 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
             <Button
               onClick={handleSubmit}
               disabled={!validateStep(currentStep) || loading}
-              className="flex-1 bg-rose-500 hover:bg-rose-600"
+              className="flex-1"
             >
               {loading ? 'Saving...' : 'Complete Profile'}
             </Button>
           )}
         </div>
       </Card>
-    </div>
+    </GradientShell>
   );
 };
 

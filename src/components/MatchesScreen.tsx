@@ -10,6 +10,10 @@ import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLogger';
 import { formatDistanceToNow } from 'date-fns';
 import type { ProfileLike } from '@/types/domain';
+import ScreenHeader from '@/components/ScreenHeader';
+import LoadingState from '@/components/LoadingState';
+import EmptyState from '@/components/EmptyState';
+import InitialsAvatar from '@/components/InitialsAvatar';
 interface MatchProfile {
   id: string;
   userId: string; // The matched user's ID
@@ -22,7 +26,7 @@ interface MatchProfile {
   }[];
   promptAnswer: string;
   compatibility: number;
-  mainPhoto: string;
+  mainPhoto: string | null;
   city?: string;
   region?: string;
   country?: string;
@@ -216,69 +220,61 @@ const MatchesScreen = ({
   const visibleMatches = matches.filter(match => !skippedProfiles.includes(match.id));
   if (loading) {
     return <div className="p-6 space-y-6 pb-20">
-        <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold text-gray-800">Today's Matches</h1>
-          <p className="text-gray-600">Finding your perfect connections...</p>
-        </div>
-        <div className="flex justify-center items-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-rose-500" />
-        </div>
+        <ScreenHeader title="Today's Matches" subtitle="Finding your perfect connections..." />
+        <LoadingState variant="skeleton" shape="card" rows={2} />
       </div>;
   }
   return <div className="px-4 space-y-4 pb-20">
-        <div className="text-center space-y-2">
-          <h1 className="text-lg font-bold text-gray-800">Today's Matches</h1>
-          <p className="text-sm text-gray-600">{matches.length} thoughtfully curated connections</p>
-        </div>
+        <ScreenHeader title="Today's Matches" subtitle={`${matches.length} thoughtfully curated connections`} />
 
       <div className="space-y-3">
-        {visibleMatches.map(match => <Card key={match.id} className="p-4 space-y-3 bg-gray-50 border-gray-200 animate-fade-in cursor-pointer hover:bg-lavender transition-colors" onClick={() => handleViewProfile(match)}>
+        {visibleMatches.map(match => <Card key={match.id} className="p-4 space-y-3 bg-muted/50 border-border animate-fade-in cursor-pointer hover:bg-accent transition-colors" onClick={() => handleViewProfile(match)}>
             {/* Header Section */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-rose-100">
-                  <img src={match.mainPhoto} alt={match.name} className="w-full h-full object-cover blur-sm" />
+                <div className="w-10 h-10 shrink-0">
+                  <InitialsAvatar src={match.mainPhoto} name={match.name} blurred />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-800">{match.name}</h3>
-                  {match.age && <p className="text-xs text-gray-600">{match.age} years</p>}
+                  <h3 className="font-medium text-foreground">{match.name}</h3>
+                  {match.age && <p className="text-xs text-muted-foreground">{match.age} years</p>}
                 </div>
               </div>
               <div className="text-right">
-                
+
               </div>
             </div>
 
             {/* Current Mood */}
             <div>
-              <h4 className="text-xs font-medium text-gray-700 mb-1">Current Mood</h4>
+              <h4 className="text-xs font-medium text-foreground/80 mb-1">Current Mood</h4>
               <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-rose-400 rounded-full"></div>
-                <span className="text-sm text-gray-600 capitalize">{match.mood}</span>
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
+                <span className="text-sm text-muted-foreground capitalize">{match.mood}</span>
               </div>
             </div>
 
             {/* Vibes Section */}
             {match.memes.length > 0 && <div>
-                <h4 className="text-xs font-medium text-gray-700 mb-2">Their Vibes</h4>
+                <h4 className="text-xs font-medium text-foreground/80 mb-2">Their Vibes</h4>
                 <div className="flex flex-wrap gap-2">
-                  {match.memes.map((meme, index) => <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-rose-50 border border-rose-200 rounded-lg">
+                  {match.memes.map((meme, index) => <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-accent border border-primary/20 rounded-lg">
                       <div className="text-xs">{meme.emoji}</div>
-                      <span className="text-xs font-medium text-gray-700">{meme.title}</span>
+                      <span className="text-xs font-medium text-accent-foreground">{meme.title}</span>
                     </div>)}
                 </div>
               </div>}
 
             {/* Perfect Sunday Quote */}
             {match.promptAnswer && <div>
-                <h4 className="text-xs font-medium text-gray-700 mb-1">Perfect Sunday</h4>
-                <div className="p-3 bg-gray-100 rounded-lg">
-                  <p className="text-sm text-gray-700">"{match.promptAnswer}"</p>
+                <h4 className="text-xs font-medium text-foreground/80 mb-1">Perfect Sunday</h4>
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-foreground/80">"{match.promptAnswer}"</p>
                 </div>
               </div>}
 
             {/* Expiry Timer */}
-            {match.expiresAt && <div className="flex items-center space-x-2 text-xs text-gray-500">
+            {match.expiresAt && <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />
                 <span>
                   Expires {formatDistanceToNow(new Date(match.expiresAt), {
@@ -298,7 +294,7 @@ const MatchesScreen = ({
               </Button>
               {(() => {
             const buttonConfig = getChatButtonContent(match);
-            return <Button size="sm" variant={buttonConfig.variant} disabled={buttonConfig.disabled} className={`flex-1 rounded-xl ${buttonConfig.variant === 'default' ? 'bg-rose-500 hover:bg-rose-600 text-white' : ''}`} onClick={e => {
+            return <Button size="sm" variant={buttonConfig.variant} disabled={buttonConfig.disabled} className="flex-1 rounded-xl" onClick={e => {
               e.stopPropagation();
               buttonConfig.onClick();
             }}>
@@ -310,18 +306,15 @@ const MatchesScreen = ({
           </Card>)}
       </div>
 
-      {visibleMatches.length === 0 && <Card className="p-4 text-center space-y-2 bg-gray-50">
-          <p className="text-sm text-gray-600">No more matches for today</p>
-          <p className="text-xs text-gray-500">New matches arrive daily at 6 AM UTC</p>
-        </Card>}
+      {visibleMatches.length === 0 && <EmptyState title="No more matches for today" description="New matches arrive daily at 6 AM UTC" />}
 
-      <Card className="p-4 bg-rose-50 border-rose-200">
+      <Card className="p-4 bg-accent border-primary/20">
         <div className="text-center space-y-2">
-          <Heart className="w-5 h-5 mx-auto text-rose-500" />
-          <p className="text-sm text-gray-700">
+          <Heart className="w-5 h-5 mx-auto text-primary" />
+          <p className="text-sm text-accent-foreground">
             New matches arrive daily at 6 AM UTC
           </p>
-          <p className="text-xs text-gray-600">
+          <p className="text-xs text-accent-foreground/80">
             Quality over quantity - each match is carefully selected
           </p>
         </div>

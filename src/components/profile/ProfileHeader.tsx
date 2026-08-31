@@ -2,6 +2,7 @@
 import { Camera } from 'lucide-react';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useAuth } from '@/hooks/useAuth';
+import LoadingState from '@/components/LoadingState';
 import type { ProfileLike } from '@/types/domain';
 
 interface ProfileHeaderProps {
@@ -28,35 +29,23 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
   const displayUrl = mainPhoto?.signedUrl || mainPhoto?.photo_url;
 
   if (loading) {
-    return (
-      <div className="text-center space-y-4">
-        <div className="relative mx-auto w-24 h-24">
-          <div className="w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-500"></div>
-          </div>
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Your Profile</h1>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LoadingState variant="skeleton" shape="avatar-text" />;
   }
 
   return (
     <div className="text-center space-y-4">
       <div className="relative mx-auto w-24 h-24">
-        <div 
-          className={`w-24 h-24 bg-gradient-to-br from-rose-100 to-pink-100 rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden ${
+        <div
+          className={`w-24 h-24 bg-accent rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden ${
             displayUrl && onPhotoClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
           }`}
           onClick={() => displayUrl && onPhotoClick?.()}
         >
           {displayUrl ? (
             <div className="relative w-full h-full">
-              <img 
-                src={displayUrl} 
-                alt="Profile" 
+              <img
+                src={displayUrl}
+                alt="Profile"
                 className={`w-full h-full object-cover rounded-full ${
                   isMatchedUser && !canViewPhotos && !canViewUnblurred ? 'blur-md' : ''
                 }`}
@@ -71,24 +60,24 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
               )}
             </div>
           ) : (
-            <Camera className="w-8 h-8 text-rose-400" />
+            <Camera className="w-8 h-8 text-primary" />
           )}
         </div>
       </div>
       {userProfile?.nickname && (
         <div className="mt-2">
-          <h2 className="text-xl font-semibold text-gray-700">{userProfile.nickname}</h2>
+          <h2 className="text-xl font-semibold text-foreground/80">{userProfile.nickname}</h2>
         </div>
       )}
       <div>
         {isMatchedUser ? (
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-2xl font-bold text-foreground">
             {userProfile?.nickname || 'User'} Profile
           </h1>
         ) : (
           <>
-            <h1 className="text-2xl font-bold text-gray-800">Your Profile</h1>
-            <p className="text-gray-600">This is how others see you</p>
+            <h1 className="text-2xl font-bold text-foreground">Your Profile</h1>
+            <p className="text-muted-foreground">This is how others see you</p>
           </>
         )}
       </div>

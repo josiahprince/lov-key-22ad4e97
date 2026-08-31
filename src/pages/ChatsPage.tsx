@@ -12,6 +12,7 @@ const ChatsPage = () => {
             matchedUserId: matchData.matchedUserId,
             matchedUserName: matchData.matchedUserName,
             matchedUserVibes: matchData.matchedUserVibes,
+            matchedUserPhoto: matchData.matchedUserPhoto,
           },
         })
       }

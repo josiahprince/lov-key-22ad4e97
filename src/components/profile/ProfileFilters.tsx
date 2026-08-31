@@ -124,7 +124,7 @@ const ProfileFilters = ({ userProfile }: { userProfile: ProfileLike | null }) =>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="flex items-center space-x-2">
           <SlidersHorizontal className="h-4 w-4" />
-          <span>Filter</span>
+          <span>Preferences</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">

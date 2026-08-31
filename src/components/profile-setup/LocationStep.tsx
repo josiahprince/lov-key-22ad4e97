@@ -35,7 +35,7 @@ const LocationStep = () => {
       
       {!location && !loading && !error && (
         <Card className="p-4 text-center space-y-4">
-          <MapPin className="w-12 h-12 mx-auto text-rose-500" />
+          <MapPin className="w-12 h-12 mx-auto text-primary" />
           <div>
             <h3 className="font-medium text-gray-800 mb-2">Detect Your Location</h3>
             <p className="text-sm text-gray-600 mb-4">
@@ -43,7 +43,7 @@ const LocationStep = () => {
             </p>
             <Button
               onClick={handleUseCurrentLocation}
-              className="w-full bg-rose-500 hover:bg-rose-600"
+              className="w-full"
             >
               <MapPin className="w-4 h-4 mr-2" />
               Use My Current Location
@@ -54,7 +54,7 @@ const LocationStep = () => {
 
       {loading && (
         <Card className="p-4 text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-rose-500" />
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
           <div>
             <h3 className="font-medium text-gray-800">Getting Your Location...</h3>
             <p className="text-sm text-gray-600">This may take a few seconds</p>
@@ -71,7 +71,7 @@ const LocationStep = () => {
             {!permissionDenied && (
               <Button
                 onClick={handleUseCurrentLocation}
-                className="w-full bg-rose-500 hover:bg-rose-600"
+                className="w-full"
               >
                 Try Again
               </Button>
