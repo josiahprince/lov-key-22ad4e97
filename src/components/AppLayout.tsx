@@ -64,7 +64,15 @@ const AppLayout = () => {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+    // Deliberately keyed on user?.id, not the user object itself - Supabase's
+    // onAuthStateChange hands back a brand-new `user` object reference on
+    // every auth event, including a routine background token refresh, not
+    // just real sign-in/sign-out. Depending on the object would re-run this
+    // check (and flip profileLoading back to true) on every such event,
+    // unmounting ProfileSetupScreen and silently wiping all in-progress
+    // onboarding form state each time.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const handleProfileSetupComplete = (profile: ProfileLike) => {
     setUserProfile(profile);
