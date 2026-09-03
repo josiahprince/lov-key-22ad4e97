@@ -104,6 +104,13 @@ export const useChats = () => {
           logError(`useChats:profile:${matchUserId}`, profileError);
         }
 
+        // A chat with no resolvable name is not something a user should ever
+        // see a placeholder for - skip it rather than rendering "Unknown User".
+        if (!matchProfile?.nickname) {
+          logError(`useChats:missingProfile:${matchUserId}`, profileError || 'profiles_matched_view returned no nickname for this match');
+          continue;
+        }
+
         // Fetch onboarding data for the match - exclude pending records
         const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
 
@@ -143,7 +150,7 @@ export const useChats = () => {
         const chatProfileData = {
           id: match.id,
           userId: matchUserId,
-          name: matchProfile?.nickname || 'Unknown User',
+          name: matchProfile.nickname,
           age: matchProfile?.age,
           mood: (matchOnboarding || defaultOnboardingData).mood || 'chill',
           memes: memeInfo,
@@ -166,6 +173,13 @@ export const useChats = () => {
   };
 
   useEffect(() => {
+    // Nothing to subscribe to while logged out - Realtime rejects an
+    // unauthenticated subscription to a RLS-protected table outright, which
+    // was surfacing as a spurious CLOSED status on the login screen.
+    if (!user) {
+      return;
+    }
+
     fetchChats();
 
     // Set up real-time subscription for matches table with unique channel ID
@@ -193,7 +207,7 @@ export const useChats = () => {
     return () => {
       supabase.removeChannel(matchesChannel);
     };
-  }, [fetchChats]);
+  }, [fetchChats, user]);
 
   return {
     chats,

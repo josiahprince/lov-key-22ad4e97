@@ -176,6 +176,13 @@ export const useMatches = () => {
           logError(`useMatches:profile:${matchUserId}`, profileError);
         }
 
+        // A match with no resolvable name is not something a user should ever
+        // see a placeholder for - skip it rather than rendering "Unknown User".
+        if (!matchProfile?.nickname) {
+          logError(`useMatches:missingProfile:${matchUserId}`, profileError || 'profiles_matched_view returned no nickname for this match');
+          continue;
+        }
+
         // Fetch onboarding data for the match - get the most recent non-pending record
         const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
 
@@ -196,7 +203,7 @@ export const useMatches = () => {
         processedMatches.push({
           id: match.id,
           userId: matchUserId, // Add the matched user's ID
-          name: matchProfile?.nickname || 'Unknown User',
+          name: matchProfile.nickname,
           age: matchProfile?.age,
           mood: matchOnboarding?.mood || 'chill',
           memes: memeInfo,
