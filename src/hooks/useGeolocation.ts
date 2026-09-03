@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface LocationData {
   latitude: number;
@@ -25,39 +26,39 @@ export const useGeolocation = () => {
     permissionDenied: false,
   });
 
+  // Reverse/forward geocoding go through the `geocode` edge function rather
+  // than calling Nominatim directly from the browser - Nominatim's usage
+  // policy requires a genuine identifying User-Agent (a forbidden header
+  // browsers strip from fetch()) and disallows unauthenticated client-side
+  // "heavy" use, which risks silent per-IP rate limiting/blocking.
   const reverseGeocode = async (lat: number, lng: number): Promise<LocationData> => {
-    try {
-      // Using OpenStreetMap Nominatim API for reverse geocoding (free)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`,
-        {
-          headers: {
-            'User-Agent': 'LovKey Dating App',
-          },
-        }
-      );
+    const { data, error } = await supabase.functions.invoke('geocode', {
+      body: { mode: 'reverse', lat, lon: lng },
+    });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch location data');
-      }
-
-      const data = await response.json();
-      
-      const city = data.address?.city || data.address?.town || data.address?.village || '';
-      const region = data.address?.state || data.address?.region || '';
-      const country = data.address?.country || '';
-      const fullAddress = data.display_name || `${city}, ${region}, ${country}`;
-
-      return {
-        latitude: lat,
-        longitude: lng,
-        city,
-        region,
-        country,
-        fullAddress,
-      };
-    } catch (error) {
+    if (error || !data || data.error) {
       throw new Error('Failed to get location details');
+    }
+
+    return data as LocationData;
+  };
+
+  // Best-effort forward geocode for a manually-typed location (e.g. "Bengaluru,
+  // Karnataka, India") - used to fill in an approximate latitude/longitude for
+  // distance-based matching. Returns null on any failure; callers should treat
+  // that as "no coordinates available", not an error - generate_daily_matches
+  // already falls back to country-only matching when lat/long is null, so a
+  // manual entry is always usable even without this succeeding.
+  const forwardGeocode = async (query: string): Promise<LocationData | null> => {
+    if (!query.trim()) return null;
+    try {
+      const { data, error } = await supabase.functions.invoke('geocode', {
+        body: { mode: 'forward', query },
+      });
+      if (error || !data || data.error) return null;
+      return data as LocationData;
+    } catch {
+      return null;
     }
   };
 
@@ -138,5 +139,6 @@ export const useGeolocation = () => {
     ...state,
     getCurrentLocation,
     resetLocation,
+    forwardGeocode,
   };
 };

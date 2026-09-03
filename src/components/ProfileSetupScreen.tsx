@@ -7,12 +7,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import type { ProfileLike } from '@/types/domain';
-import { ProfileSetupProvider, useProfileSetup } from './profile-setup/ProfileSetupContext';
+import { ProfileSetupProvider, useProfileSetup, TOTAL_SETUP_STEPS } from './profile-setup/ProfileSetupContext';
 import GradientShell from '@/components/GradientShell';
-import BasicInfoStep from './profile-setup/BasicInfoStep';
-import GenderOrientationStep from './profile-setup/GenderOrientationStep';
+import NameStep from './profile-setup/NameStep';
+import BirthdayStep from './profile-setup/BirthdayStep';
+import GenderStep from './profile-setup/GenderStep';
+import OrientationStep from './profile-setup/OrientationStep';
+import InterestedInStep from './profile-setup/InterestedInStep';
+import PhotosStep from './profile-setup/PhotosStep';
 import LocationStep from './profile-setup/LocationStep';
 import InterestsStep from './profile-setup/InterestsStep';
+import LanguagesStep from './profile-setup/LanguagesStep';
+import PreferencesStep from './profile-setup/PreferencesStep';
 
 type GenderType = Database['public']['Enums']['gender_type'];
 type OrientationType = Database['public']['Enums']['orientation_type'];
@@ -97,13 +103,25 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <BasicInfoStep />;
+        return <NameStep />;
       case 2:
-        return <GenderOrientationStep />;
+        return <BirthdayStep />;
       case 3:
-        return <LocationStep />;
+        return <GenderStep />;
       case 4:
+        return <OrientationStep />;
+      case 5:
+        return <InterestedInStep />;
+      case 6:
+        return <PhotosStep />;
+      case 7:
+        return <LocationStep />;
+      case 8:
         return <InterestsStep />;
+      case 9:
+        return <LanguagesStep />;
+      case 10:
+        return <PreferencesStep />;
       default:
         return null;
     }
@@ -112,23 +130,25 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
   return (
     <GradientShell centered>
       <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl">
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
-            <img
-              src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png"
-              alt="LovKey Logo"
-              className="w-16 h-16"
-            />
-          </div>
-          <h1 className="text-2xl font-bold text-foreground">Complete Your Profile</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Step {currentStep} of 4
-          </p>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-            <div
-              className="bg-primary h-2 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / 4) * 100}%` }}
-            />
+        <div className="mb-6">
+          {currentStep === 1 && (
+            <div className="flex justify-center mb-4">
+              <img
+                src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png"
+                alt="LovKey Logo"
+                className="w-16 h-16"
+              />
+            </div>
+          )}
+          <div className="flex gap-1">
+            {Array.from({ length: TOTAL_SETUP_STEPS }, (_, i) => (
+              <div
+                key={i}
+                className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                  i < currentStep ? 'bg-primary' : 'bg-gray-200'
+                }`}
+              />
+            ))}
           </div>
         </div>
 
@@ -145,7 +165,7 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
             </Button>
           )}
 
-          {currentStep < 4 ? (
+          {currentStep < TOTAL_SETUP_STEPS ? (
             <Button
               onClick={handleNext}
               disabled={!validateStep(currentStep)}

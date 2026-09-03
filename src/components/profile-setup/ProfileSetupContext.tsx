@@ -32,7 +32,13 @@ export interface ProfileFormData {
   interests: string[];
   personality_prompts: { [key: string]: string };
   languages_spoken: string[];
+  // Not persisted to profiles - tracked here only so the Photos step can
+  // gate "Next" the same way every other step does. Source of truth for the
+  // actual photos is the user_photos table (see PhotosStep.tsx).
+  hasPhoto: boolean;
 }
+
+export const TOTAL_SETUP_STEPS = 10;
 
 interface ProfileSetupContextType {
   formData: ProfileFormData;
@@ -77,7 +83,8 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     // Additional profile data
     interests: [],
     personality_prompts: {},
-    languages_spoken: []
+    languages_spoken: [],
+    hasPhoto: false
   });
 
   const [dobError, setDobError] = useState<string | null>(null);
@@ -111,20 +118,30 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
 
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 1: {
-        const hasBasicInfo = Boolean(formData.first_name && formData.last_name && formData.nickname && formData.date_of_birth);
+      case 1: // Name
+        return Boolean(formData.first_name && formData.last_name && formData.nickname);
+      case 2: { // Birthday
         const isOldEnough = formData.date_of_birth ? calculateAge(formData.date_of_birth) >= 18 : false;
-        return hasBasicInfo && isOldEnough && !dobError;
+        return Boolean(formData.date_of_birth) && isOldEnough && !dobError;
       }
-      case 2:
-        return Boolean(formData.gender && formData.sexual_orientation && formData.interested_in && 
-                      formData.min_age_preference >= 18 && formData.max_age_preference <= 90 &&
+      case 3: // Gender
+        return Boolean(formData.gender);
+      case 4: // Sexual orientation
+        return Boolean(formData.sexual_orientation);
+      case 5: // Interested in
+        return Boolean(formData.interested_in);
+      case 6: // Photos
+        return formData.hasPhoto;
+      case 7: // Location
+        return Boolean(formData.city && formData.country);
+      case 8: // Interests
+        return formData.interests.length > 0;
+      case 9: // Languages (optional)
+        return true;
+      case 10: // Age/distance preferences (always have sane defaults)
+        return Boolean(formData.min_age_preference >= 18 && formData.max_age_preference <= 90 &&
                       formData.min_age_preference <= formData.max_age_preference &&
                       formData.max_distance_preference >= 0 && formData.max_distance_preference <= 100);
-      case 3:
-        return Boolean(formData.location);
-      case 4:
-        return Boolean(formData.interests.length > 0 && formData.languages_spoken.length > 0);
       default:
         return false;
     }

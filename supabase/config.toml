@@ -61,6 +61,9 @@ enable_confirmations = false
 [functions.generate-cultural-vibes]
 verify_jwt = false
 
+[functions.geocode]
+verify_jwt = false
+
 [functions.get-signed-photo-url]
 verify_jwt = false
 
