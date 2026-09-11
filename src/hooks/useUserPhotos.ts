@@ -372,3 +372,5 @@ export const useUserPhotos = (userId: string | undefined) => {
     refetch: fetchPhotos
   };
 };
+
+export type UseUserPhotosReturn = ReturnType<typeof useUserPhotos>;

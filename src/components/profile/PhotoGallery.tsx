@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Star, Upload, Link, GripVertical } from 'lucide-react';
-import { useUserPhotos } from '@/hooks/useUserPhotos';
+import type { UseUserPhotosReturn } from '@/hooks/useUserPhotos';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import LoadingState from '@/components/LoadingState';
 
@@ -13,10 +13,11 @@ interface PhotoGalleryProps {
   isMatchedUser?: boolean;
   matchId?: string;
   onPhotoClick?: (photoIndex: number) => void;
+  photosState: UseUserPhotosReturn;
 }
 
-const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, matchId, onPhotoClick }: PhotoGalleryProps) => {
-  const { photos: userPhotos, loading: userLoading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto, swapPhotoSlots } = useUserPhotos(isMatchedUser ? undefined : userId);
+const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, matchId, onPhotoClick, photosState }: PhotoGalleryProps) => {
+  const { photos: userPhotos, loading: userLoading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto, swapPhotoSlots } = photosState;
   const { photos: securePhotos, loading: secureLoading, canViewUnblurred, refetch: refetchSecurePhotos, clearCache } = useSecurePhotos({
     userId,
     matchId,
