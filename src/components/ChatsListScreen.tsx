@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Clock, User } from 'lucide-react';
@@ -21,26 +20,12 @@ interface ChatsListScreenProps {
 }
 
 const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
-  const { chats, loading, refetch } = useChats();
+  const { chats, loading } = useChats();
   const navigate = useNavigate();
   
-  // Add effect to refetch when component mounts or becomes visible
-  React.useEffect(() => {
-    refetch();
-    
-    // Set up visibility change listener to refetch when returning to this screen
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        refetch();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
+  // useChats already fetches on mount and keeps chats in sync via its
+  // realtime subscription, so no extra mount/visibility-triggered refetch
+  // is needed here.
 
   if (loading) {
     return (
