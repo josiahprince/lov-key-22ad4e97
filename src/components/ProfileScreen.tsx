@@ -14,6 +14,7 @@ import NotificationsSection from './profile/NotificationsSection';
 import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
+import { useUserPhotos } from '@/hooks/useUserPhotos';
 import { useAuth } from '@/hooks/useAuth';
 import type { ProfileLike } from '@/types/domain';
 
@@ -27,6 +28,7 @@ const ProfileScreen = ({
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const { photos } = useSecurePhotos({ userId: currentUserId, isOwnProfile: true });
+  const photosState = useUserPhotos(currentUserId);
 
   const onSignOut = () => {
     supabase.auth.signOut();
@@ -77,8 +79,9 @@ const ProfileScreen = ({
       />
       <ProfileInfo userProfile={userProfile} />
       <DescriptionSection />
-      <PhotoGallery 
+      <PhotoGallery
         userId={currentUserId}
+        photosState={photosState}
         onPhotoClick={(index) => {
           setSelectedPhotoIndex(index);
           setIsGalleryOpen(true);

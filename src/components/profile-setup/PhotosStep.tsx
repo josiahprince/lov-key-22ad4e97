@@ -8,10 +8,10 @@ import { useProfileSetup } from './ProfileSetupContext';
 const PhotosStep = () => {
   const { user } = useAuth();
   const { updateField } = useProfileSetup();
-  // Own instance just to know whether at least one photo exists, for step
-  // validation - the actual upload UI/state lives inside PhotoGallery below.
-  const { photos } = useUserPhotos(user?.id);
-  const hasPhoto = photos.some(p => Boolean(p.photo_url));
+  // Single shared instance, passed down to PhotoGallery, so step validation
+  // sees the same state as the upload UI instead of a separately-subscribed copy.
+  const photosState = useUserPhotos(user?.id);
+  const hasPhoto = photosState.photos.some(p => Boolean(p.photo_url));
 
   useEffect(() => {
     updateField('hasPhoto', hasPhoto);
@@ -26,7 +26,7 @@ const PhotosStep = () => {
           Add at least 1 photo so people know who they're matching with
         </p>
       </div>
-      <PhotoGallery userId={user?.id} />
+      <PhotoGallery userId={user?.id} photosState={photosState} />
     </div>
   );
 };

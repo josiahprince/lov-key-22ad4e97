@@ -15,6 +15,7 @@ import PhotoGalleryViewer from '@/components/profile/PhotoGalleryViewer';
 import BlockReportModal from '@/components/BlockReportModal';
 import { useMessages } from '@/hooks/useMessages';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
+import { useUserPhotos } from '@/hooks/useUserPhotos';
 import { useMatchedUserProfile } from '@/hooks/useMatchedUserProfile';
 import { useBlockUser } from '@/hooks/useBlockUser';
 import {
@@ -56,6 +57,9 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
     isOwnProfile: false
   });
   const { blockUser, blocking } = useBlockUser();
+  // Matched-user view is read-only for photos (see PhotoGallery's isMatchedUser
+  // branch), so this instance never fetches/subscribes for a real user id.
+  const photosState = useUserPhotos(undefined);
 
   const handleBack = () => navigate(backTo);
 
@@ -129,6 +133,7 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
           <MatchedUserDescriptionSection userId={matchedUserProfile.id} />
           <PhotoGallery
             userId={matchedUserProfile.id}
+            photosState={photosState}
             canViewPhotos={canViewPhotos}
             isMatchedUser={true}
             matchId={matchId}
