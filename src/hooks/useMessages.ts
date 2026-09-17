@@ -121,16 +121,16 @@ export const useMessages = (matchId: string, currentUserId: string) => {
     }
   };
 
-  // Check if photos should be unblurred (60+ total messages, matching get-signed-photo-url backend rule)
-  const canViewPhotos = () => {
-    return messageCounts.total >= 60;
-  };
-
-  // Set up real-time subscription
+  // Set up real-time subscription, plus a polling fallback - some networks
+  // (e.g. corporate networks that block the realtime websocket) never get a
+  // live connection, so without polling those users would only ever see new
+  // messages after a manual page refresh.
   useEffect(() => {
     if (!matchId || !currentUserId) return;
 
     fetchMessages();
+
+    const pollInterval = setInterval(fetchMessages, 4000);
 
     const channel = supabase
       .channel(`messages-realtime:${matchId}`)
@@ -211,6 +211,7 @@ export const useMessages = (matchId: string, currentUserId: string) => {
       });
 
     return () => {
+      clearInterval(pollInterval);
       supabase.removeChannel(channel);
     };
   }, [matchId, currentUserId]);
@@ -220,7 +221,6 @@ export const useMessages = (matchId: string, currentUserId: string) => {
     loading,
     messageCounts,
     sendMessage,
-    canViewPhotos,
     fetchMessages
   };
 };

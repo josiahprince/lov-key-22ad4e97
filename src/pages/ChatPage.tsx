@@ -35,6 +35,7 @@ const ChatPage = () => {
       matchedUserVibes={state.matchedUserVibes}
       matchedUserPhoto={state.matchedUserPhoto}
       onBackToChats={() => navigate('/chats')}
+      onViewPhotos={() => navigate(`/chat/${matchId}`)}
     />
   );
 };

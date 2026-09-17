@@ -86,24 +86,27 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Check message count for the 60-message requirement
-      // Photos should be blurred until 60 messages exchanged
+      // Photos stay blurred until BOTH people opt in through the photo
+      // reveal handshake (submit_photo_reveal_choice) - reaching the message
+      // threshold only earns the pair the right to be asked, it does not
+      // unblur anything on its own.
       const matchIdToCheck = matchId || matchData.id;
-      
-      const { count: messageCount, error: countError } = await supabaseAdmin
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('match_id', matchIdToCheck);
 
-      if (countError) {
-        console.error('Error counting messages:', countError);
+      const { data: revealData, error: revealError } = await supabaseAdmin
+        .from('photo_reveals')
+        .select('revealed_at')
+        .eq('match_id', matchIdToCheck)
+        .maybeSingle();
+
+      if (revealError) {
+        console.error('Error checking photo reveal state:', revealError);
         return new Response(
-          JSON.stringify({ error: 'Failed to verify message count' }),
+          JSON.stringify({ error: 'Failed to verify photo reveal state' }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
-      const canViewUnblurred = (messageCount || 0) >= 60;
+      const canViewUnblurred = Boolean(revealData?.revealed_at);
 
       // Return info about whether photo should be blurred
       // We still provide the signed URL but include blur status
@@ -120,10 +123,9 @@ Deno.serve(async (req) => {
       }
 
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           signedUrl: signedUrlData.signedUrl,
-          canViewUnblurred,
-          messageCount: messageCount || 0
+          canViewUnblurred
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -143,10 +145,9 @@ Deno.serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         signedUrl: signedUrlData.signedUrl,
-        canViewUnblurred: true,
-        messageCount: 999 // Own photos always viewable
+        canViewUnblurred: true
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

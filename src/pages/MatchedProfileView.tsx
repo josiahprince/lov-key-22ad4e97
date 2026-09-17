@@ -14,6 +14,7 @@ import MatchedUserDescriptionSection from '@/components/profile/MatchedUserDescr
 import PhotoGalleryViewer from '@/components/profile/PhotoGalleryViewer';
 import BlockReportModal from '@/components/BlockReportModal';
 import { useMessages } from '@/hooks/useMessages';
+import { usePhotoReveal } from '@/hooks/usePhotoReveal';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
 import { useMatchedUserProfile } from '@/hooks/useMatchedUserProfile';
@@ -51,6 +52,7 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
 
   const { matchedUserProfile, loading } = useMatchedUserProfile(matchId, user?.id);
   const { messages } = useMessages(matchId || '', user?.id || '');
+  const { round } = usePhotoReveal(matchId || '', messages.length);
   const { photos, canViewUnblurred: canViewPhotos } = useSecurePhotos({
     userId: matchedUserProfile?.id,
     matchId: matchId,
@@ -144,7 +146,7 @@ const MatchedProfileView = ({ backTo, backLabel }: MatchedProfileViewProps) => {
           />
 
           {!canViewPhotos && (
-            <PhotoUnlockNotice current={messages.length} variant="card" />
+            <PhotoUnlockNotice messageCount={messages.length} round={round} variant="card" />
           )}
         </div>
 

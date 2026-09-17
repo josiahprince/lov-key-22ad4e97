@@ -1,7 +1,7 @@
 
 import { Card } from '@/components/ui/card';
 import { Heart } from 'lucide-react';
-import { PHOTO_UNLOCK_THRESHOLD } from '@/lib/constants';
+import { PHOTO_REVEAL_INITIAL_THRESHOLD } from '@/lib/constants';
 
 const PrivacyCards = () => {
   return (
@@ -10,7 +10,8 @@ const PrivacyCards = () => {
         <Heart className="w-6 h-6 mx-auto text-primary" />
         <h4 className="font-medium text-accent-foreground">Privacy First</h4>
         <p className="text-sm text-accent-foreground/80">
-          Your photos stay blurred until you and your match exchange {PHOTO_UNLOCK_THRESHOLD} messages
+          Your photos stay blurred until you and your match exchange {PHOTO_REVEAL_INITIAL_THRESHOLD} messages
+          and you both choose to reveal them
         </p>
       </div>
     </Card>

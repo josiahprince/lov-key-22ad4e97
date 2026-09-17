@@ -547,6 +547,14 @@ export type Database = {
         }[]
       }
       get_date_in_timezone: { Args: { user_timezone: string }; Returns: string }
+      get_photo_reveal_state: {
+        Args: { p_match_id: string }
+        Returns: {
+          reveal_round: number
+          my_choice: string | null
+          revealed: boolean
+        }[]
+      }
       is_after_6am_in_timezone: {
         Args: { user_timezone: string }
         Returns: boolean
@@ -561,6 +569,14 @@ export type Database = {
       should_show_onboarding: {
         Args: { user_id_param: string }
         Returns: boolean
+      }
+      submit_photo_reveal_choice: {
+        Args: { p_match_id: string; p_choice: string }
+        Returns: {
+          reveal_round: number
+          my_choice: string | null
+          revealed: boolean
+        }[]
       }
       submit_report: {
         Args: {

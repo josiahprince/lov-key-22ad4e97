@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { format, isToday, isYesterday } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +8,12 @@ import { Clock, Send, Images, MoreVertical } from 'lucide-react';
 import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
 import { useBlockUser } from '@/hooks/useBlockUser';
+import { usePhotoReveal } from '@/hooks/usePhotoReveal';
+import type { PhotoRevealChoice } from '@/lib/constants';
 import BlockReportModal from '@/components/BlockReportModal';
 import ScreenHeader from '@/components/ScreenHeader';
 import PhotoUnlockNotice from '@/components/PhotoUnlockNotice';
+import PhotoRevealPrompt from '@/components/PhotoRevealPrompt';
 import LoadingState from '@/components/LoadingState';
 import {
   DropdownMenu,
@@ -35,20 +39,83 @@ interface ChatScreenProps {
   matchedUserVibes: string;
   matchedUserPhoto?: string | null;
   onBackToChats?: () => void;
+  onViewPhotos?: () => void;
 }
 
-const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, matchedUserPhoto, onBackToChats }: ChatScreenProps) => {
+const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes, matchedUserPhoto, onBackToChats, onViewPhotos }: ChatScreenProps) => {
   const { user } = useAuth();
   const currentUserId = user?.id ?? '';
   const [newMessage, setNewMessage] = useState('');
   const [canSend, setCanSend] = useState(true);
-  const [photoRequestSent, setPhotoRequestSent] = useState(false);
   const [isBlockConfirmOpen, setIsBlockConfirmOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, loading, messageCounts, sendMessage, canViewPhotos } = useMessages(matchId, currentUserId);
+  const { messages, loading, messageCounts, sendMessage } = useMessages(matchId, currentUserId);
   const { blockUser, blocking } = useBlockUser();
+  const {
+    round,
+    threshold,
+    revealed,
+    submitting: submittingChoice,
+    awaitingMyChoice,
+    awaitingPartner,
+    submitChoice,
+  } = usePhotoReveal(matchId, messageCounts.total);
+
+  // Group consecutive messages from the same sender together, with date
+  // dividers inserted wherever the calendar day changes - the layout other
+  // messaging/dating apps use so a run of bubbles reads as one "turn".
+  const chatItems = useMemo(() => {
+    type ChatItem =
+      | { type: 'date'; id: string; label: string }
+      | { type: 'group'; id: string; isOwn: boolean; messages: typeof messages };
+
+    const items: ChatItem[] = [];
+    let lastDateKey: string | null = null;
+    let currentGroup: typeof messages | null = null;
+    let currentSenderId: string | null = null;
+
+    const dateLabel = (iso: string) => {
+      const date = new Date(iso);
+      if (isToday(date)) return 'Today';
+      if (isYesterday(date)) return 'Yesterday';
+      return format(date, 'MMMM d, yyyy');
+    };
+
+    const flushGroup = () => {
+      if (currentGroup && currentGroup.length > 0) {
+        items.push({
+          type: 'group',
+          id: currentGroup[0].id,
+          isOwn: currentSenderId === currentUserId,
+          messages: currentGroup,
+        });
+      }
+      currentGroup = null;
+    };
+
+    messages.forEach((message) => {
+      const dateKey = format(new Date(message.created_at), 'yyyy-MM-dd');
+      if (dateKey !== lastDateKey) {
+        flushGroup();
+        currentSenderId = null;
+        items.push({ type: 'date', id: `date-${dateKey}`, label: dateLabel(message.created_at) });
+        lastDateKey = dateKey;
+      }
+
+      if (message.sender_id === currentSenderId && currentGroup) {
+        currentGroup.push(message);
+      } else {
+        flushGroup();
+        currentGroup = [message];
+        currentSenderId = message.sender_id;
+      }
+    });
+    flushGroup();
+
+    return items;
+  }, [messages, currentUserId]);
 
   const handleConfirmBlock = async () => {
     const success = await blockUser(matchedUserId);
@@ -56,15 +123,20 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     if (success) onBackToChats?.();
   };
 
-  // Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom only when a message is actually added - the
+  // periodic poll re-fetches and replaces the whole array every few
+  // seconds even when nothing changed, which would otherwise yank the
+  // view back to the bottom while someone is reading older messages.
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const previousMessageCountRef = useRef(0);
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length > previousMessageCountRef.current) {
       scrollToBottom();
     }
+    previousMessageCountRef.current = messages.length;
   }, [messages]);
 
   const handleSendMessage = async () => {
@@ -82,9 +154,13 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     }
   };
 
-  const handlePhotoRequest = async () => {
-    setPhotoRequestSent(true);
-    await sendMessage("Would you like to share more photos?", matchedUserId);
+  const handleRevealChoice = async (choice: PhotoRevealChoice) => {
+    const result = await submitChoice(choice);
+    // Both sides agreed, so this tap is what unlocked the photos - take them
+    // straight there rather than making them hunt for the button.
+    if (result?.revealed) {
+      onViewPhotos?.();
+    }
   };
 
   return (
@@ -93,21 +169,20 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
       <div className="p-3 bg-white border-b border-border">
         <ScreenHeader
           onBack={onBackToChats}
-          avatar={{ src: matchedUserPhoto ?? undefined, alt: matchedUserName, blurred: !canViewPhotos() }}
+          avatar={{ src: matchedUserPhoto ?? undefined, alt: matchedUserName, blurred: !revealed }}
           title={matchedUserName}
           subtitle={matchedUserVibes}
           actions={
             <>
-              {canViewPhotos() && (
+              {revealed && (
                 <Button
-                  onClick={handlePhotoRequest}
-                  disabled={photoRequestSent}
+                  onClick={onViewPhotos}
                   size="sm"
                   variant="outline"
                   className="text-primary border-primary/20 hover:bg-accent text-xs px-2 py-1"
                 >
                   <Images className="w-3 h-3 mr-1" />
-                  {photoRequestSent ? 'Requested' : 'View Photos'}
+                  View Photos
                 </Button>
               )}
               <DropdownMenu>
@@ -129,8 +204,8 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
           }
         />
 
-        {!canViewPhotos() && (
-          <PhotoUnlockNotice current={messageCounts.total} className="mt-2" />
+        {!revealed && !awaitingMyChoice && !awaitingPartner && (
+          <PhotoUnlockNotice messageCount={messageCounts.total} round={round} className="mt-2" />
         )}
       </div>
 
@@ -142,22 +217,68 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
               <LoadingState variant="skeleton" shape="message" />
             ) : (
               <>
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.sender_id === currentUserId ? 'justify-end' : 'justify-start'} mb-3`}
-                  >
+                {chatItems.map((item) => {
+                  if (item.type === 'date') {
+                    return (
+                      <div key={item.id} className="flex justify-center my-1">
+                        <span className="text-[11px] font-medium text-muted-foreground bg-muted px-3 py-1 rounded-full">
+                          {item.label}
+                        </span>
+                      </div>
+                    );
+                  }
+
+                  const { isOwn, messages: groupMessages } = item;
+                  const lastMessage = groupMessages[groupMessages.length - 1];
+
+                  return (
                     <div
-                      className={`max-w-[80%] p-3 rounded-xl text-sm ${
-                        message.sender_id === currentUserId
-                          ? 'bg-primary text-primary-foreground rounded-br-sm'
-                          : 'bg-muted text-foreground rounded-bl-sm'
-                      }`}
+                      key={item.id}
+                      className={`flex items-end gap-2 mb-3 ${isOwn ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="break-words">{message.content}</p>
+                      {!isOwn && (
+                        <div className="relative w-7 h-7 rounded-full overflow-hidden shrink-0 border border-border">
+                          <img
+                            src={matchedUserPhoto ?? undefined}
+                            alt={matchedUserName}
+                            className={`w-full h-full object-cover ${!revealed ? 'filter blur-sm' : ''}`}
+                          />
+                        </div>
+                      )}
+
+                      <div className={`flex flex-col max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                        <span className="text-[11px] font-medium text-muted-foreground px-1 mb-0.5">
+                          {isOwn ? 'You' : matchedUserName}
+                        </span>
+
+                        {groupMessages.map((message, idx) => {
+                          const isFirst = idx === 0;
+                          const isLast = idx === groupMessages.length - 1;
+                          const roundedCorner = isOwn
+                            ? `rounded-2xl ${isFirst ? 'rounded-tr-2xl' : 'rounded-tr-sm'} ${isLast ? 'rounded-br-sm' : 'rounded-br-2xl'}`
+                            : `rounded-2xl ${isFirst ? 'rounded-tl-2xl' : 'rounded-tl-sm'} ${isLast ? 'rounded-bl-sm' : 'rounded-bl-2xl'}`;
+
+                          return (
+                            <div
+                              key={message.id}
+                              className={`px-3 py-2 text-sm break-words ${idx > 0 ? 'mt-0.5' : ''} ${roundedCorner} ${
+                                isOwn
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'bg-muted text-foreground'
+                              }`}
+                            >
+                              {message.content}
+                            </div>
+                          );
+                        })}
+
+                        <span className="text-[10px] text-muted-foreground mt-1 px-1">
+                          {format(new Date(lastMessage.created_at), 'h:mm a')}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {!canSend && (
                   <div className="text-center py-4">
@@ -180,6 +301,17 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
 
       {/* Message Input - anchored to bottom, below the message list */}
       <div className="p-4 bg-white border-t border-border shadow-sm">
+        {(awaitingMyChoice || awaitingPartner) && (
+          <PhotoRevealPrompt
+            matchedUserName={matchedUserName}
+            threshold={threshold}
+            waitingForPartner={awaitingPartner}
+            submitting={submittingChoice}
+            onChoose={handleRevealChoice}
+            className="mb-3"
+          />
+        )}
+
         <div className="flex space-x-3 items-center">
           <Input
             value={newMessage}

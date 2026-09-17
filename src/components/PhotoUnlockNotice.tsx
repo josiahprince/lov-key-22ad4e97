@@ -1,17 +1,17 @@
 import { Eye } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { getPhotoUnlockCopy, PHOTO_UNLOCK_THRESHOLD } from '@/lib/constants';
+import { getPhotoUnlockCopy } from '@/lib/constants';
 
 interface PhotoUnlockNoticeProps {
-  current: number;
-  total?: number;
+  messageCount: number;
+  round: number;
   variant?: 'banner' | 'card';
   className?: string;
 }
 
-const PhotoUnlockNotice = ({ current, total = PHOTO_UNLOCK_THRESHOLD, variant = 'banner', className }: PhotoUnlockNoticeProps) => {
-  const copy = getPhotoUnlockCopy(current, total);
+const PhotoUnlockNotice = ({ messageCount, round, variant = 'banner', className }: PhotoUnlockNoticeProps) => {
+  const copy = getPhotoUnlockCopy(messageCount, round);
 
   if (variant === 'card') {
     return (
