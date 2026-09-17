@@ -96,10 +96,16 @@ const AppLayout = () => {
     return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
   }
 
+  // An open chat (/chats/:matchId) renders its own message input anchored to
+  // the bottom of the screen - the fixed bottom nav would sit on top of it
+  // and hide it, so skip the nav there too.
+  const isOpenChat = /^\/chats\/[^/]+$/.test(location.pathname);
+  const hideNavigation = location.pathname === '/onboarding' || isOpenChat;
+
   return (
     <GradientShell withCard>
       <Outlet context={{ userProfile, shouldShowOnboarding, onboardingLoading }} />
-      {location.pathname !== '/onboarding' && <Navigation />}
+      {!hideNavigation && <Navigation />}
     </GradientShell>
   );
 };
