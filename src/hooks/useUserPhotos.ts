@@ -3,35 +3,28 @@ import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLogger';
+import {
+  PHOTO_BUCKET,
+  initializePhotoSlots,
+  storagePathForPhotoUrl,
+  validatePhotoFile,
+} from '@/lib/photos';
+import type { UserPhoto } from '@/lib/photos';
 
-export interface UserPhoto {
-  id: string;
-  photo_url: string;
-  photo_slot: number;
-  is_main: boolean;
-  signedUrl?: string;
-  canViewUnblurred?: boolean;
-}
+export type { UserPhoto };
 
 export const useUserPhotos = (userId: string | undefined) => {
   const [photos, setPhotos] = useState<UserPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Initialize photo slots (1-6)
-  const initializePhotoSlots = (userPhotos: UserPhoto[]) => {
-    const photoSlots = Array.from({ length: 6 }, (_, index) => {
-      const slot = index + 1;
-      const existingPhoto = userPhotos.find(p => p.photo_slot === slot);
-      return existingPhoto || {
-        id: `slot-${slot}`,
-        photo_url: '',
-        photo_slot: slot,
-        is_main: slot === 1 && userPhotos.length === 0
-      };
-    });
-    return photoSlots;
-  };
+  // Every photo operation reports back through the same two toasts, so keep
+  // the shape in one place rather than repeating the options object per call.
+  const notifyError = (description: string) =>
+    toast({ title: 'Error', description, variant: 'destructive' });
+
+  const notifySuccess = (description: string) =>
+    toast({ title: 'Success', description });
 
   const fetchPhotos = async () => {
     if (!userId) {
@@ -48,11 +41,7 @@ export const useUserPhotos = (userId: string | undefined) => {
         .order('photo_slot');
 
       if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load photos",
-          variant: "destructive"
-        });
+        notifyError('Failed to load photos');
         return;
       }
 
@@ -67,48 +56,21 @@ export const useUserPhotos = (userId: string | undefined) => {
 
   const uploadPhoto = async (file: File, slot: number) => {
     if (!userId) {
-      toast({
-        title: "Error",
-        description: "Please sign in to upload photos",
-        variant: "destructive"
-      });
+      notifyError('Please sign in to upload photos');
       return null;
     }
 
     try {
       
-      // Validate file type - Enhanced to support more formats
-      const allowedTypes = [
-        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
-        'image/bmp', 'image/webp', 'image/svg+xml', 'image/tiff', 
-        'image/x-icon', 'image/vnd.microsoft.icon'
-      ];
-      
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Error",
-          description: "Please select a valid image file (JPG, PNG, GIF, BMP, WebP, SVG, TIFF, ICO)",
-          variant: "destructive"
-        });
-        return null;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "Error",
-          description: "File size should be less than 5MB",
-          variant: "destructive"
-        });
+      const validationError = validatePhotoFile(file);
+      if (validationError) {
+        notifyError(validationError);
         return null;
       }
 
       const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/${slot}-${Date.now()}.${fileExt}`;
       
-      // Use the new profile-photos bucket for all photos
-      const bucketName = 'profile-photos';
-
       // Delete existing photo in this slot first
       const existingPhoto = photos.find(p => p.photo_slot === slot && p.photo_url);
       if (existingPhoto && existingPhoto.photo_url.includes('supabase')) {
@@ -116,7 +78,7 @@ export const useUserPhotos = (userId: string | undefined) => {
       }
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(bucketName)
+        .from(PHOTO_BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true
@@ -127,7 +89,7 @@ export const useUserPhotos = (userId: string | undefined) => {
       }
 
       const { data: { publicUrl } } = supabase.storage
-        .from(bucketName)
+        .from(PHOTO_BUCKET)
         .getPublicUrl(fileName);
 
       // Save to database
@@ -149,29 +111,18 @@ export const useUserPhotos = (userId: string | undefined) => {
       // Refresh photos after successful upload
       await fetchPhotos();
 
-      toast({
-        title: "Success",
-        description: "Photo uploaded successfully"
-      });
+      notifySuccess('Photo uploaded successfully');
 
       return publicUrl;
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload photo. Please try again.",
-        variant: "destructive"
-      });
+      notifyError('Failed to upload photo. Please try again.');
       return null;
     }
   };
 
   const addPhotoFromUrl = async (url: string, slot: number) => {
     if (!userId) {
-      toast({
-        title: "Error",
-        description: "Please sign in to add photos",
-        variant: "destructive"
-      });
+      notifyError('Please sign in to add photos');
       return;
     }
 
@@ -193,16 +144,9 @@ export const useUserPhotos = (userId: string | undefined) => {
       // Refresh photos after successful addition
       await fetchPhotos();
 
-      toast({
-        title: "Success",
-        description: "Photo added successfully"
-      });
+      notifySuccess('Photo added successfully');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add photo",
-        variant: "destructive"
-      });
+      notifyError('Failed to add photo');
     }
   };
 
@@ -223,17 +167,13 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       if (dbError) throw dbError;
 
-      // If it's a Supabase-hosted photo, delete from storage
-      if (photo.photo_url.includes('supabase')) {
-        const urlParts = photo.photo_url.split('/');
-        const fileName = urlParts[urlParts.length - 1];
-        const fullPath = `${userId}/${fileName}`;
-        
-        // Use the profile-photos bucket
-        const bucketName = 'profile-photos';
-        
+      // Externally hosted photos (social imports) have nothing in storage
+      // to delete, so storagePathForPhotoUrl returns null and we skip it.
+      const fullPath = storagePathForPhotoUrl(photo.photo_url, userId);
+      if (fullPath) {
+
         const { error: storageError } = await supabase.storage
-          .from(bucketName)
+          .from(PHOTO_BUCKET)
           .remove([fullPath]);
 
         if (storageError) {
@@ -244,16 +184,9 @@ export const useUserPhotos = (userId: string | undefined) => {
       // Refresh photos after successful removal
       await fetchPhotos();
 
-      toast({
-        title: "Success",
-        description: "Photo removed successfully"
-      });
+      notifySuccess('Photo removed successfully');
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to remove photo",
-        variant: "destructive"
-      });
+      notifyError('Failed to remove photo');
     }
   };
 
@@ -281,9 +214,9 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       await fetchPhotos();
 
-      toast({ title: "Success", description: "Main photo updated" });
+      notifySuccess('Main photo updated');
     } catch (error) {
-      toast({ title: "Error", description: "Failed to set main photo", variant: "destructive" });
+      notifyError('Failed to set main photo');
     }
   };
 
@@ -314,7 +247,7 @@ export const useUserPhotos = (userId: string | undefined) => {
 
       await fetchPhotos();
     } catch (error) {
-      toast({ title: "Error", description: "Failed to reorder photos", variant: "destructive" });
+      notifyError('Failed to reorder photos');
     }
   };
 

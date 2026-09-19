@@ -3,15 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
-
-interface UserPhoto {
-  id: string;
-  photo_url: string;
-  photo_slot: number;
-  is_main: boolean;
-  signedUrl?: string;
-  canViewUnblurred?: boolean;
-}
+import type { UserPhoto } from '@/lib/photos';
 
 interface PhotoGalleryViewerProps {
   photos: UserPhoto[];

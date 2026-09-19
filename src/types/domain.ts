@@ -1,7 +1,7 @@
 import type { Database } from '@/integrations/supabase/types';
 
 export type Profile = Database['public']['Tables']['profiles']['Row'];
-export type MatchedProfile = Database['public']['Tables']['profiles_matched_view']['Row'];
+export type MatchedProfile = Database['public']['Views']['profiles_matched_view']['Row'];
 export type OnboardingRow = Database['public']['Tables']['user_onboarding']['Row'];
 export type MatchRow = Database['public']['Tables']['matches']['Row'];
 
