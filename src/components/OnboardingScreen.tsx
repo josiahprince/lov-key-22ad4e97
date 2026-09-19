@@ -10,6 +10,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { logError } from '@/lib/errorLogger';
 import LoadingState from '@/components/LoadingState';
+import MoodStep from '@/components/onboarding/MoodStep';
+import { MOODS } from '@/components/onboarding/moods';
+import VibesStep from '@/components/onboarding/VibesStep';
+import PerfectSundayStep from '@/components/onboarding/PerfectSundayStep';
 
 interface OnboardingCompletionData {
   mood: string;
@@ -30,15 +34,6 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
 
   const { onboardingData, loading, shouldShowOnboarding, saveOnboardingData } = useOnboardingData();
   const { vibes: memes, loading: vibesLoading } = useCulturalVibes(userCountry);
-
-  const moods = [
-    { id: 'happy', label: 'Happy', icon: Smile, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
-    { id: 'angry', label: 'Angry', icon: Flame, color: 'bg-red-100 text-red-700 border-red-200' },
-    { id: 'anxious', label: 'Anxious', icon: Meh, color: 'bg-blue-100 text-blue-700 border-blue-200' },
-    { id: 'sad', label: 'Sad', icon: Frown, color: 'bg-purple-100 text-purple-700 border-purple-200' },
-    { id: 'optimistic', label: 'Optimistic', icon: Heart, color: 'bg-pink-100 text-pink-700 border-pink-200' },
-    { id: 'sleepy', label: 'Sleepy', icon: Coffee, color: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
-  ];
 
   // Fetch user's country on component mount
   useEffect(() => {
@@ -167,7 +162,7 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
 
   // Show existing data confirmation screen
   if (showExistingData && step === 1) {
-    const currentMoodData = moods.find(m => m.id === mood);
+    const currentMoodData = MOODS.find(m => m.id === mood);
     const currentMemesData = memes.filter(m => selectedMemes.includes(m.id));
 
     return (
@@ -243,126 +238,27 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
   const renderStep = () => {
     switch (step) {
       case 1:
-        return (
-          <div className="space-y-3 animate-fade-in">
-            <div className="space-y-2">
-              <h2 className="text-base font-medium text-gray-700">What's your current mood?</h2>
-              <div className="grid grid-cols-3 gap-2">
-                {moods.map((m) => {
-                  const IconComponent = m.icon;
-                  return (
-                    <Card
-                      key={m.id}
-                      className={`p-2 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                        mood === m.id ? m.color : 'bg-gray-50 hover:bg-gray-100'
-                      }`}
-                      onClick={() => setMood(m.id)}
-                    >
-                      <div className="text-center space-y-1">
-                        <IconComponent className="w-5 h-5 mx-auto" />
-                        <p className="text-xs font-medium">{m.label}</p>
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-            
-            <Button
-              onClick={() => setStep(2)}
-              disabled={!mood}
-              className="w-full py-2 rounded-xl transition-all duration-200"
-            >
-              Next
-            </Button>
-          </div>
-        );
+        return <MoodStep mood={mood} onSelectMood={setMood} onNext={() => setStep(2)} />;
 
       case 2:
         return (
-          <div className="space-y-3 animate-fade-in">
-            <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold text-gray-800">Pick your vibes</h2>
-              <p className="text-xs text-gray-600">Choose up to 3 that represent you today</p>
-              <p className="text-xs text-primary">{selectedMemes.length}/3 selected</p>
-            </div>
-            
-            <div className="space-y-1 max-h-52 overflow-y-auto">
-              {memes.map((meme) => (
-                <Card
-                  key={meme.id}
-                  className={`p-2 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                    selectedMemes.includes(meme.id)
-                      ? 'bg-accent border-primary/20 text-accent-foreground'
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-                  onClick={() => handleMemeToggle(meme.id)}
-                >
-                  <div className="flex items-center space-x-2">
-                    <div className="text-base">{meme.emoji}</div>
-                    <div>
-                      <h3 className="text-xs font-medium">{meme.title}</h3>
-                      <p className="text-xs text-gray-600">{meme.description}</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-            
-            <div className="flex space-x-2">
-              <Button 
-                onClick={() => setStep(1)} 
-                variant="outline"
-                className="flex-1 py-2 rounded-xl"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={selectedMemes.length === 0}
-                className="flex-1 py-2 rounded-xl"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
+          <VibesStep
+            vibes={memes}
+            selectedMemes={selectedMemes}
+            onToggleMeme={handleMemeToggle}
+            onBack={() => setStep(1)}
+            onNext={() => setStep(3)}
+          />
         );
 
       case 3:
         return (
-          <div className="space-y-4 animate-fade-in">
-            <div className="space-y-3">
-              <h3 className="text-lg font-bold text-center bg-gradient-to-r from-primary via-primary/70 to-orange-500 bg-clip-text text-transparent">
-                Describe your perfect Sunday
-              </h3>
-              <Textarea
-                placeholder="Maybe sleeping in, reading a book, trying a new recipe, or exploring a local market..."
-                value={promptAnswer}
-                onChange={(e) => setPromptAnswer(e.target.value)}
-                className="min-h-[80px] rounded-xl text-sm"
-              />
-              <p className="text-xs text-gray-500 text-center">
-                Be yourself! There's no wrong answer here.
-              </p>
-            </div>
-            
-            <div className="flex space-x-2">
-              <Button 
-                onClick={() => setStep(2)} 
-                variant="outline"
-                className="flex-1 py-2 rounded-xl"
-              >
-                Back
-              </Button>
-              <Button
-                onClick={handleComplete}
-                disabled={!promptAnswer.trim()}
-                className="flex-1 py-2 rounded-xl"
-              >
-                Complete
-              </Button>
-            </div>
-          </div>
+          <PerfectSundayStep
+            promptAnswer={promptAnswer}
+            onChangePromptAnswer={setPromptAnswer}
+            onBack={() => setStep(2)}
+            onComplete={handleComplete}
+          />
         );
 
       default:

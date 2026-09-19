@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Star, Upload, Link, GripVertical } from 'lucide-react';
 import type { UseUserPhotosReturn } from '@/hooks/useUserPhotos';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
+import { usePhotoSlotDragAndDrop } from '@/hooks/usePhotoSlotDragAndDrop';
 import LoadingState from '@/components/LoadingState';
 
 interface PhotoGalleryProps {
@@ -38,43 +39,25 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
   const [socialUrl, setSocialUrl] = useState('');
   const [uploading, setUploading] = useState<number | null>(null);
 
-  // Drag-and-drop state
-  const dragSlotRef = useRef<number | null>(null);
-  const [dragOverSlot, setDragOverSlot] = useState<number | null>(null);
-  const [isDraggingSlot, setIsDraggingSlot] = useState<number | null>(null);
-
   const refreshSecurePhotos = () => {
     if (userId) clearCache(userId);
     refetchSecurePhotos();
   };
 
-  // Drag handlers
-  const handleDragStart = (slot: number) => {
-    dragSlotRef.current = slot;
-    setIsDraggingSlot(slot);
-  };
-
-  const handleDragOver = (e: React.DragEvent, slot: number) => {
-    e.preventDefault();
-    setDragOverSlot(slot);
-  };
-
-  const handleDrop = async (e: React.DragEvent, targetSlot: number) => {
-    e.preventDefault();
-    const sourceSlot = dragSlotRef.current;
-    setDragOverSlot(null);
-    setIsDraggingSlot(null);
-    dragSlotRef.current = null;
-    if (sourceSlot === null || sourceSlot === targetSlot) return;
-    await swapPhotoSlots(sourceSlot, targetSlot);
-    refreshSecurePhotos();
-  };
-
-  const handleDragEnd = () => {
-    setDragOverSlot(null);
-    setIsDraggingSlot(null);
-    dragSlotRef.current = null;
-  };
+  const {
+    dragOverSlot,
+    isDraggingSlot,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = usePhotoSlotDragAndDrop({
+    onSwap: async (sourceSlot, targetSlot) => {
+      await swapPhotoSlots(sourceSlot, targetSlot);
+      refreshSecurePhotos();
+    },
+  });
 
   const handleFileUpload = async (slot: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -164,7 +147,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                     className="relative"
                     onDragOver={(e) => handleDragOver(e, photo.photo_slot)}
                     onDrop={(e) => handleDrop(e, photo.photo_slot)}
-                    onDragLeave={() => setDragOverSlot(null)}
+                    onDragLeave={handleDragLeave}
                   >
                     {hasPhoto ? (
                       <div

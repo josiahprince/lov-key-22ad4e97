@@ -40,7 +40,24 @@ interface NormalizedPlace {
   fullAddress: string;
 }
 
-function normalize(data: any): NormalizedPlace {
+// Shape of a Nominatim result. Every field is optional because which address
+// keys come back varies by country and by how specific the matched place is.
+interface NominatimResult {
+  lat?: string;
+  lon?: string;
+  display_name?: string;
+  address?: {
+    city?: string;
+    town?: string;
+    village?: string;
+    county?: string;
+    state?: string;
+    region?: string;
+    country?: string;
+  };
+}
+
+function normalize(data: NominatimResult): NormalizedPlace {
   const address = data.address ?? {};
   return {
     latitude: parseFloat(data.lat),

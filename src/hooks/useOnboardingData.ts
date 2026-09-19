@@ -3,9 +3,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { toSelectedMemeDisplay } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
 import type { PostgrestError } from '@supabase/supabase-js';
 import type { MappedOnboardingData } from '@/types/domain';
+import type { Json } from '@/integrations/supabase/types';
 
 type OnboardingData = MappedOnboardingData;
 
@@ -100,7 +102,7 @@ export const useOnboardingData = () => {
           id: data.id,
           mood: data.mood,
           selectedMemes: data.selected_memes,
-          selectedMemesDisplay: data.selected_memes_display as MappedOnboardingData['selectedMemesDisplay'],
+          selectedMemesDisplay: toSelectedMemeDisplay(data.selected_memes_display),
           perfectSunday: data.perfect_sunday,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
@@ -172,7 +174,12 @@ export const useOnboardingData = () => {
           user_id: user.id,
           mood: data.mood,
           selected_memes: data.selectedMemes,
-          selected_memes_display: data.selectedMemesDisplay ?? null,
+          // Widened at the write boundary: the value is plain JSON-serializable
+          // data, but SelectedMemeDisplay has no index signature so TS won't
+          // structurally match it against the column's Json type. Kept local
+          // rather than loosening SelectedMemeDisplay itself, which would stop
+          // typos in the field names from being caught everywhere else.
+          selected_memes_display: (data.selectedMemesDisplay ?? null) as unknown as Json,
           perfect_sunday: data.perfectSunday,
           updated_at: new Date().toISOString(),
           onboarding_shown_today: true,
@@ -189,7 +196,7 @@ export const useOnboardingData = () => {
         id: result.id,
         mood: result.mood,
         selectedMemes: result.selected_memes,
-        selectedMemesDisplay: result.selected_memes_display as MappedOnboardingData['selectedMemesDisplay'],
+        selectedMemesDisplay: toSelectedMemeDisplay(result.selected_memes_display),
         perfectSunday: result.perfect_sunday,
         createdAt: result.created_at,
         updatedAt: result.updated_at,
