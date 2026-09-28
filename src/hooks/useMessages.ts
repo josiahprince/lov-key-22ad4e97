@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLogger';
+import { CHAT_INACTIVITY_HOURS } from '@/lib/constants';
 
 interface Message {
   id: string;
@@ -108,13 +109,17 @@ export const useMessages = (matchId: string, currentUserId: string) => {
       return true;
     } catch (error) {
       logError(`useMessages:sendMessage:${matchId}`, error);
-      const isRateLimited =
-        error instanceof Error && error.message.includes('rate_limit_exceeded');
+      const message = (error as { message?: string } | null)?.message ?? '';
+      const isRateLimited = message.includes('rate_limit_exceeded');
+      // The messages INSERT policy only allows active accepted chats.
+      const isChatClosed = message.includes('row-level security');
       toast({
-        title: isRateLimited ? "Slow down" : "Error",
+        title: isRateLimited ? "Slow down" : isChatClosed ? "Chat closed" : "Error",
         description: isRateLimited
           ? "You're sending messages too quickly. Please wait a moment."
-          : "Failed to send message",
+          : isChatClosed
+            ? `This chat is no longer active. Chats close when either person goes ${CHAT_INACTIVITY_HOURS} hours without sending a message.`
+            : "Failed to send message",
         variant: "destructive"
       });
       return false;

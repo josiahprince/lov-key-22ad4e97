@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLogger';
 import { formatDistanceToNow } from 'date-fns';
+import { MAX_ACTIVE_CHATS, MATCH_EXPIRY_HOURS, CHAT_INACTIVITY_HOURS } from '@/lib/constants';
 import type { ProfileLike } from '@/types/domain';
 import ScreenHeader from '@/components/ScreenHeader';
 import LoadingState from '@/components/LoadingState';
@@ -48,6 +49,8 @@ const MatchesScreen = ({
   const {
     matches,
     loading,
+    activeChatCount,
+    chatLimitReached,
     refetch
   } = useMatches();
   const {
@@ -119,11 +122,27 @@ const MatchesScreen = ({
       }).eq('id', match.id).select(); // Add select to get the updated data back
 
       if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to accept chat request. Please try again.",
-          variant: "destructive"
-        });
+        const message = error.message ?? '';
+        if (message.includes('chat_limit_reached')) {
+          toast({
+            title: "Chat limit reached",
+            description: `One of you already has ${MAX_ACTIVE_CHATS} active chats, so this chat can't start right now.`,
+            variant: "destructive"
+          });
+        } else if (message.includes('match_closed')) {
+          toast({
+            title: "Match expired",
+            description: `This match expired because a chat wasn't started within ${MATCH_EXPIRY_HOURS} hours.`,
+            variant: "destructive"
+          });
+          refetch();
+        } else {
+          toast({
+            title: "Error",
+            description: "Failed to accept chat request. Please try again.",
+            variant: "destructive"
+          });
+        }
         return;
       }
       if (!data || data.length === 0) {
@@ -185,6 +204,17 @@ const MatchesScreen = ({
       };
     }
 
+    // Accepting or requesting would push someone past the active-chat cap.
+    if (chatLimitReached) {
+      return {
+        text: "Chat limit reached",
+        icon: <MessageCircle className="w-4 h-4 mr-1" />,
+        disabled: true,
+        onClick: () => {},
+        variant: "outline" as const
+      };
+    }
+
     // If there's a pending request
     if (match.chatRequestStatus === 'pending') {
       // If current user sent the request, show "Request Sent"
@@ -225,7 +255,25 @@ const MatchesScreen = ({
       </div>;
   }
   return <div className="px-4 space-y-4 pb-20">
-        <ScreenHeader title="Today's Matches" subtitle={`${matches.length} thoughtfully curated connections`} />
+        <ScreenHeader title="Today's Matches" subtitle={chatLimitReached ? 'New matches are paused' : `${matches.length} thoughtfully curated connections`} />
+
+      {chatLimitReached && <Card className="p-4 bg-accent border-primary/30">
+          <div className="flex items-start gap-3">
+            <MessageCircle className="w-5 h-5 mt-0.5 shrink-0 text-primary" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-accent-foreground">
+                You have {activeChatCount} active chats
+              </p>
+              <p className="text-xs text-accent-foreground/80">
+                {MAX_ACTIVE_CHATS} is the limit, so new matches won't be added until one of your chats closes.
+                This keeps conversations from getting overwhelming. A chat closes when either person goes {CHAT_INACTIVITY_HOURS} hours without sending a message.
+              </p>
+              {onNavigateToChats && <Button variant="link" size="sm" className="h-auto p-0 text-xs" onClick={onNavigateToChats}>
+                  Go to your chats
+                </Button>}
+            </div>
+          </div>
+        </Card>}
 
       <div className="space-y-3">
         {visibleMatches.map(match => <Card key={match.id} className="p-4 space-y-3 bg-muted/50 border-border animate-fade-in cursor-pointer hover:bg-accent transition-colors" onClick={() => handleViewProfile(match)}>
@@ -279,7 +327,7 @@ const MatchesScreen = ({
                 <span>
                   Expires {formatDistanceToNow(new Date(match.expiresAt), {
               addSuffix: true
-            })}
+            })} if no chat is started
                 </span>
               </div>}
 
@@ -306,16 +354,16 @@ const MatchesScreen = ({
           </Card>)}
       </div>
 
-      {visibleMatches.length === 0 && <EmptyState title="No more matches for today" description="New matches arrive daily at 6 AM UTC" />}
+      {visibleMatches.length === 0 && !chatLimitReached && <EmptyState title="No more matches for today" description="New matches arrive daily from 6 AM UTC" />}
 
       <Card className="p-4 bg-accent border-primary/20">
         <div className="text-center space-y-2">
           <Heart className="w-5 h-5 mx-auto text-primary" />
           <p className="text-sm text-accent-foreground">
-            New matches arrive daily at 6 AM UTC
+            New matches arrive daily from 6 AM UTC
           </p>
           <p className="text-xs text-accent-foreground/80">
-            Quality over quantity - each match is carefully selected
+            A match expires after {MATCH_EXPIRY_HOURS} hours if no chat is started, and a new one is found for you
           </p>
         </div>
       </Card>

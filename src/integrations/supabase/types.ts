@@ -37,6 +37,7 @@ export type Database = {
       }
       matches: {
         Row: {
+          accepted_at: string | null
           chat_request_sender: string | null
           chat_request_status: string | null
           created_at: string
@@ -52,6 +53,7 @@ export type Database = {
           user_2: string
         }
         Insert: {
+          accepted_at?: string | null
           chat_request_sender?: string | null
           chat_request_status?: string | null
           created_at?: string
@@ -67,6 +69,7 @@ export type Database = {
           user_2: string
         }
         Update: {
+          accepted_at?: string | null
           chat_request_sender?: string | null
           chat_request_status?: string | null
           created_at?: string
