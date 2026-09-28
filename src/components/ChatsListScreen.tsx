@@ -8,6 +8,7 @@ import ScreenHeader from '@/components/ScreenHeader';
 import LoadingState from '@/components/LoadingState';
 import EmptyState from '@/components/EmptyState';
 import InitialsAvatar from '@/components/InitialsAvatar';
+import { MAX_ACTIVE_CHATS, CHAT_INACTIVITY_HOURS } from '@/lib/constants';
 
 interface ChatsListScreenProps {
   onStartChat: (matchData: {
@@ -38,7 +39,12 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
 
   return (
     <div className="px-4 space-y-4 pb-20">
-      <ScreenHeader title="Your Chats" subtitle={`${chats.length} active conversations`} />
+      <ScreenHeader title="Your Chats" subtitle={`${chats.length} of ${MAX_ACTIVE_CHATS} active conversations`} />
+
+      <p className="text-xs text-muted-foreground">
+        A chat closes for both of you if either person goes {CHAT_INACTIVITY_HOURS} hours without sending a message.
+        {chats.length >= MAX_ACTIVE_CHATS && ` New matches are paused while you have ${MAX_ACTIVE_CHATS} active chats.`}
+      </p>
 
       <div className="space-y-3">
         {chats.map((chat) => (

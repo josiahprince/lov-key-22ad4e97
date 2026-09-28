@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
+import { MAX_ACTIVE_CHATS, getMatchDayStart } from '@/lib/constants';
 import type { MatchRow } from '@/types/domain';
 
 interface MatchProfile {
@@ -28,6 +29,7 @@ export const useMatches = () => {
   const { user } = useAuth();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeChatCount, setActiveChatCount] = useState(0);
   const { toast } = useToast();
 
   const fetchTodayMatches = useCallback(async () => {
@@ -42,110 +44,66 @@ export const useMatches = () => {
     try {
       setLoading(true);
 
-      // Fetch active matches (including accepted ones to show "Go to Chats" button)
-      // Only exclude chats that have messages (they belong in the chats screen)
-      const { data: todayMatches, error: matchesError } = await supabase
+      const fetchLiveMatches = () => supabase
         .from('matches')
-        .select('*, chat_request_status, chat_request_sender, expires_at')
+        .select('*')
         .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .eq('status', 'active') // Only active status for matches screen (chatting status goes to chats)
-        .gt('expires_at', new Date().toISOString()) // Only non-expired matches
+        .eq('status', 'active')
+        .gt('expires_at', new Date().toISOString())
         .limit(10);
 
-      if (matchesError) {
-        throw matchesError;
-      }
-
-      // Check how many matches were created TODAY (regardless of current status)
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      
-      const { data: todayCreatedMatches, error: todayMatchesError } = await supabase
-        .from('matches')
-        .select('id, status, chat_request_status, created_at')
-        .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-        .gte('matched_on', todayStart.toISOString());
-
-      if (todayMatchesError) {
-        logError("useMatches:todayMatches", todayMatchesError);
-      }
-
-      const matchesCreatedToday = todayCreatedMatches?.length || 0;
-
-      // If user already has 2 matches created today, don't generate more (regardless of status)
-      if (matchesCreatedToday >= 2) {
-        if (todayMatches && todayMatches.length > 0) {
-          await processMatches(todayMatches, user.id);
-        } else {
-          setMatches([]);
-        }
-        return;
-      }
-
-      // If we get here, user has less than 2 matches created today
-      // Check if we should generate new ones
-      if (!todayMatches || todayMatches.length === 0) {
-        
-        // Check how many active chats the user has
-        const { data: activeChats, error: chatsError } = await supabase
+      const [liveResult, chatsResult, todayResult] = await Promise.all([
+        fetchLiveMatches(),
+        supabase
           .from('matches')
-          .select('id')
+          .select('id', { count: 'exact', head: true })
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
           .in('status', ['active', 'chatting'])
-          .eq('chat_request_status', 'accepted');
-
-        if (chatsError) {
-          logError("useMatches:activeChats", chatsError);
-        }
-
-        const activeChatCount = activeChats?.length || 0;
-        
-        if (activeChatCount >= 6) {
-          toast({
-            title: "Chat limit reached",
-            description: "You have 6 active chats. New matches will be available when some chats expire (48 hours of inactivity).",
-            variant: "default"
-          });
-          setMatches([]);
-          return;
-        }
-
-        // Try to generate new matches using the RPC function
-        const { data: generationResult, error: generateError } = await supabase
-          .rpc('generate_daily_matches');
-        
-        if (generateError) {
-          logError("useMatches:generateDaily", generateError);
-        } else if (generationResult && generationResult.length > 0) {
-          const result = generationResult[0];
-          
-          // Check if the current user was skipped due to chat limit
-          if (result.users_skipped_chat_limit > 0 && result.matches_created === 0) {
-            toast({
-              title: "Chat Limit Reached",
-              description: "You have reached the maximum of 6 active chats. New matches will be available when some chats expire.",
-              variant: "default",
-            });
-          }
-        }
-        
-        // Retry fetching after generation attempt
-        const { data: newMatches } = await supabase
+          .eq('chat_request_status', 'accepted'),
+        supabase
           .from('matches')
-          .select('*, chat_request_status, chat_request_sender, expires_at')
+          .select('id', { count: 'exact', head: true })
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .eq('status', 'active')
-          .gt('expires_at', new Date().toISOString());
+          .neq('status', 'expired')
+          .gte('matched_on', getMatchDayStart().toISOString()),
+      ]);
 
-        if (newMatches) {
-          await processMatches(newMatches, user.id);
-        } else {
-          setMatches([]);
-        }
-      } else {
-        await processMatches(todayMatches, user.id);
+      if (liveResult.error) {
+        throw liveResult.error;
+      }
+      if (chatsResult.error) {
+        logError("useMatches:activeChats", chatsResult.error);
+      }
+      if (todayResult.error) {
+        logError("useMatches:todayMatches", todayResult.error);
       }
 
+      const chatCount = chatsResult.count ?? 0;
+      setActiveChatCount(chatCount);
+
+      let liveMatches = liveResult.data ?? [];
+
+      // The hourly cron normally fills matches; this only covers a user who
+      // opens the screen before the next run. The server enforces every cap.
+      const canGenerate =
+        liveMatches.length === 0 &&
+        chatCount < MAX_ACTIVE_CHATS &&
+        (todayResult.count ?? 0) < 2;
+
+      if (canGenerate) {
+        const { error: generateError } = await supabase.rpc('generate_daily_matches');
+        if (generateError) {
+          logError("useMatches:generateDaily", generateError);
+        } else {
+          const { data: newMatches, error: refetchError } = await fetchLiveMatches();
+          if (refetchError) {
+            logError("useMatches:refetchAfterGenerate", refetchError);
+          }
+          liveMatches = newMatches ?? [];
+        }
+      }
+
+      await processMatches(liveMatches, user.id);
     } catch (error) {
       toast({
         title: "Error",
@@ -234,6 +192,8 @@ export const useMatches = () => {
   return {
     matches,
     loading,
+    activeChatCount,
+    chatLimitReached: activeChatCount >= MAX_ACTIVE_CHATS,
     refetch: fetchTodayMatches
   };
 };
