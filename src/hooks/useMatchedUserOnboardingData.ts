@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { fetchLatestOnboarding } from '@/lib/matchQueries';
+import { fetchLatestOnboarding, toSelectedMemeDisplay } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
 import type { OnboardingRow, MappedOnboardingData } from '@/types/domain';
 
@@ -16,7 +16,7 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
     id: data.id,
     mood: data.mood,
     selectedMemes: data.selected_memes,
-    selectedMemesDisplay: data.selected_memes_display as OnboardingData['selectedMemesDisplay'],
+    selectedMemesDisplay: toSelectedMemeDisplay(data.selected_memes_display),
     perfectSunday: data.perfect_sunday,
     createdAt: data.created_at,
     updatedAt: data.updated_at,

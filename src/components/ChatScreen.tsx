@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { format, isToday, isYesterday } from 'date-fns';
+import { format } from 'date-fns';
+import { groupMessagesIntoChatItems } from '@/lib/chatGrouping';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -63,59 +64,10 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
     submitChoice,
   } = usePhotoReveal(matchId, messageCounts.total);
 
-  // Group consecutive messages from the same sender together, with date
-  // dividers inserted wherever the calendar day changes - the layout other
-  // messaging/dating apps use so a run of bubbles reads as one "turn".
-  const chatItems = useMemo(() => {
-    type ChatItem =
-      | { type: 'date'; id: string; label: string }
-      | { type: 'group'; id: string; isOwn: boolean; messages: typeof messages };
-
-    const items: ChatItem[] = [];
-    let lastDateKey: string | null = null;
-    let currentGroup: typeof messages | null = null;
-    let currentSenderId: string | null = null;
-
-    const dateLabel = (iso: string) => {
-      const date = new Date(iso);
-      if (isToday(date)) return 'Today';
-      if (isYesterday(date)) return 'Yesterday';
-      return format(date, 'MMMM d, yyyy');
-    };
-
-    const flushGroup = () => {
-      if (currentGroup && currentGroup.length > 0) {
-        items.push({
-          type: 'group',
-          id: currentGroup[0].id,
-          isOwn: currentSenderId === currentUserId,
-          messages: currentGroup,
-        });
-      }
-      currentGroup = null;
-    };
-
-    messages.forEach((message) => {
-      const dateKey = format(new Date(message.created_at), 'yyyy-MM-dd');
-      if (dateKey !== lastDateKey) {
-        flushGroup();
-        currentSenderId = null;
-        items.push({ type: 'date', id: `date-${dateKey}`, label: dateLabel(message.created_at) });
-        lastDateKey = dateKey;
-      }
-
-      if (message.sender_id === currentSenderId && currentGroup) {
-        currentGroup.push(message);
-      } else {
-        flushGroup();
-        currentGroup = [message];
-        currentSenderId = message.sender_id;
-      }
-    });
-    flushGroup();
-
-    return items;
-  }, [messages, currentUserId]);
+  const chatItems = useMemo(
+    () => groupMessagesIntoChatItems(messages, currentUserId),
+    [messages, currentUserId]
+  );
 
   const handleConfirmBlock = async () => {
     const success = await blockUser(matchedUserId);

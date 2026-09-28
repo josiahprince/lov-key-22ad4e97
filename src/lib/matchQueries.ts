@@ -32,6 +32,12 @@ const isSelectedMemeDisplayArray = (value: unknown): value is SelectedMemeDispla
       typeof (item as Record<string, unknown>).emoji === 'string'
   );
 
+// Narrows a raw `selected_memes_display` Json column to the display shape.
+// Returns undefined for legacy/malformed rows so callers fall back to
+// getMemeDisplayInfo's legacy map rather than trusting an unchecked cast.
+export const toSelectedMemeDisplay = (value: unknown): SelectedMemeDisplay[] | undefined =>
+  isSelectedMemeDisplayArray(value) ? value : undefined;
+
 // Prefers the exact vibe text/emoji persisted at selection time. Falls back to
 // the legacy static map (by id) only for rows saved before that column existed.
 export const getMemeDisplayInfo = (
