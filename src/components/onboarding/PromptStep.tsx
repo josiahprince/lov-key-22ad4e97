@@ -1,26 +1,34 @@
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
-interface PerfectSundayStepProps {
+interface PromptStepProps {
+  question: string;
+  placeholder: string;
   promptAnswer: string;
   onChangePromptAnswer: (value: string) => void;
   onBack: () => void;
   onComplete: () => void;
 }
 
-const PerfectSundayStep = ({
+// The question of the week (see useWeeklyPrompt).
+const PromptStep = ({
+  question,
+  placeholder,
   promptAnswer,
   onChangePromptAnswer,
   onBack,
   onComplete,
-}: PerfectSundayStepProps) => (
+}: PromptStepProps) => (
   <div className="space-y-4 animate-fade-in">
     <div className="space-y-3">
+      <p className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide">
+        Question of the week
+      </p>
       <h3 className="text-lg font-bold text-center bg-gradient-to-r from-primary via-primary/70 to-orange-500 bg-clip-text text-transparent">
-        Describe your perfect Sunday
+        {question}
       </h3>
       <Textarea
-        placeholder="Maybe sleeping in, reading a book, trying a new recipe, or exploring a local market..."
+        placeholder={placeholder}
         value={promptAnswer}
         onChange={(e) => onChangePromptAnswer(e.target.value)}
         className="min-h-[80px] rounded-xl text-sm"
@@ -45,4 +53,4 @@ const PerfectSundayStep = ({
   </div>
 );
 
-export default PerfectSundayStep;
+export default PromptStep;

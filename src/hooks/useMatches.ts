@@ -15,6 +15,7 @@ interface MatchProfile {
   mood: string;
   memes: { emoji: string; title: string }[];
   promptAnswer: string;
+  promptQuestion: string;
   compatibility: number;
   mainPhoto: string | null;
   city?: string;
@@ -166,6 +167,7 @@ export const useMatches = () => {
           mood: matchOnboarding?.mood || 'chill',
           memes: memeInfo,
           promptAnswer: matchOnboarding?.perfect_sunday || "",
+          promptQuestion: matchOnboarding?.prompt_question || "Describe your perfect Sunday",
           compatibility: match.match_score || 75,
           mainPhoto: matchPhoto?.photo_url || null,
           city: matchProfile?.city || 'Unknown',

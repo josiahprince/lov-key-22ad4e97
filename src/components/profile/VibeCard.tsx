@@ -59,9 +59,9 @@ const VibeCard = ({
             </div>
           </div>}
 
-        {/* Perfect Sunday */}
+        {/* Question of the week answer */}
         {onboardingData.perfectSunday && <div className="space-y-2">
-            <p className="text-gray-700 font-medium">Perfect Sunday:</p>
+            <p className="text-gray-700 font-medium">{onboardingData.promptQuestion || 'Describe your perfect Sunday'}</p>
             <div className="bg-gray-50 p-3 rounded-lg">
               <p className="text-gray-600 text-sm italic">"{onboardingData.perfectSunday}"</p>
             </div>

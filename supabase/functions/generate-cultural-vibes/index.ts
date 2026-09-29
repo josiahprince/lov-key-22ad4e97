@@ -13,6 +13,136 @@ interface Vibe {
   emoji: string;
 }
 
+type Client = ReturnType<typeof createClient>;
+
+// Ids come from the title, not the position in the list, so "Chai Addict"
+// is the same vibe for everyone and generate_daily_matches() can compare
+// selections across users. A title that reappears in a later week keeps
+// its id.
+const slugify = (title: string) =>
+  title
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+
+const loadVibeSet = async (admin: Client, country: string, weekStart: string) => {
+  const { data } = await admin
+    .from('vibe_sets')
+    .select('vibes')
+    .eq('country', country)
+    .eq('week_start', weekStart)
+    .maybeSingle();
+  return (data?.vibes as Vibe[] | undefined) ?? null;
+};
+
+const vibesResponse = (vibes: Vibe[], weekStart: string) =>
+  new Response(JSON.stringify({ vibes, weekStart }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+
+const generateVibes = async (country: string, weekStart: string, avoidTitles: string[]): Promise<Vibe[]> => {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  if (!LOVABLE_API_KEY) {
+    throw new Error('LOVABLE_API_KEY is not configured');
+  }
+
+  console.log(`Generating vibes for ${country}, week of ${weekStart}`);
+
+  const avoidLine = avoidTitles.length > 0
+    ? `\nLast week's vibes were: ${avoidTitles.join(', ')}. The 7 topical vibes must be different from these; evergreen ones may repeat.`
+    : '';
+
+  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-flash',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a cultural expert helping to create relatable personality vibes for a dating app in ${country}. Each vibe should be relatable, light-hearted, and positive.`
+        },
+        {
+          role: 'user',
+          content: `Generate exactly 15 vibes for people in ${country} for the week starting ${weekStart}:
+- 8 evergreen vibes: everyday life, food, hobbies, personality (e.g. "Chai Addict", "Night Owl").
+- 7 topical vibes tied to what's happening in ${country} around that week: festivals, the current sports season, big releases, weather, trends.${avoidLine}
+
+For each vibe, provide:
+1. A catchy title (2-3 words, in English)
+2. A short relatable description (5-7 words)
+3. An appropriate emoji
+
+Every title must be unique. Return the response as a valid JSON array with this exact structure:
+[
+  {
+    "title": "Vibe Title",
+    "description": "Short relatable description",
+    "emoji": "🎯"
+  }
+]
+
+Return ONLY the JSON array, no other text.`
+        }
+      ],
+      temperature: 0.8,
+      max_tokens: 2000,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Lovable AI error:', response.status, errorText);
+
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    if (response.status === 402) {
+      throw new Error('Payment required. Please add credits to your workspace.');
+    }
+
+    throw new Error(`Lovable AI error: ${response.status}`);
+  }
+
+  const aiResponse = await response.json();
+  const content = aiResponse.choices[0].message.content;
+
+  let vibesData: Array<{ title: string; description: string; emoji: string }>;
+  try {
+    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    vibesData = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+  } catch (parseError) {
+    console.error('Failed to parse AI response:', parseError, content);
+    throw new Error('Invalid response format from AI');
+  }
+
+  if (!Array.isArray(vibesData) || vibesData.length === 0) {
+    throw new Error('Invalid vibes data structure');
+  }
+
+  const seen = new Set<string>();
+  const vibes: Vibe[] = [];
+  for (const vibe of vibesData) {
+    if (!vibe?.title || typeof vibe.title !== 'string') continue;
+    const id = slugify(vibe.title);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    vibes.push({ id, title: vibe.title, description: vibe.description ?? '', emoji: vibe.emoji ?? '✨' });
+    if (vibes.length === 15) break;
+  }
+
+  if (vibes.length === 0) {
+    throw new Error('Invalid vibes data structure');
+  }
+  return vibes;
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -46,129 +176,73 @@ Deno.serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
-    }
+    const userId = data.claims.sub as string;
 
-    const { country } = await req.json();
-    
-    if (!country) {
+    // The caller's own profile decides the country and the week, so a client
+    // can't make us generate (and pay for) sets for arbitrary countries.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('country, timezone')
+      .eq('id', userId)
+      .maybeSingle();
+
+    // The request body's `country` is ignored for the same reason.
+    const country = profile?.country;
+    if (!country || typeof country !== 'string' || country.length > 100) {
       throw new Error('Country is required');
     }
-    
-    // Validate country input
-    if (typeof country !== 'string' || country.length > 100) {
-      throw new Error('Invalid country format');
-    }
 
-    console.log(`Generating vibes for country: ${country}`);
-
-    // Call Lovable AI Gateway to generate culturally relevant vibes
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a cultural expert helping to create relatable personality vibes for a dating app. Generate 15 culturally relevant vibes that reflect ${country}'s culture, current affairs, popular sports, food culture, entertainment, and daily life experiences. Each vibe should be relatable, light-hearted, and positive.`
-          },
-          {
-            role: 'user',
-            content: `Generate exactly 15 culturally relevant vibes for ${country}. For each vibe, provide:
-1. A catchy title (2-3 words)
-2. A short relatable description (5-7 words)
-3. An appropriate emoji
-
-Make them fun, culturally specific, and representative of modern life in ${country}. Include vibes about:
-- Popular foods and dining culture
-- Sports and entertainment
-- Daily life experiences
-- Cultural traditions and festivals
-- Modern lifestyle trends
-- Local humor and references
-
-Return the response as a valid JSON array with this exact structure:
-[
-  {
-    "title": "Vibe Title",
-    "description": "Short relatable description",
-    "emoji": "🎯"
-  }
-]
-
-Return ONLY the JSON array, no other text.`
-          }
-        ],
-        temperature: 0.8,
-        max_tokens: 2000,
-      }),
+    const { data: weekStart, error: weekError } = await supabase.rpc('current_week_start', {
+      user_timezone: profile?.timezone ?? 'UTC',
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Lovable AI error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again later.');
-      }
-      if (response.status === 402) {
-        throw new Error('Payment required. Please add credits to your workspace.');
-      }
-      
-      throw new Error(`Lovable AI error: ${response.status}`);
+    if (weekError || !weekStart) {
+      throw new Error(`Could not resolve current week: ${weekError?.message ?? 'no value'}`);
     }
 
-    const aiResponse = await response.json();
-    const content = aiResponse.choices[0].message.content;
-    
-    console.log('Raw AI response:', content);
+    // Service role: vibe_sets is read-only for users.
+    const admin = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
-    // Parse the JSON response
-    let vibesData: Array<{title: string; description: string; emoji: string}>;
+    const existing = await loadVibeSet(admin, country, weekStart);
+    if (existing) {
+      return vibesResponse(existing, weekStart);
+    }
+
+    // Last week's set: its topical titles are excluded so this week feels
+    // new, and it's the fallback if generation fails.
+    const { data: previousSet } = await admin
+      .from('vibe_sets')
+      .select('vibes, week_start')
+      .eq('country', country)
+      .lt('week_start', weekStart)
+      .order('week_start', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const previousVibes = (previousSet?.vibes as Vibe[] | undefined) ?? [];
+
+    let vibes: Vibe[];
     try {
-      // Try to extract JSON from the response
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        vibesData = JSON.parse(jsonMatch[0]);
-      } else {
-        vibesData = JSON.parse(content);
+      vibes = await generateVibes(country, weekStart, previousVibes.map((v) => v.title));
+    } catch (generationError) {
+      console.error('Vibe generation failed:', generationError);
+      if (previousVibes.length > 0) {
+        return vibesResponse(previousVibes, previousSet!.week_start);
       }
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', parseError);
-      throw new Error('Invalid response format from AI');
+      throw generationError;
     }
 
-    // Validate and format the vibes
-    if (!Array.isArray(vibesData) || vibesData.length === 0) {
-      throw new Error('Invalid vibes data structure');
+    // Two users can hit an empty week at the same time. Whoever inserts
+    // first wins and everyone reads that row back, so the whole country
+    // shares one set (and one set of ids).
+    const { error: insertError } = await admin
+      .from('vibe_sets')
+      .upsert({ country, week_start: weekStart, vibes }, { onConflict: 'country,week_start', ignoreDuplicates: true });
+    if (insertError) {
+      console.error('Failed to store vibe set:', insertError);
     }
 
-    // Convert to our format with IDs
-    const vibes: Vibe[] = vibesData.slice(0, 15).map((vibe, index) => ({
-      id: `vibe${index + 1}`,
-      title: vibe.title,
-      description: vibe.description,
-      emoji: vibe.emoji,
-    }));
-
-    console.log(`Successfully generated ${vibes.length} vibes for ${country}`);
-
-    return new Response(
-      JSON.stringify({ vibes }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json',
-          'Cache-Control': 'public, max-age=86400', // Cache for 24 hours
-        } 
-      }
-    );
+    const stored = await loadVibeSet(admin, country, weekStart);
+    console.log(`Vibe set ready for ${country}, week of ${weekStart}`);
+    return vibesResponse(stored ?? vibes, weekStart);
 
   } catch (error) {
     console.error('Error in generate-cultural-vibes function:', error);
