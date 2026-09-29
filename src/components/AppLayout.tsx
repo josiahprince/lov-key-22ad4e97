@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,11 @@ export interface AppLayoutContext {
   userProfile: ProfileLike | null;
   shouldShowOnboarding: boolean;
   onboardingLoading: boolean;
+  // The single useOnboardingData instance for the signed-in user. The daily
+  // onboarding gate below reads shouldShowOnboarding from it, so the
+  // onboarding screen must save through this same instance or the gate
+  // would never see the answer and would bounce the user straight back.
+  onboarding: ReturnType<typeof useOnboardingData>;
 }
 
 const AppLayout = () => {
@@ -24,7 +29,20 @@ const AppLayout = () => {
   const [profileComplete, setProfileComplete] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
 
-  const { shouldShowOnboarding, loading: onboardingLoading } = useOnboardingData();
+  const onboarding = useOnboardingData();
+  const { shouldShowOnboarding, loading: onboardingLoading, refetch: refetchOnboarding } = onboarding;
+
+  // The daily prompt is due on the first open after 06:00 local time. An app
+  // left open overnight never remounts, so re-check whenever it comes back
+  // to the foreground.
+  useEffect(() => {
+    if (!user) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') refetchOnboarding();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [user, refetchOnboarding]);
 
   useEffect(() => {
     if (!user) {
@@ -96,6 +114,12 @@ const AppLayout = () => {
     return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
   }
 
+  // Existing users answer the onboarding flow once a day, and their answer
+  // decides that day's matches, so no screen is reachable until it's done.
+  if (!onboardingLoading && shouldShowOnboarding && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   // An open chat (/chats/:matchId) renders its own message input anchored to
   // the bottom of the screen - the fixed bottom nav would sit on top of it
   // and hide it, so skip the nav there too.
@@ -104,7 +128,7 @@ const AppLayout = () => {
 
   return (
     <GradientShell withCard>
-      <Outlet context={{ userProfile, shouldShowOnboarding, onboardingLoading }} />
+      <Outlet context={{ userProfile, shouldShowOnboarding, onboardingLoading, onboarding }} />
       {!hideNavigation && <Navigation />}
     </GradientShell>
   );

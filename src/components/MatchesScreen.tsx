@@ -26,6 +26,7 @@ interface MatchProfile {
     title: string;
   }[];
   promptAnswer: string;
+  promptQuestion: string;
   compatibility: number;
   mainPhoto: string | null;
   city?: string;
@@ -313,9 +314,9 @@ const MatchesScreen = ({
                 </div>
               </div>}
 
-            {/* Perfect Sunday Quote */}
+            {/* Question of the week answer */}
             {match.promptAnswer && <div>
-                <h4 className="text-xs font-medium text-foreground/80 mb-1">Perfect Sunday</h4>
+                <h4 className="text-xs font-medium text-foreground/80 mb-1">{match.promptQuestion}</h4>
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-foreground/80">"{match.promptAnswer}"</p>
                 </div>

@@ -27,7 +27,12 @@ export interface MappedOnboardingData {
   mood: string;
   selectedMemes: string[];
   selectedMemesDisplay?: SelectedMemeDisplay[];
+  // Answer to the question of the week. The name dates from when the question
+  // was always "Describe your perfect Sunday"; promptQuestion is the question
+  // this answer was actually written for.
   perfectSunday: string;
+  promptId?: string | null;
+  promptQuestion?: string | null;
   createdAt?: string;
   updatedAt?: string;
   lastOnboardingDate?: string;

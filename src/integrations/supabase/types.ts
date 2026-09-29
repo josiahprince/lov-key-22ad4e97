@@ -197,6 +197,33 @@ export type Database = {
           },
         ]
       }
+      onboarding_prompts: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          placeholder: string
+          question: string
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id: string
+          placeholder?: string
+          question: string
+          sort: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          placeholder?: string
+          question?: string
+          sort?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age: number | null
@@ -382,6 +409,8 @@ export type Database = {
           mood: string
           onboarding_shown_today: boolean | null
           perfect_sunday: string
+          prompt_id: string | null
+          prompt_question: string | null
           selected_memes: string[]
           selected_memes_display: Json | null
           updated_at: string
@@ -395,6 +424,8 @@ export type Database = {
           mood: string
           onboarding_shown_today?: boolean | null
           perfect_sunday: string
+          prompt_id?: string | null
+          prompt_question?: string | null
           selected_memes: string[]
           selected_memes_display?: Json | null
           updated_at?: string
@@ -408,6 +439,8 @@ export type Database = {
           mood?: string
           onboarding_shown_today?: boolean | null
           perfect_sunday?: string
+          prompt_id?: string | null
+          prompt_question?: string | null
           selected_memes?: string[]
           selected_memes_display?: Json | null
           updated_at?: string
@@ -442,6 +475,27 @@ export type Database = {
           photo_url?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      vibe_sets: {
+        Row: {
+          country: string
+          created_at: string
+          vibes: Json
+          week_start: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          vibes: Json
+          week_start: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          vibes?: Json
+          week_start?: string
         }
         Relationships: []
       }
@@ -532,6 +586,25 @@ export type Database = {
       cleanup_expired_matches_and_inactive_chats: {
         Args: never
         Returns: undefined
+      }
+      current_onboarding_day: {
+        Args: { user_timezone: string }
+        Returns: string
+      }
+      current_week_start: {
+        Args: { user_timezone: string }
+        Returns: string
+      }
+      current_weekly_prompt: {
+        Args: { user_timezone: string }
+        Returns: {
+          active: boolean
+          created_at: string
+          id: string
+          placeholder: string
+          question: string
+          sort: number
+        }[]
       }
       generate_daily_matches: {
         Args: never

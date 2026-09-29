@@ -18,6 +18,8 @@ export const useMatchedUserOnboardingData = (userId: string | undefined) => {
     selectedMemes: data.selected_memes,
     selectedMemesDisplay: toSelectedMemeDisplay(data.selected_memes_display),
     perfectSunday: data.perfect_sunday,
+    promptId: data.prompt_id,
+    promptQuestion: data.prompt_question,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
   });

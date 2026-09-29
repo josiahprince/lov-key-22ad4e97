@@ -1,19 +1,17 @@
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Heart, Smile, Meh, Frown, Zap, Coffee, Flame } from 'lucide-react';
-import { useOnboardingData } from '@/hooks/useOnboardingData';
+import type { useOnboardingData } from '@/hooks/useOnboardingData';
 import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { logError } from '@/lib/errorLogger';
 import LoadingState from '@/components/LoadingState';
 import MoodStep from '@/components/onboarding/MoodStep';
-import { MOODS } from '@/components/onboarding/moods';
 import VibesStep from '@/components/onboarding/VibesStep';
-import PerfectSundayStep from '@/components/onboarding/PerfectSundayStep';
+import PromptStep from '@/components/onboarding/PromptStep';
+import { useWeeklyPrompt } from '@/hooks/useWeeklyPrompt';
 
 interface OnboardingCompletionData {
   mood: string;
@@ -22,18 +20,24 @@ interface OnboardingCompletionData {
   createdAt: Date;
 }
 
-const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingCompletionData) => void }) => {
+interface OnboardingScreenProps {
+  // Owned by AppLayout so saving here also clears its daily onboarding gate.
+  onboarding: ReturnType<typeof useOnboardingData>;
+  onComplete: (data: OnboardingCompletionData) => void;
+}
+
+const OnboardingScreen = ({ onboarding, onComplete }: OnboardingScreenProps) => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [mood, setMood] = useState('');
   const [selectedMemes, setSelectedMemes] = useState<string[]>([]);
   const [promptAnswer, setPromptAnswer] = useState('');
-  const [showExistingData, setShowExistingData] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [userCountry, setUserCountry] = useState<string | null>(null);
 
-  const { onboardingData, loading, shouldShowOnboarding, saveOnboardingData } = useOnboardingData();
+  const { onboardingData, loading, saveOnboardingData } = onboarding;
   const { vibes: memes, loading: vibesLoading } = useCulturalVibes(userCountry);
+  const { prompt, loading: promptLoading } = useWeeklyPrompt();
 
   // Fetch user's country on component mount
   useEffect(() => {
@@ -54,34 +58,23 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
     fetchUserCountry();
   }, [user]);
 
-  // Load existing data when component mounts (only once)
+  // Mood and vibes are picked fresh every day, since they decide today's
+  // matches. The written answer is only carried over while it's still the
+  // same question of the week, so the user writes it once a week and just
+  // confirms it on the other days.
   useEffect(() => {
-    if (!loading && onboardingData && shouldShowOnboarding && !dataLoaded) {
-      // Check if we have valid existing data (not placeholder values)
-      const hasValidMood = onboardingData.mood && 
-        onboardingData.mood !== 'pending_daily_update' && 
-        onboardingData.mood.trim() !== '';
-      
-      const hasValidMemes = onboardingData.selectedMemes && 
-        onboardingData.selectedMemes.length > 0 && 
-        !onboardingData.selectedMemes.includes('pending') &&
-        !(onboardingData.selectedMemes.length === 1 && onboardingData.selectedMemes[0] === 'pending');
-      
-      const hasValidSunday = onboardingData.perfectSunday && 
-        onboardingData.perfectSunday !== 'pending_daily_update' && 
-        onboardingData.perfectSunday.trim() !== '';
-
-      if (hasValidMood && hasValidMemes && hasValidSunday) {
-        // Pre-populate with existing data
-        setMood(onboardingData.mood);
-        setSelectedMemes(onboardingData.selectedMemes);
-        setPromptAnswer(onboardingData.perfectSunday);
-        setShowExistingData(true);
-      }
-      
-      setDataLoaded(true);
+    if (loading || promptLoading || dataLoaded) return;
+    const previousAnswer = onboardingData?.perfectSunday;
+    if (
+      onboardingData?.promptId === prompt.id &&
+      previousAnswer &&
+      previousAnswer !== 'pending_daily_update' &&
+      previousAnswer.trim() !== ''
+    ) {
+      setPromptAnswer(previousAnswer);
     }
-  }, [loading, onboardingData, shouldShowOnboarding, dataLoaded]);
+    setDataLoaded(true);
+  }, [loading, promptLoading, onboardingData, prompt.id, dataLoaded]);
 
   const handleMemeToggle = (memeId: string) => {
     setSelectedMemes(prev => {
@@ -119,6 +112,8 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
         selectedMemes,
         selectedMemesDisplay,
         perfectSunday: promptAnswer,
+        promptId: prompt.id,
+        promptQuestion: prompt.question,
       });
 
       onComplete(profileData);
@@ -127,110 +122,13 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
     }
   };
 
-  const handleProceedWithExisting = async () => {
-    if (onboardingData) {
-      try {
-        await saveOnboardingData({
-          mood: onboardingData.mood,
-          selectedMemes: onboardingData.selectedMemes,
-          selectedMemesDisplay: onboardingData.selectedMemesDisplay,
-          perfectSunday: onboardingData.perfectSunday,
-        });
-      } catch (e) {
-        logError("OnboardingScreen:handleProceedWithExisting", e);
-      }
-      const profileData = {
-        mood: onboardingData.mood,
-        memes: onboardingData.selectedMemes,
-        promptAnswer: onboardingData.perfectSunday,
-        createdAt: new Date(),
-      };
-      onComplete(profileData);
-    }
-  };
-
-  if (loading || vibesLoading) {
+  if (loading || vibesLoading || promptLoading) {
     return (
       <div className="px-4 flex flex-col justify-center items-center min-h-[400px]">
         <LoadingState
           variant="spinner"
           label={vibesLoading ? 'Preparing your personalized vibes...' : 'Loading your preferences...'}
         />
-      </div>
-    );
-  }
-
-  // Show existing data confirmation screen
-  if (showExistingData && step === 1) {
-    const currentMoodData = MOODS.find(m => m.id === mood);
-    const currentMemesData = memes.filter(m => selectedMemes.includes(m.id));
-
-    return (
-      <div className="px-4 flex flex-col justify-center">
-        <div className="space-y-4 animate-fade-in">
-          <div className="text-center space-y-2">
-            <h2 className="text-lg font-bold text-gray-800">Welcome back!</h2>
-            <p className="text-sm text-gray-600">Here are your current preferences from yesterday:</p>
-          </div>
-
-          <div className="space-y-3">
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Current Mood</h3>
-              {currentMoodData && (
-                <Card className={`p-2 ${currentMoodData.color}`}>
-                  <div className="text-center space-y-1">
-                    <currentMoodData.icon className="w-5 h-5 mx-auto" />
-                    <p className="text-xs font-medium">{currentMoodData.label}</p>
-                  </div>
-                </Card>
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Your Vibes</h3>
-              <div className="space-y-1">
-                {currentMemesData.map((meme) => (
-                  <Card key={meme.id} className="p-2 bg-accent border-primary/20">
-                    <div className="flex items-center space-x-2">
-                      <div className="text-base">{meme.emoji}</div>
-                      <div>
-                        <h4 className="text-xs font-medium">{meme.title}</h4>
-                        <p className="text-xs text-gray-600">{meme.description}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Perfect Sunday</h3>
-              <Card className="p-3 bg-gray-50">
-                <p className="text-sm text-gray-700">{promptAnswer}</p>
-              </Card>
-            </div>
-          </div>
-
-          <div className="flex space-x-2">
-            <Button
-              onClick={handleProceedWithExisting}
-              className="flex-1 py-2 rounded-xl"
-            >
-              Continue with these
-            </Button>
-            <Button 
-              onClick={() => {
-                setShowExistingData(false);
-                // Reset vibes selection to allow fresh picks
-                setSelectedMemes([]);
-              }}
-              variant="outline"
-              className="flex-1 py-2 rounded-xl"
-            >
-              Update preferences
-            </Button>
-          </div>
-        </div>
       </div>
     );
   }
@@ -253,7 +151,9 @@ const OnboardingScreen = ({ onComplete }: { onComplete: (data: OnboardingComplet
 
       case 3:
         return (
-          <PerfectSundayStep
+          <PromptStep
+            question={prompt.question}
+            placeholder={prompt.placeholder}
             promptAnswer={promptAnswer}
             onChangePromptAnswer={setPromptAnswer}
             onBack={() => setStep(2)}

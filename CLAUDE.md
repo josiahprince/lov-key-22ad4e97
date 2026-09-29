@@ -16,7 +16,13 @@ Vite + React + TypeScript SPA on Supabase. Dev server: `npm run dev` (port 8080)
    - A user's activity is their latest message in that chat, or `accepted_at` if they haven't sent one.
    - Both users get a `chat_expired` notification that says whose inactivity closed it.
 
-Where it's enforced: `supabase/migrations/20260928120000_match_limits_and_expiry_notifications.sql`.
+4. **Daily onboarding decides daily matches.** Existing users re-answer Mood → Vibes → Perfect Sunday once a day, on their first open after 06:00 local time. There is no "reuse yesterday's answers" shortcut; only the Perfect Sunday text is pre-filled.
+   - `AppLayout` blocks every route until the user has answered (`useOnboardingData` is owned there and passed to the onboarding page via outlet context). It re-checks when the tab becomes visible again.
+   - `generate_daily_matches()` only processes a user whose `last_onboarding_date >= current_onboarding_day(timezone)`. Candidates are **not** filtered this way: their latest answers count.
+   - The third step is a **question of the week**. It's the same for everyone, rotates Monday 06:00 local through `onboarding_prompts` (`current_weekly_prompt()`), and its answer pre-fills only while the question is unchanged. The answer still lives in `user_onboarding.perfect_sunday`, with `prompt_id`/`prompt_question` recording which question it answers.
+   - **Vibes are one shared set per country per week** (`vibe_sets`, written only by the `generate-cultural-vibes` edge function). Vibe ids are title slugs, never positional, because `generate_daily_matches()` scores vibe overlap by id.
+
+Where it's enforced: `supabase/migrations/20260928120000_match_limits_and_expiry_notifications.sql`, plus `20260928130000_daily_onboarding_gates_matching.sql` and `20260929120000_weekly_prompt_and_vibe_sets.sql` for rule 4.
 - `guard_match_update()` trigger: accept cap, `accepted_at`, no reviving closed matches, `expires_at` is immutable.
 - `cleanup_expired_matches_and_inactive_chats()`: hourly, handles rules 2 and 3 and their notifications.
 - `generate_daily_matches()`: hourly at :10, handles rule 1 and replacements.
