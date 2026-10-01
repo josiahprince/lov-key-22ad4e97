@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,7 @@ interface FilterPreferences {
   interests: string[];
 }
 
-const ProfileFilters = ({ userProfile }: { userProfile: ProfileLike | null }) => {
+const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | null; trigger?: ReactNode }) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<FilterPreferences>({
@@ -122,10 +122,12 @@ const ProfileFilters = ({ userProfile }: { userProfile: ProfileLike | null }) =>
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center space-x-2">
-          <SlidersHorizontal className="h-4 w-4" />
-          <span>Preferences</span>
-        </Button>
+        {trigger ?? (
+          <Button variant="outline" size="sm" className="flex items-center space-x-2">
+            <SlidersHorizontal className="h-4 w-4" />
+            <span>Preferences</span>
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>

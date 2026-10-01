@@ -1,5 +1,9 @@
 # LovKey
 
+## Pending items (owner wants reminders)
+
+`PENDING.md` lists open items that need the owner. At the start of a session, and when you finish a task, add a short reminder of the unchecked items. Name them in a line or two, don't repeat the whole file. When an item is done, remove it and update "Last reviewed". When new owner-side work comes up (a migration to apply by hand, a dashboard setting, something left untested), add it.
+
 Vite + React + TypeScript SPA on Supabase. Dev server: `npm run dev` (port 8080). Check with `npm run typecheck` and `npm run lint`.
 
 ## Match and chat rules (product invariants — do not change without the owner's sign-off)
@@ -33,5 +37,7 @@ Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY
 
 - `matches` has an UPDATE policy with no column restriction. Clients can PATCH any column, so never trust client-writable columns for rules. Enforce them in triggers or SECURITY DEFINER functions.
 - `notifications` rows can only be inserted from SECURITY DEFINER code. When adding a notification type, widen `notifications_type_check` and the `Notification.type` union in `src/hooks/useNotifications.ts`.
+- `reports.reporter_id` / `reported_id` are deliberately **not** foreign keys, so reports (and their `message_snapshot` evidence) survive account deletion (`delete-account` edge function). Don't re-add `ON DELETE CASCADE`. `blocked_users` still cascades.
+- `export-my-data` (Settings → Download my data) and `delete-account` edge functions both enumerate the user's tables by hand. When adding a table that holds user data, add it to both, and to the Privacy Policy in `src/lib/legal.ts`.
 - `src/integrations/supabase/types.ts` is hand-maintained. Update it with every schema change.
 - Migrations are applied by hand in the Supabase dashboard SQL editor, because the CLI can't reach the DB from this machine.
