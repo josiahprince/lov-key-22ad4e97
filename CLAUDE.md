@@ -23,13 +23,16 @@ Vite + React + TypeScript SPA on Supabase. Dev server: `npm run dev` (port 8080)
 4. **Daily onboarding decides daily matches.** Existing users re-answer Mood → Vibes → Perfect Sunday once a day, on their first open after 06:00 local time. There is no "reuse yesterday's answers" shortcut; only the Perfect Sunday text is pre-filled.
    - `AppLayout` blocks every route until the user has answered (`useOnboardingData` is owned there and passed to the onboarding page via outlet context). It re-checks when the tab becomes visible again.
    - `generate_daily_matches()` only processes a user whose `last_onboarding_date >= current_onboarding_day(timezone)`. Candidates are **not** filtered this way: their latest answers count.
+   - The 2-matches-per-day cap resets on the same 06:00 local boundary (`current_match_day_start(timezone)`), each person counted against their own day. It is a cap, not a batch: any generation run fills an open slot, and the Matches screen asks for one whenever fewer than 2 are showing.
    - The third step is a **question of the week**. It's the same for everyone, rotates Monday 06:00 local through `onboarding_prompts` (`current_weekly_prompt()`), and its answer pre-fills only while the question is unchanged. The answer still lives in `user_onboarding.perfect_sunday`, with `prompt_id`/`prompt_question` recording which question it answers.
    - **Vibes are one shared set per country per week** (`vibe_sets`, written only by the `generate-cultural-vibes` edge function). Vibe ids are title slugs, never positional, because `generate_daily_matches()` scores vibe overlap by id.
 
-Where it's enforced: `supabase/migrations/20260928120000_match_limits_and_expiry_notifications.sql`, plus `20260928130000_daily_onboarding_gates_matching.sql` and `20260929120000_weekly_prompt_and_vibe_sets.sql` for rule 4.
+Where it's enforced: `supabase/migrations/20260928120000_match_limits_and_expiry_notifications.sql`, plus `20260928130000_daily_onboarding_gates_matching.sql`, `20260929120000_weekly_prompt_and_vibe_sets.sql` and `20261005120000_match_day_local_time.sql` for rule 4.
 - `guard_match_update()` trigger: accept cap, `accepted_at`, no reviving closed matches, `expires_at` is immutable.
 - `cleanup_expired_matches_and_inactive_chats()`: hourly, handles rules 2 and 3 and their notifications.
-- `generate_daily_matches()`: hourly at :10, handles rule 1 and replacements.
+- `generate_daily_matches()`: hourly at :10, handles rule 1 and replacements. It's a full pass over every user, so clients can't execute it. The app calls `generate_my_daily_matches()`, which only processes `auth.uid()`. Both wrap `generate_matches_internal(p_only_user)`, so change matching logic there (`20261005130000_per_user_match_generation.sql`).
+
+"Remove User" on the Chats screen calls `remove_match()`, which sets `status = 'unmatched'` without notifying the other person. `generate_matches_internal()` never re-pairs an `unmatched` pair. A `skipped`, `expired` or `inactive` pair waits 7 days, measured from `updated_at`, which a trigger stamps on every status change (`20261005140000_remove_match.sql`). An open chat watches its own match row (`useMatchClosed`) and shows "This chat has ended" when it closes.
 
 Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY_HOURS`, `CHAT_INACTIVITY_HOURS`). The server is the source of truth, so don't re-implement expiry filtering client-side.
 

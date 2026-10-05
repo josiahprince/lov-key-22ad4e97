@@ -2,7 +2,7 @@
 
 Open work that needs the owner. Claude reminds you of these (see `CLAUDE.md`). Remove an item once it's done.
 
-_Last reviewed: 2026-10-01_
+_Last reviewed: 2026-10-05_
 
 ## Before launch (needs you)
 
@@ -11,6 +11,9 @@ _Last reviewed: 2026-10-01_
 - [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Set one up in Supabase → Authentication → Emails → SMTP settings.
 
 ## Still to test end to end (use throwaway accounts)
+
+- [ ] **Remove User:** the chat disappears for both people, the remover's chat count drops by one, and the pair never gets matched again. If the other person has the chat open, it switches to "This chat has ended" within about 15 seconds.
+- [ ] **Skip cooldown:** a skipped person isn't suggested again for 7 days.
 
 - [ ] **Download my data:** the zip downloads with `data.json`, photos and `README.txt`.
 - [ ] **Delete account:** profile, photos and chats disappear for both people, and any report about the deleted user is still in `reports`.

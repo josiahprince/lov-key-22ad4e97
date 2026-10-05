@@ -587,6 +587,10 @@ export type Database = {
         Args: never
         Returns: undefined
       }
+      current_match_day_start: {
+        Args: { user_timezone: string }
+        Returns: string
+      }
       current_onboarding_day: {
         Args: { user_timezone: string }
         Returns: string
@@ -607,6 +611,26 @@ export type Database = {
         }[]
       }
       generate_daily_matches: {
+        Args: never
+        Returns: {
+          matches_created: number
+          users_processed: number
+          users_skipped_chat_limit: number
+        }[]
+      }
+      generate_matches_internal: {
+        Args: { p_only_user: string | null }
+        Returns: {
+          matches_created: number
+          users_processed: number
+          users_skipped_chat_limit: number
+        }[]
+      }
+      remove_match: {
+        Args: { p_match_id: string }
+        Returns: undefined
+      }
+      generate_my_daily_matches: {
         Args: never
         Returns: {
           matches_created: number

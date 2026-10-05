@@ -10,7 +10,8 @@ import { useMessages } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
 import { useBlockUser } from '@/hooks/useBlockUser';
 import { usePhotoReveal } from '@/hooks/usePhotoReveal';
-import type { PhotoRevealChoice } from '@/lib/constants';
+import { useMatchClosed } from '@/hooks/useMatchClosed';
+import { CHAT_INACTIVITY_HOURS, type PhotoRevealChoice } from '@/lib/constants';
 import BlockReportModal from '@/components/BlockReportModal';
 import ScreenHeader from '@/components/ScreenHeader';
 import PhotoUnlockNotice from '@/components/PhotoUnlockNotice';
@@ -54,6 +55,7 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
 
   const { messages, loading, messageCounts, sendMessage } = useMessages(matchId, currentUserId);
   const { blockUser, blocking } = useBlockUser();
+  const { closedReason, checkStatus } = useMatchClosed(matchId);
   const {
     round,
     threshold,
@@ -92,17 +94,19 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !canSend || loading) return;
-    
+    if (!newMessage.trim() || !canSend || loading || closedReason) return;
+
     setCanSend(false);
     const success = await sendMessage(newMessage, matchedUserId);
-    
+
     if (success) {
       setNewMessage('');
       // Add a delay before allowing next message
       setTimeout(() => setCanSend(true), 10000);
     } else {
       setCanSend(true);
+      // A failed send is often the first sign the chat was closed.
+      checkStatus();
     }
   };
 
@@ -253,6 +257,22 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
 
       {/* Message Input - anchored to bottom, below the message list */}
       <div className="p-4 bg-white border-t border-border shadow-sm">
+        {closedReason ? (
+          <div className="text-center space-y-3" role="status">
+            <div>
+              <p className="font-medium text-foreground">This chat has ended</p>
+              <p className="text-sm text-muted-foreground">
+                {closedReason === 'inactive'
+                  ? `It closed because one of you went ${CHAT_INACTIVITY_HOURS} hours without sending a message.`
+                  : `You can no longer message ${matchedUserName}.`}
+              </p>
+            </div>
+            <Button onClick={onBackToChats} className="w-full rounded-xl">
+              Back to Chats
+            </Button>
+          </div>
+        ) : (
+        <>
         {(awaitingMyChoice || awaitingPartner) && (
           <PhotoRevealPrompt
             matchedUserName={matchedUserName}
@@ -288,6 +308,8 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
               ⏱️ Next message unlocks in a few seconds
             </span>
           </div>
+        )}
+        </>
         )}
       </div>
 

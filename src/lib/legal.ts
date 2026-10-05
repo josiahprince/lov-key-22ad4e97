@@ -120,6 +120,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: '8. Blocking, reporting, and moderation',
     bullets: [
       'You can block anyone from their profile or your chat. A blocked person can no longer contact you, and the two of you will not be matched again.',
+      'You can remove a match from your Chats screen at any time. The chat ends for both of you, the other person is not notified, and the two of you will not be matched again.',
       'You can report someone for harassment, inappropriate content, a fake profile, spam, suspected underage use, or anything else. When you report someone from a chat, a copy of up to the last 200 messages in that chat is attached to the report so we can review it.',
       'We review reports and may warn, restrict, or remove accounts. We may also keep report records and share information with law enforcement where the law requires it or where someone’s safety is at risk.',
       'Do not file false or malicious reports.',

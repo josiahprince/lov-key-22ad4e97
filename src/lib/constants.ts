@@ -2,12 +2,14 @@
 export const MAX_ACTIVE_CHATS = 6;
 export const MATCH_EXPIRY_HOURS = 24;
 export const CHAT_INACTIVITY_HOURS = 48;
+export const DAILY_MATCH_LIMIT = 2;
 
-// Match days roll over at 06:00 UTC (see generate_daily_matches()).
+// Match days roll over at 06:00 local time, the same boundary as the daily
+// onboarding (see current_match_day_start() in 20261005120000).
 export const getMatchDayStart = (now: Date = new Date()) => {
   const start = new Date(now);
-  start.setUTCHours(6, 0, 0, 0);
-  if (start > now) start.setUTCDate(start.getUTCDate() - 1);
+  start.setHours(6, 0, 0, 0);
+  if (start > now) start.setDate(start.getDate() - 1);
   return start;
 };
 

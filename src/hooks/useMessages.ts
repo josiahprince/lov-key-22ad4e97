@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logError } from '@/lib/errorLogger';
-import { CHAT_INACTIVITY_HOURS } from '@/lib/constants';
 
 interface Message {
   id: string;
@@ -118,7 +117,7 @@ export const useMessages = (matchId: string, currentUserId: string) => {
         description: isRateLimited
           ? "You're sending messages too quickly. Please wait a moment."
           : isChatClosed
-            ? `This chat is no longer active. Chats close when either person goes ${CHAT_INACTIVITY_HOURS} hours without sending a message.`
+            ? "This chat is no longer active."
             : "Failed to send message",
         variant: "destructive"
       });

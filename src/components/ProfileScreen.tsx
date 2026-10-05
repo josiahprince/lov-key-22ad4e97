@@ -10,7 +10,6 @@ import PhotoGallery from './profile/PhotoGallery';
 import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
 import NotificationsSection from './profile/NotificationsSection';
-import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
@@ -58,15 +57,7 @@ const ProfileScreen = ({
 
   return (
     <div className="p-4 pb-20 space-y-6">
-      <ScreenHeader
-        logo
-        actions={
-          <>
-            <ProfileFilters userProfile={userProfile} />
-            {settingsAction}
-          </>
-        }
-      />
+      <ScreenHeader logo actions={settingsAction} />
 
       <ProfileHeader
         userProfile={userProfile} 
