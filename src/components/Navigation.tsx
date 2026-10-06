@@ -14,10 +14,13 @@ const Navigation = () => {
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const IconComponent = item.icon;
-          // Treat any /chats/* route (including an open chat) as the chats tab
+          // Treat any /chats/* route (including an open chat) as the chats tab,
+          // and Settings (opened from Profile) as the profile tab
           const isActive = item.path === '/chats'
             ? location.pathname.startsWith('/chats')
-            : location.pathname.startsWith(item.path);
+            : item.path === '/profile'
+              ? location.pathname.startsWith('/profile') || location.pathname.startsWith('/settings')
+              : location.pathname.startsWith(item.path);
 
           return (
             <NavLink

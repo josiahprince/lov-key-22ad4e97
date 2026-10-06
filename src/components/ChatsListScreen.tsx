@@ -1,7 +1,21 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle, Clock, User } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { MessageCircle, Clock, UserMinus } from 'lucide-react';
 import { useChats } from '@/hooks/useChats';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { logError } from '@/lib/errorLogger';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import ScreenHeader from '@/components/ScreenHeader';
@@ -21,8 +35,30 @@ interface ChatsListScreenProps {
 }
 
 const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
-  const { chats, loading } = useChats();
+  const { chats, loading, refetch } = useChats();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [pendingRemove, setPendingRemove] = useState<{ id: string; name: string } | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  const handleRemove = async () => {
+    if (!pendingRemove) return;
+    setRemoving(true);
+    const { error } = await supabase.rpc('remove_match', { p_match_id: pendingRemove.id });
+    setRemoving(false);
+    if (error) {
+      logError(`ChatsListScreen:removeMatch:${pendingRemove.id}`, error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove this match. Please try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    toast({ title: `${pendingRemove.name} removed` });
+    setPendingRemove(null);
+    refetch();
+  };
   
   // useChats already fetches on mount and keeps chats in sync via its
   // realtime subscription, so no extra mount/visibility-triggered refetch
@@ -50,7 +86,17 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
         {chats.map((chat) => (
           <Card
             key={chat.id}
-            className="p-4 space-y-3 bg-muted/50 border-border animate-fade-in hover:bg-accent transition-colors"
+            role="button"
+            tabIndex={0}
+            aria-label={`View ${chat.name}'s profile`}
+            onClick={() => navigate(`/chat/${chat.id}`)}
+            onKeyDown={(e) => {
+              if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                navigate(`/chat/${chat.id}`);
+              }
+            }}
+            className="p-4 space-y-3 bg-muted/50 border-border animate-fade-in hover:bg-accent transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {/* Header Section */}
             <div className="flex items-center justify-between">
@@ -111,14 +157,14 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1 border-primary/20 text-primary hover:bg-accent"
+                className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/chat/${chat.id}`);
+                  setPendingRemove({ id: chat.id, name: chat.name });
                 }}
               >
-                <User className="w-4 h-4 mr-1" />
-                View Profile
+                <UserMinus className="w-4 h-4 mr-1" />
+                Remove User
               </Button>
               <Button
                 size="sm"
@@ -143,6 +189,30 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
           </Card>
         ))}
       </div>
+
+      <AlertDialog open={!!pendingRemove} onOpenChange={(open) => !open && !removing && setPendingRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove {pendingRemove?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your chat ends for both of you and you won't be matched again. They won't be notified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removing}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRemove();
+              }}
+            >
+              {removing ? 'Removing...' : 'Remove'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {chats.length === 0 && (
         <EmptyState

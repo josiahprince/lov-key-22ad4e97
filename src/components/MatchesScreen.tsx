@@ -355,13 +355,13 @@ const MatchesScreen = ({
           </Card>)}
       </div>
 
-      {visibleMatches.length === 0 && !chatLimitReached && <EmptyState title="No more matches for today" description="New matches arrive daily from 6 AM UTC" />}
+      {visibleMatches.length === 0 && !chatLimitReached && <EmptyState title="No more matches for today" description="New matches arrive daily from 6 AM your time" />}
 
       <Card className="p-4 bg-accent border-primary/20">
         <div className="text-center space-y-2">
           <Heart className="w-5 h-5 mx-auto text-primary" />
           <p className="text-sm text-accent-foreground">
-            New matches arrive daily from 6 AM UTC
+            New matches arrive daily from 6 AM your time
           </p>
           <p className="text-xs text-accent-foreground/80">
             A match expires after {MATCH_EXPIRY_HOURS} hours if no chat is started, and a new one is found for you

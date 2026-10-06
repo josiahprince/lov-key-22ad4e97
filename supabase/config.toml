@@ -69,3 +69,9 @@ verify_jwt = false
 
 [functions.notify-report-alert]
 verify_jwt = false
+
+[functions.delete-account]
+verify_jwt = false
+
+[functions.export-my-data]
+verify_jwt = false

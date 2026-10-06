@@ -1,17 +1,15 @@
 
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Settings } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ScreenHeader from '@/components/ScreenHeader';
 import ProfileHeader from './profile/ProfileHeader';
 import ProfileInfo from './profile/ProfileInfo';
 import PhotoGallery from './profile/PhotoGallery';
 import DescriptionSection from './profile/DescriptionSection';
 import PrivacyCards from './profile/PrivacyCards';
-import BlockedUsersSection from './profile/BlockedUsersSection';
 import NotificationsSection from './profile/NotificationsSection';
-import ProfileFilters from './profile/ProfileFilters';
 import PhotoGalleryViewer from './profile/PhotoGalleryViewer';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { useUserPhotos } from '@/hooks/useUserPhotos';
@@ -24,25 +22,24 @@ const ProfileScreen = ({
   userProfile: ProfileLike | null;
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const currentUserId = user?.id;
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const { photos } = useSecurePhotos({ userId: currentUserId, isOwnProfile: true });
   const photosState = useUserPhotos(currentUserId);
 
-  const onSignOut = () => {
-    supabase.auth.signOut();
-  };
-
-  const signOutAction = (
+  // Sign out, account and legal options all live on the Settings screen.
+  const settingsAction = (
     <Button
-      onClick={onSignOut}
+      onClick={() => navigate('/settings')}
       variant="outline"
       size="sm"
-      className="flex items-center space-x-2"
+      className="h-9 w-9 p-0"
+      aria-label="Settings"
+      title="Settings"
     >
-      <LogOut className="w-4 h-4" />
-      <span>Sign Out</span>
+      <Settings className="w-4 h-4" />
     </Button>
   );
 
@@ -50,7 +47,7 @@ const ProfileScreen = ({
   if (!userProfile) {
     return (
       <div className="p-4 pb-20 space-y-6">
-        <ScreenHeader logo actions={signOutAction} />
+        <ScreenHeader logo actions={settingsAction} />
         <div className="text-center">
           <p className="text-muted-foreground">Loading profile...</p>
         </div>
@@ -60,15 +57,7 @@ const ProfileScreen = ({
 
   return (
     <div className="p-4 pb-20 space-y-6">
-      <ScreenHeader
-        logo
-        actions={
-          <>
-            <ProfileFilters userProfile={userProfile} />
-            {signOutAction}
-          </>
-        }
-      />
+      <ScreenHeader logo actions={settingsAction} />
 
       <ProfileHeader
         userProfile={userProfile} 
@@ -90,9 +79,8 @@ const ProfileScreen = ({
       <PrivacyCards />
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Account</h3>
+        <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wide">Activity</h3>
         <NotificationsSection />
-        <BlockedUsersSection />
       </div>
 
       <PhotoGalleryViewer

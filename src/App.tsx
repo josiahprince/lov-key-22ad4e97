@@ -11,6 +11,10 @@ import MatchesPage from "@/pages/MatchesPage";
 import ChatsPage from "@/pages/ChatsPage";
 import ChatPage from "@/pages/ChatPage";
 import ProfilePage from "@/pages/ProfilePage";
+import SettingsPage from "@/pages/SettingsPage";
+import TermsPage from "@/pages/TermsPage";
+import PrivacyPage from "@/pages/PrivacyPage";
+import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import MatchedProfileView from "@/pages/MatchedProfileView";
 import NotFound from "./pages/NotFound";
 
@@ -31,6 +35,7 @@ const App = () => (
               <Route path="/chats" element={<ChatsPage />} />
               <Route path="/chats/:matchId" element={<ChatPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route
                 path="/match/:matchId"
                 element={<MatchedProfileView backTo="/matches" backLabel="Back to Matches" />}
@@ -40,6 +45,10 @@ const App = () => (
                 element={<MatchedProfileView backTo="/chats" backLabel="Back to Chats" />}
               />
             </Route>
+            {/* Public: linked from the sign-up form and the reset-password email, so they can't sit behind AppLayout's auth gate */}
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

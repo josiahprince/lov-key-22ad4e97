@@ -4,7 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
-import { MAX_ACTIVE_CHATS, getMatchDayStart } from '@/lib/constants';
+import { DAILY_MATCH_LIMIT, MAX_ACTIVE_CHATS, getMatchDayStart } from '@/lib/constants';
 import type { MatchRow } from '@/types/domain';
 
 interface MatchProfile {
@@ -84,15 +84,16 @@ export const useMatches = () => {
 
       let liveMatches = liveResult.data ?? [];
 
-      // The hourly cron normally fills matches; this only covers a user who
-      // opens the screen before the next run. The server enforces every cap.
+      // The hourly cron also fills matches; this tops up an open slot as soon
+      // as the screen opens, so both of today's matches show together when
+      // they're available. The server enforces every cap.
       const canGenerate =
-        liveMatches.length === 0 &&
+        liveMatches.length < DAILY_MATCH_LIMIT &&
         chatCount < MAX_ACTIVE_CHATS &&
-        (todayResult.count ?? 0) < 2;
+        (todayResult.count ?? 0) < DAILY_MATCH_LIMIT;
 
       if (canGenerate) {
-        const { error: generateError } = await supabase.rpc('generate_daily_matches');
+        const { error: generateError } = await supabase.rpc('generate_my_daily_matches');
         if (generateError) {
           logError("useMatches:generateDaily", generateError);
         } else {
@@ -120,8 +121,7 @@ export const useMatches = () => {
     const processedMatches: MatchProfile[] = [];
 
     for (const match of matchesData) {
-      // Stop if we already have 2 matches
-      if (processedMatches.length >= 2) break;
+      if (processedMatches.length >= DAILY_MATCH_LIMIT) break;
 
       // Determine which user is the match (not the current user)
       const isUser1 = match.user_1 === currentUserId;
