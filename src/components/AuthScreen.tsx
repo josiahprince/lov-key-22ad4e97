@@ -86,7 +86,7 @@ const AuthScreen = ({
   const submitLabel = mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Sign Up' : 'Send reset link';
 
   return <GradientShell centered>
-      <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl">
+      <Card className="w-full max-w-md p-6 bg-card/80 backdrop-blur-sm shadow-xl">
         <div className="text-center mb-6">
           <div className="flex justify-center mb-4">
             <img src="/lovable-uploads/c28200aa-e002-4654-86ab-fcb6351cb739.png" alt="LovKey Logo" className="w-16 h-16" />

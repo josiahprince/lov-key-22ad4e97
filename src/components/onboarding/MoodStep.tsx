@@ -11,7 +11,7 @@ interface MoodStepProps {
 const MoodStep = ({ mood, onSelectMood, onNext }: MoodStepProps) => (
   <div className="space-y-3 animate-fade-in">
     <div className="space-y-2">
-      <h2 className="text-base font-medium text-gray-700">What's your current mood?</h2>
+      <h2 className="text-base font-medium text-foreground">What's your current mood?</h2>
       <div className="grid grid-cols-3 gap-2">
         {MOODS.map((m) => {
           const IconComponent = m.icon;
@@ -19,7 +19,7 @@ const MoodStep = ({ mood, onSelectMood, onNext }: MoodStepProps) => (
             <Card
               key={m.id}
               className={`p-2 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
-                mood === m.id ? m.color : 'bg-gray-50 hover:bg-gray-100'
+                mood === m.id ? m.color : 'bg-muted hover:bg-muted'
               }`}
               onClick={() => onSelectMood(m.id)}
             >

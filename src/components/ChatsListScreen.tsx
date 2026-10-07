@@ -22,6 +22,7 @@ import ScreenHeader from '@/components/ScreenHeader';
 import LoadingState from '@/components/LoadingState';
 import EmptyState from '@/components/EmptyState';
 import InitialsAvatar from '@/components/InitialsAvatar';
+import MatchDetails from '@/components/MatchDetails';
 import { MAX_ACTIVE_CHATS, CHAT_INACTIVITY_HOURS } from '@/lib/constants';
 
 interface ChatsListScreenProps {
@@ -102,7 +103,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 shrink-0">
-                  <InitialsAvatar src={chat.mainPhoto} name={chat.name} />
+                  <InitialsAvatar src={chat.mainPhoto} name={chat.name} blurred={!chat.photoRevealed} />
                 </div>
                 <div>
                   <h3 className="font-medium text-foreground">{chat.name}</h3>
@@ -123,34 +124,7 @@ const ChatsListScreen = ({ onStartChat }: ChatsListScreenProps) => {
               </div>
             </div>
 
-            {/* Current Mood */}
-            <div>
-              <h4 className="text-xs font-medium text-foreground/80 mb-1">Current Mood</h4>
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span className="text-sm text-muted-foreground capitalize">{chat.mood}</span>
-              </div>
-            </div>
-
-            {/* Vibes Section */}
-            {chat.memes.length > 0 && (
-              <div>
-                <h4 className="text-xs font-medium text-foreground/80 mb-2">Their Vibes</h4>
-                <div className="flex flex-wrap gap-2">
-                  {chat.memes.slice(0, 3).map((meme, index) => (
-                    <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-accent border border-primary/20 rounded-lg">
-                      <div className="text-xs">{meme.emoji}</div>
-                      <span className="text-xs font-medium text-accent-foreground">{meme.title}</span>
-                    </div>
-                  ))}
-                  {chat.memes.length > 3 && (
-                    <div className="px-2 py-1 bg-muted border border-border rounded-lg">
-                      <span className="text-xs text-muted-foreground">+{chat.memes.length - 3} more</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <MatchDetails mood={chat.mood} vibes={chat.memes} promptQuestion={chat.promptQuestion} promptAnswer={chat.promptAnswer} />
 
             {/* Action Buttons */}
             <div className="pt-2 flex space-x-2">

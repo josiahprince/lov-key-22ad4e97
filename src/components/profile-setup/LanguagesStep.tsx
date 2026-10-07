@@ -28,7 +28,7 @@ const LanguagesStep = () => {
         <p className="text-sm text-muted-foreground mt-1">Optional - helps us match you with people you can talk to</p>
       </div>
       <div className="flex justify-end">
-        <span className="text-sm text-gray-600">{formData.languages_spoken.length} selected</span>
+        <span className="text-sm text-muted-foreground">{formData.languages_spoken.length} selected</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {LANGUAGE_OPTIONS.map((language) => (

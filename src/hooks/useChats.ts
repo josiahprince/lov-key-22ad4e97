@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
+import { getMemeDisplayInfo, fetchMatchPartner } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
 import type { MatchRow } from '@/types/domain';
 
@@ -13,7 +13,11 @@ interface ChatProfile {
   age?: number;
   mood: string;
   memes: { emoji: string; title: string }[];
+  promptQuestion: string | null;
+  promptAnswer: string;
   mainPhoto: string | null;
+  // Both people chose to reveal photos; until then the photo is shown blurred.
+  photoRevealed: boolean;
   city?: string;
   region?: string;
   country?: string;
@@ -65,88 +69,50 @@ export const useChats = () => {
   }, [toast, user]);
 
   const processChats = async (chatMatches: MatchRow[], currentUserId: string) => {
-    const processedChats: ChatProfile[] = [];
+    const cards = await Promise.all(
+      chatMatches.map(async (match): Promise<ChatProfile | null> => {
+        const matchUserId = match.user_1 === currentUserId ? match.user_2 : match.user_1;
+        try {
+          const { profile, onboarding, photoUrl, photoRevealed } = await fetchMatchPartner(matchUserId, 'useChats', match.id);
 
-    for (const match of chatMatches) {
-      // Determine which user is the match (not the current user)
-      const isUser1 = match.user_1 === currentUserId;
-      const matchUserId = isUser1 ? match.user_2 : match.user_1;
+          // A chat with no resolvable name is not something a user should ever
+          // see a placeholder for - skip it rather than rendering "Unknown User".
+          if (!profile?.nickname) {
+            logError(`useChats:missingProfile:${matchUserId}`, 'profiles_matched_view returned no nickname for this match');
+            return null;
+          }
 
-      try {
-        
-        // Fetch matched user's safe profile data (RLS-friendly)
-        const { data: matchProfile, error: profileError } = await fetchMatchedViewProfile(matchUserId);
+          // A placeholder onboarding row has nothing real to show yet.
+          if (onboarding?.selected_memes?.length === 1 && onboarding.selected_memes[0] === 'pending') {
+            logError(`useChats:pendingData:${matchUserId}`, 'Skipping chat with pending onboarding data');
+            return null;
+          }
 
-        if (profileError) {
-          logError(`useChats:profile:${matchUserId}`, profileError);
+          return {
+            id: match.id,
+            userId: matchUserId,
+            name: profile.nickname,
+            age: profile.age,
+            mood: onboarding?.mood || 'chill',
+            memes: getMemeDisplayInfo(onboarding?.selected_memes, onboarding?.selected_memes_display),
+            promptQuestion: onboarding?.prompt_question ?? null,
+            promptAnswer: onboarding?.perfect_sunday || '',
+            mainPhoto: photoUrl,
+            photoRevealed,
+            city: profile.city || 'Unknown',
+            region: profile.region,
+            country: profile.country,
+            lastInteractionAt: match.last_interaction_at,
+            hasUnreadMessages: false,
+          };
+        } catch (error) {
+          logError(`useChats:processChat:${matchUserId}`, error);
+          return null;
         }
+      })
+    );
 
-        // A chat with no resolvable name is not something a user should ever
-        // see a placeholder for - skip it rather than rendering "Unknown User".
-        if (!matchProfile?.nickname) {
-          logError(`useChats:missingProfile:${matchUserId}`, profileError || 'profiles_matched_view returned no nickname for this match');
-          continue;
-        }
-
-        // Fetch onboarding data for the match - exclude pending records
-        const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
-
-        if (onboardingError) {
-          logError(`useChats:onboarding:${matchUserId}`, onboardingError);
-        }
-
-        // Skip if onboarding data has pending values
-        if (matchOnboarding && (
-          matchOnboarding.selected_memes &&
-           matchOnboarding.selected_memes.length === 1 &&
-           matchOnboarding.selected_memes[0] === 'pending'
-        )) {
-          logError(`useChats:pendingData:${matchUserId}`, "Skipping chat with pending onboarding data");
-          continue;
-        }
-
-        // Use default values if no onboarding data exists
-        const defaultOnboardingData = {
-          mood: 'chill',
-          selected_memes: [],
-          perfect_sunday: 'Relaxing at home'
-        };
-
-        // Fetch main photo for the match
-        const { data: matchPhoto, error: photoError } = await fetchMainPhotoUrl(matchUserId);
-
-        if (photoError) {
-          logError(`useChats:photo:${matchUserId}`, photoError);
-        }
-
-        const memeInfo = getMemeDisplayInfo(
-          (matchOnboarding || defaultOnboardingData).selected_memes || [],
-          matchOnboarding?.selected_memes_display
-        );
-        
-        const chatProfileData = {
-          id: match.id,
-          userId: matchUserId,
-          name: matchProfile.nickname,
-          age: matchProfile?.age,
-          mood: (matchOnboarding || defaultOnboardingData).mood || 'chill',
-          memes: memeInfo,
-          mainPhoto: matchPhoto?.photo_url || null,
-          city: matchProfile?.city || 'Unknown',
-          region: matchProfile?.region,
-          country: matchProfile?.country,
-          lastInteractionAt: match.last_interaction_at,
-          hasUnreadMessages: false
-        };
-        
-        processedChats.push(chatProfileData);
-      } catch (error) {
-        logError(`useChats:processChat:${matchUserId}`, error);
-        continue;
-      }
-    }
-
-    setChats(processedChats);
+    setChats(cards.filter((card): card is ChatProfile => card !== null));
   };
 
   useEffect(() => {
@@ -170,7 +136,7 @@ export const useChats = () => {
           schema: 'public',
           table: 'matches'
         },
-        (payload) => {
+        () => {
           // Refetch chats when matches are updated with longer delay for DB propagation
           setTimeout(() => fetchChats(), 800);
         }

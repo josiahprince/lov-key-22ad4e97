@@ -3,9 +3,9 @@ import SettingsScreen from '@/components/SettingsScreen';
 import type { AppLayoutContext } from '@/components/AppLayout';
 
 const SettingsPage = () => {
-  const { userProfile } = useOutletContext<AppLayoutContext>();
+  const { userProfile, updateUserProfile } = useOutletContext<AppLayoutContext>();
 
-  return <SettingsScreen userProfile={userProfile} />;
+  return <SettingsScreen userProfile={userProfile} onProfileUpdated={updateUserProfile} />;
 };
 
 export default SettingsPage;

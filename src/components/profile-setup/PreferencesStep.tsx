@@ -37,7 +37,7 @@ const PreferencesStep = () => {
           className="w-full"
         />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">See people 2 years either side if I run out</span>
+          <span className="text-sm text-muted-foreground">See people 2 years either side if I run out</span>
           <Switch
             checked={formData.expand_age_range}
             onCheckedChange={(checked) => updateField('expand_age_range', checked)}
@@ -59,7 +59,7 @@ const PreferencesStep = () => {
           className="w-full"
         />
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-600">See people slightly further away if I run out</span>
+          <span className="text-sm text-muted-foreground">See people slightly further away if I run out</span>
           <Switch
             checked={formData.expand_distance_range}
             onCheckedChange={(checked) => updateField('expand_distance_range', checked)}

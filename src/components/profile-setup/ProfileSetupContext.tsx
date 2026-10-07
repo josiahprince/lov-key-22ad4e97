@@ -30,7 +30,6 @@ export interface ProfileFormData {
   expand_distance_range: boolean;
   // Additional profile data
   interests: string[];
-  personality_prompts: { [key: string]: string };
   languages_spoken: string[];
   // Not persisted to profiles - tracked here only so the Photos step can
   // gate "Next" the same way every other step does. Source of truth for the
@@ -82,7 +81,6 @@ export const ProfileSetupProvider = ({ children }: { children: ReactNode }) => {
     expand_distance_range: false,
     // Additional profile data
     interests: [],
-    personality_prompts: {},
     languages_spoken: [],
     hasPhoto: false
   });

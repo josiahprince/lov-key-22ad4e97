@@ -8,7 +8,7 @@ const HeroHeader = () => (
       Welcome to LovKey
     </h1>
 
-    <p className="text-xl md:text-2xl text-gray-700 font-medium italic">
+    <p className="text-xl md:text-2xl text-foreground font-medium italic">
       Low-key matching minds — before photos.
     </p>
 

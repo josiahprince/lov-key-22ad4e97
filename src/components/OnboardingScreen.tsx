@@ -1,7 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { Textarea } from '@/components/ui/textarea';
-import { Heart, Smile, Meh, Frown, Zap, Coffee, Flame } from 'lucide-react';
 import type { useOnboardingData } from '@/hooks/useOnboardingData';
 import { useCulturalVibes } from '@/hooks/useCulturalVibes';
 import { supabase } from '@/integrations/supabase/client';
@@ -174,7 +172,7 @@ const OnboardingScreen = ({ onboarding, onComplete }: OnboardingScreenProps) => 
             <div
               key={i}
               className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                i <= step ? 'bg-primary' : 'bg-gray-200'
+                i <= step ? 'bg-primary' : 'bg-muted'
               }`}
             />
           ))}

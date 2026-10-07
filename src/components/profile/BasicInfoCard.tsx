@@ -15,7 +15,7 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
     return (
       <Card>
         <CardContent className="p-4">
-          <p className="text-gray-600 text-center">Loading profile information...</p>
+          <p className="text-muted-foreground text-center">Loading profile information...</p>
         </CardContent>
       </Card>
     );
@@ -63,18 +63,18 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
       <CardContent className="space-y-4">
         {/* Basic Information Section */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Basic Information</h3>
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Basic Information</h3>
           
           {/* Name and Age */}
           <div className="flex items-start space-x-3">
-            <User className="h-4 w-4 text-gray-500 mt-0.5" />
+            <User className="h-4 w-4 text-muted-foreground mt-0.5" />
             <div className="space-y-1">
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-foreground">
                 {userProfile.first_name} {userProfile.last_name}
                 {userProfile.nickname && ` (${userProfile.nickname})`}
               </p>
               {formatAge() && (
-                <p className="text-sm text-gray-600">{formatAge()}</p>
+                <p className="text-sm text-muted-foreground">{formatAge()}</p>
               )}
             </div>
           </div>
@@ -82,9 +82,9 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
           {/* Date of Birth */}
           {userProfile.date_of_birth && (
             <div className="flex items-start space-x-3">
-              <Calendar className="h-4 w-4 text-gray-500 mt-0.5" />
+              <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div>
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   <span className="font-medium">Born:</span> {new Date(userProfile.date_of_birth).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -99,12 +99,12 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
         {/* Gender Section */}
         {formatGender() && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Gender</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Gender</h3>
             
             <div className="flex items-start space-x-3">
-              <User className="h-4 w-4 text-gray-500 mt-0.5" />
+              <User className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm text-gray-900">{formatGender()}</p>
+                <p className="text-sm text-foreground">{formatGender()}</p>
               </div>
             </div>
           </div>
@@ -113,16 +113,16 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
         {/* Location Section */}
         {userProfile.location && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Location</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Location</h3>
             
             <div className="flex items-start space-x-3">
-              <MapPin className="h-4 w-4 text-gray-500 mt-0.5" />
+              <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
-                <p className="text-sm text-gray-900">
+                <p className="text-sm text-foreground">
                   <span className="font-medium">Location:</span> {userProfile.location}
                 </p>
                 {userProfile.city && userProfile.country && (
-                  <p className="text-xs text-gray-600">
+                  <p className="text-xs text-muted-foreground">
                     {userProfile.city}{userProfile.region && `, ${userProfile.region}`}, {userProfile.country}
                   </p>
                 )}
@@ -134,7 +134,7 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
         {/* Interests Section */}
         {interests.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Interests</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Interests</h3>
             <div className="flex flex-wrap gap-2">
               {interests.map((interest) => (
                 <Badge key={interest} variant="secondary">{interest}</Badge>
@@ -146,7 +146,7 @@ const BasicInfoCard = ({ userProfile, onEdit }: BasicInfoCardProps) => {
         {/* Languages Section */}
         {languages.length > 0 && (
           <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Languages</h3>
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">Languages</h3>
             <div className="flex flex-wrap gap-2">
               {languages.map((language) => (
                 <Badge key={language} variant="secondary">{language}</Badge>

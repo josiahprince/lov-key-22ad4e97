@@ -19,6 +19,7 @@ import LocationStep from './profile-setup/LocationStep';
 import InterestsStep from './profile-setup/InterestsStep';
 import LanguagesStep from './profile-setup/LanguagesStep';
 import PreferencesStep from './profile-setup/PreferencesStep';
+import { writeProfileLocation } from '@/lib/location';
 
 type GenderType = Database['public']['Enums']['gender_type'];
 type OrientationType = Database['public']['Enums']['orientation_type'];
@@ -62,17 +63,10 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
         gender: formData.gender as GenderType,
         sexual_orientation: formData.sexual_orientation as OrientationType,
         interested_in: formData.interested_in as InterestedInType,
-        location: formData.location,
-        city: formData.city,
-        region: formData.region,
-        country: formData.country,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
         min_age_preference: formData.min_age_preference,
         max_age_preference: formData.max_age_preference,
         max_distance_preference: formData.max_distance_preference,
         interests: formData.interests,
-        personality_prompts: formData.personality_prompts,
         languages_spoken: formData.languages_spoken,
         is_profile_complete: true
       };
@@ -83,12 +77,23 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
 
       if (error) throw error;
 
+      // Location goes through its own checked server function (see src/lib/location.ts).
+      const locationFields = {
+        location: formData.location,
+        city: formData.city,
+        region: formData.region,
+        country: formData.country,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+      };
+      await writeProfileLocation(user.id, locationFields);
+
       toast({
         title: "Success",
         description: "Profile setup completed!"
       });
 
-      onComplete(profileData);
+      onComplete({ ...profileData, ...locationFields });
     } catch (error) {
       toast({
         title: "Error",
@@ -129,7 +134,7 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
 
   return (
     <GradientShell centered>
-      <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl">
+      <Card className="w-full max-w-md p-6 bg-card/80 backdrop-blur-sm shadow-xl">
         <div className="mb-6">
           {currentStep === 1 && (
             <div className="flex justify-center mb-4">
@@ -145,7 +150,7 @@ const ProfileSetupForm = ({ onComplete }: ProfileSetupScreenProps) => {
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
-                  i < currentStep ? 'bg-primary' : 'bg-gray-200'
+                  i < currentStep ? 'bg-primary' : 'bg-muted'
                 }`}
               />
             ))}

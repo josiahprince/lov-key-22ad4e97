@@ -81,18 +81,6 @@ export const useOnboardingData = () => {
         .limit(1)
         .maybeSingle();
 
-      // If no valid onboarding data found, check if there are any records at all
-      let hasAnyRecord = false;
-      if (!data) {
-        const { data: anyRecord } = await supabase
-          .from('user_onboarding')
-          .select('id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .maybeSingle();
-        hasAnyRecord = !!anyRecord;
-      }
-
       if (error) {
         logError("useOnboardingData:fetchOnboarding", error);
       }

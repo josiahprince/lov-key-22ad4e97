@@ -36,6 +36,15 @@ Where it's enforced: `supabase/migrations/20260928120000_match_limits_and_expiry
 
 Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY_HOURS`, `CHAT_INACTIVITY_HOURS`). The server is the source of truth, so don't re-implement expiry filtering client-side.
 
+## Location (owner decision, 2026-10-07)
+
+- Location comes only from the device, never typed in, so a profile is where the person really is. Like Tinder and Bumble, it is **required**.
+- It is set at sign-up (`LocationStep`), refreshed once a day on the first open after 06:00 local (`useDailyLocation`, run from `AppLayout`), and on demand from Settings → Update location. All three go through `src/lib/location.ts`.
+- While the browser refuses location, `AppLayout` shows `LocationRequiredScreen` instead of the app. Other failures (timeout, no signal, lookup down) never block; the last saved location stays.
+- Coordinates are turned into a place by BigDataCloud's free client-side endpoint, called straight from the browser. Nominatim via an edge function was dropped because Nominatim blocks Supabase's servers. `country` is stored as the common English name from the ISO code (`Intl.DisplayNames`), because it is compared as text (country-only matching, `vibe_sets`, the language list in `src/lib/languages.ts`).
+- Dev only: `VITE_DEV_IP_LOCATION=true` in `.env.local` (gitignored) falls back to the approximate location of your internet connection when the browser refuses, because the Claude browser pane always refuses. It is compiled out of production builds. It writes that location to the profile, so the signed-in test account moves to wherever your connection appears to be.
+- Location columns (`latitude`, `longitude`, `city`, `region`, `country`, `location`, `location_updated_at`) can only be written through `set_my_location()`. The `guard_profile_location` trigger rejects direct client writes, and the function rejects moves faster than 1000 km/h (`20261007120000_location_guard.sql`). Coordinates are rounded to 2 decimals (about 1 km). It still trusts the city name and coordinates the browser sends, so it stops tampering, not GPS spoofing.
+
 ## Database gotchas
 
 - `matches` has an UPDATE policy with no column restriction. Clients can PATCH any column, so never trust client-writable columns for rules. Enforce them in triggers or SECURITY DEFINER functions.

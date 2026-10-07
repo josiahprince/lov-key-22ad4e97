@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { getMemeDisplayInfo, fetchLatestOnboarding, fetchMainPhotoUrl, fetchMatchedViewProfile } from '@/lib/matchQueries';
+import { getMemeDisplayInfo, fetchMatchPartner, fetchTodayMatchCount } from '@/lib/matchQueries';
 import { logError } from '@/lib/errorLogger';
-import { DAILY_MATCH_LIMIT, MAX_ACTIVE_CHATS, getMatchDayStart } from '@/lib/constants';
+import { DAILY_MATCH_LIMIT, MAX_ACTIVE_CHATS } from '@/lib/constants';
 import type { MatchRow } from '@/types/domain';
 
-interface MatchProfile {
+export interface MatchProfile {
   id: string;
   userId: string; // The matched user's ID
   name: string;
@@ -18,6 +18,8 @@ interface MatchProfile {
   promptQuestion: string;
   compatibility: number;
   mainPhoto: string | null;
+  // Both people chose to reveal photos; until then the photo is shown blurred.
+  photoRevealed: boolean;
   city?: string;
   region?: string;
   country?: string;
@@ -61,12 +63,7 @@ export const useMatches = () => {
           .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
           .in('status', ['active', 'chatting'])
           .eq('chat_request_status', 'accepted'),
-        supabase
-          .from('matches')
-          .select('id', { count: 'exact', head: true })
-          .or(`user_1.eq.${user.id},user_2.eq.${user.id}`)
-          .neq('status', 'expired')
-          .gte('matched_on', getMatchDayStart().toISOString()),
+        fetchTodayMatchCount(user.id),
       ]);
 
       if (liveResult.error) {
@@ -118,73 +115,47 @@ export const useMatches = () => {
   }, [user, toast]);
 
   const processMatches = async (matchesData: MatchRow[], currentUserId: string) => {
-    const processedMatches: MatchProfile[] = [];
+    const cards = await Promise.all(
+      matchesData.map(async (match): Promise<MatchProfile | null> => {
+        const matchUserId = match.user_1 === currentUserId ? match.user_2 : match.user_1;
+        try {
+          const { profile, onboarding, photoUrl, photoRevealed } = await fetchMatchPartner(matchUserId, 'useMatches', match.id);
 
-    for (const match of matchesData) {
-      if (processedMatches.length >= DAILY_MATCH_LIMIT) break;
+          // A match with no resolvable name is not something a user should ever
+          // see a placeholder for - skip it rather than rendering "Unknown User".
+          if (!profile?.nickname) {
+            logError(`useMatches:missingProfile:${matchUserId}`, 'profiles_matched_view returned no nickname for this match');
+            return null;
+          }
 
-      // Determine which user is the match (not the current user)
-      const isUser1 = match.user_1 === currentUserId;
-      const matchUserId = isUser1 ? match.user_2 : match.user_1;
-
-      try {
-        // Fetch matched user's safe profile data (RLS-friendly)
-        const { data: matchProfile, error: profileError } = await fetchMatchedViewProfile(matchUserId);
-
-        if (profileError) {
-          logError(`useMatches:profile:${matchUserId}`, profileError);
+          // Show matches even with incomplete onboarding data.
+          return {
+            id: match.id,
+            userId: matchUserId,
+            name: profile.nickname,
+            age: profile.age,
+            mood: onboarding?.mood || 'chill',
+            memes: getMemeDisplayInfo(onboarding?.selected_memes, onboarding?.selected_memes_display),
+            promptAnswer: onboarding?.perfect_sunday || '',
+            promptQuestion: onboarding?.prompt_question || 'Describe your perfect Sunday',
+            compatibility: match.match_score || 75,
+            mainPhoto: photoUrl,
+            photoRevealed,
+            city: profile.city || 'Unknown',
+            region: profile.region,
+            country: profile.country,
+            chatRequestStatus: match.chat_request_status || 'none',
+            chatRequestSender: match.chat_request_sender,
+            expiresAt: match.expires_at,
+          };
+        } catch (error) {
+          logError(`useMatches:processMatch:${matchUserId}`, error);
+          return null;
         }
+      })
+    );
 
-        // A match with no resolvable name is not something a user should ever
-        // see a placeholder for - skip it rather than rendering "Unknown User".
-        if (!matchProfile?.nickname) {
-          logError(`useMatches:missingProfile:${matchUserId}`, profileError || 'profiles_matched_view returned no nickname for this match');
-          continue;
-        }
-
-        // Fetch onboarding data for the match - get the most recent non-pending record
-        const { data: matchOnboarding, error: onboardingError } = await fetchLatestOnboarding(matchUserId);
-
-        if (onboardingError) {
-          logError(`useMatches:onboarding:${matchUserId}`, onboardingError);
-        }
-
-        // Fetch main photo for the match
-        const { data: matchPhoto, error: photoError } = await fetchMainPhotoUrl(matchUserId);
-
-        if (photoError) {
-          logError(`useMatches:photo:${matchUserId}`, photoError);
-        }
-
-        // Show matches even with incomplete data
-        const memeInfo = getMemeDisplayInfo(matchOnboarding?.selected_memes || [], matchOnboarding?.selected_memes_display);
-
-        processedMatches.push({
-          id: match.id,
-          userId: matchUserId, // Add the matched user's ID
-          name: matchProfile.nickname,
-          age: matchProfile?.age,
-          mood: matchOnboarding?.mood || 'chill',
-          memes: memeInfo,
-          promptAnswer: matchOnboarding?.perfect_sunday || "",
-          promptQuestion: matchOnboarding?.prompt_question || "Describe your perfect Sunday",
-          compatibility: match.match_score || 75,
-          mainPhoto: matchPhoto?.photo_url || null,
-          city: matchProfile?.city || 'Unknown',
-          region: matchProfile?.region,
-          country: matchProfile?.country,
-          chatRequestStatus: match.chat_request_status || 'none',
-          chatRequestSender: match.chat_request_sender,
-          expiresAt: match.expires_at
-        });
-        
-      } catch (error) {
-        logError(`useMatches:processMatch:${matchUserId}`, error);
-        continue;
-      }
-    }
-
-    setMatches(processedMatches);
+    setMatches(cards.filter((card): card is MatchProfile => card !== null).slice(0, DAILY_MATCH_LIMIT));
   };
 
   useEffect(() => {

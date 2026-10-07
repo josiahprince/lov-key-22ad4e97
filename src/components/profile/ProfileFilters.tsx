@@ -1,20 +1,26 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, useRef, useCallback, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { X, SlidersHorizontal, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import type { Database } from '@/integrations/supabase/types';
 import type { ProfileLike } from '@/types/domain';
+import { getLanguageOptions } from '@/lib/languages';
+import { INTEREST_OPTIONS } from '@/lib/profileOptions';
+import { fetchTodayMatchCount } from '@/lib/matchQueries';
+import { DAILY_MATCH_LIMIT } from '@/lib/constants';
+import { logError } from '@/lib/errorLogger';
 
-type GenderType = Database['public']['Enums']['gender_type'];
+const MIN_AGE = 18;
+const MAX_AGE = 100;
+const AUTOSAVE_DELAY_MS = 600;
+
 type OrientationType = Database['public']['Enums']['orientation_type'];
 type InterestedInType = Database['public']['Enums']['interested_in_type'];
 
@@ -24,12 +30,19 @@ interface FilterPreferences {
   distance_km: number;
   sexual_orientation: OrientationType[];
   interested_in: InterestedInType[];
-  personality_prompts: string[];
   languages_spoken: string[];
   interests: string[];
 }
 
-const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | null; trigger?: ReactNode }) => {
+const ProfileFilters = ({
+  userProfile,
+  trigger,
+  onSaved,
+}: {
+  userProfile: ProfileLike | null;
+  trigger?: ReactNode;
+  onSaved?: (patch: Partial<ProfileLike>) => void;
+}) => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [filters, setFilters] = useState<FilterPreferences>({
@@ -38,77 +51,120 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
     distance_km: 50,
     sexual_orientation: [],
     interested_in: [],
-    personality_prompts: [],
     languages_spoken: [],
     interests: []
   });
-  const [loading, setLoading] = useState(false);
+  // Preferences as they were when the dialog opened, for the next-day notice.
+  const [openedFilters, setOpenedFilters] = useState<FilterPreferences | null>(null);
+  // Today's matches are all handed out, so new preferences only shape tomorrow's.
+  const [todaysMatchesDone, setTodaysMatchesDone] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // Last state persisted to the database, and the pending autosave.
+  const savedRef = useRef<string | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openRef = useRef(open);
+  openRef.current = open;
   const { toast } = useToast();
+
+  const hasChanges = openedFilters !== null && JSON.stringify(filters) !== JSON.stringify(openedFilters);
+  const showNextDayNotice = todaysMatchesDone && hasChanges;
+
+  useEffect(() => {
+    if (!open || !user) return;
+    let cancelled = false;
+    fetchTodayMatchCount(user.id).then(({ count, error }) => {
+      if (cancelled) return;
+      if (error) {
+        logError('ProfileFilters:todayMatches', error);
+        return;
+      }
+      setTodaysMatchesDone((count ?? 0) >= DAILY_MATCH_LIMIT);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, user]);
 
   // Available options
   const orientationOptions: OrientationType[] = ['straight', 'gay', 'lesbian', 'bisexual', 'pansexual', 'asexual', 'other'];
   const interestedInOptions: InterestedInType[] = ['men', 'women', 'non_binary', 'everyone'];
-  const interestOptions = ['Music', 'Travel', 'Memes', 'Pets', 'Sports', 'Movies', 'Books', 'Cooking', 'Fitness', 'Art', 'Gaming', 'Photography'];
-  const languageOptions = ['English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese', 'Chinese', 'Japanese', 'Korean', 'Arabic', 'Hindi', 'Russian'];
-  const personalityPrompts = ['Two truths and a lie', 'My perfect Sunday', 'What makes me happy', 'My biggest fear', 'Dream vacation', 'Favorite childhood memory'];
+  const languageOptions = getLanguageOptions(userProfile?.country);
+  const ageOptions = Array.from({ length: MAX_AGE - MIN_AGE + 1 }, (_, i) => MIN_AGE + i);
 
   useEffect(() => {
-    if (userProfile) {
-      setFilters({
-        age_min: userProfile.min_age_preference || 18,
-        age_max: userProfile.max_age_preference || 65,
+    // Don't overwrite edits in progress if the profile refreshes while open.
+    if (userProfile && !openRef.current) {
+      const loaded: FilterPreferences = {
+        age_min: Math.min(Math.max(userProfile.min_age_preference || MIN_AGE, MIN_AGE), MAX_AGE),
+        age_max: Math.min(Math.max(userProfile.max_age_preference || 65, MIN_AGE), MAX_AGE),
         distance_km: userProfile.max_distance_preference || 50,
         sexual_orientation: userProfile.sexual_orientation ? [userProfile.sexual_orientation] : [],
         interested_in: userProfile.interested_in ? [userProfile.interested_in] : [],
-        personality_prompts: userProfile.personality_prompts ? Object.keys(userProfile.personality_prompts).filter(key => userProfile.personality_prompts[key]) : [],
         languages_spoken: userProfile.languages_spoken || userProfile.languages || [],
         interests: userProfile.interests || []
-      });
+      };
+      setFilters(loaded);
+      savedRef.current = JSON.stringify(loaded);
     }
   }, [userProfile]);
 
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      if (!user) throw new Error('No user found');
+  const persist = useCallback(async (next: FilterPreferences) => {
+    if (!user) return;
+    const serialized = JSON.stringify(next);
+    if (serialized === savedRef.current) return;
 
-      // Convert personality prompts back to object format
-      const personalityPromptsObj = filters.personality_prompts.reduce((acc, prompt) => {
-        acc[prompt] = userProfile.personality_prompts?.[prompt] || '';
-        return acc;
-      }, {} as Record<string, string>);
+    setSaveStatus('saving');
+    const patch = {
+      min_age_preference: next.age_min,
+      max_age_preference: next.age_max,
+      max_distance_preference: next.distance_km,
+      sexual_orientation: next.sexual_orientation[0] || null,
+      interested_in: next.interested_in[0] || null,
+      languages_spoken: next.languages_spoken,
+      interests: next.interests
+    };
+    const { error } = await supabase.from('profiles').update(patch).eq('id', user.id);
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          min_age_preference: filters.age_min,
-          max_age_preference: filters.age_max,
-          max_distance_preference: filters.distance_km,
-          sexual_orientation: filters.sexual_orientation[0] || null,
-          interested_in: filters.interested_in[0] || null,
-          personality_prompts: personalityPromptsObj,
-          languages_spoken: filters.languages_spoken,
-          interests: filters.interests
-        })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Filter preferences updated!"
-      });
-
-      setOpen(false);
-    } catch (error) {
+    if (error) {
+      logError('ProfileFilters:save', error);
+      setSaveStatus('error');
       toast({
         title: "Error",
         description: "Failed to update preferences. Please try again.",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
+      return;
     }
+    savedRef.current = serialized;
+    setSaveStatus('saved');
+    onSaved?.(patch);
+  }, [user, toast, onSaved]);
+
+  // Autosave shortly after the last change, so dragging the distance slider
+  // or ticking several languages makes one write rather than many.
+  useEffect(() => {
+    if (!open) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      void persist(filters);
+    }, AUTOSAVE_DELAY_MS);
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
+  }, [filters, open, persist]);
+
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      setOpenedFilters(filters);
+      setSaveStatus('idle');
+    } else if (saveTimerRef.current) {
+      // Closing mid-debounce: save now rather than dropping the last change.
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+      void persist(filters);
+    }
+    setOpen(next);
   };
 
   const toggleArrayItem = (array: string[], item: string, setter: (value: string[]) => void) => {
@@ -120,7 +176,7 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button variant="outline" size="sm" className="flex items-center space-x-2">
@@ -140,23 +196,27 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
             <Label className="text-base font-medium">Age Range</Label>
             <div className="mt-2 space-y-2">
               <div className="flex items-center space-x-4">
-                <Input
-                  type="number"
-                  value={filters.age_min}
-                  onChange={(e) => setFilters(prev => ({ ...prev, age_min: parseInt(e.target.value) || 18 }))}
-                  className="w-20"
-                  min="18"
-                  max="100"
-                />
+                <Select value={String(filters.age_min)} onValueChange={(value) => setFilters(prev => ({ ...prev, age_min: Number(value) }))}>
+                  <SelectTrigger className="w-24" aria-label="Minimum age">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ageOptions.filter(age => age <= filters.age_max).map(age => (
+                      <SelectItem key={age} value={String(age)}>{age}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <span>to</span>
-                <Input
-                  type="number"
-                  value={filters.age_max}
-                  onChange={(e) => setFilters(prev => ({ ...prev, age_max: parseInt(e.target.value) || 65 }))}
-                  className="w-20"
-                  min="18"
-                  max="100"
-                />
+                <Select value={String(filters.age_max)} onValueChange={(value) => setFilters(prev => ({ ...prev, age_max: Number(value) }))}>
+                  <SelectTrigger className="w-24" aria-label="Maximum age">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ageOptions.filter(age => age >= filters.age_min).map(age => (
+                      <SelectItem key={age} value={String(age)}>{age}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <span>years</span>
               </div>
             </div>
@@ -174,7 +234,7 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
                 step={1}
                 className="w-full"
               />
-              <div className="text-sm text-gray-600">{filters.distance_km} km</div>
+              <div className="text-sm text-muted-foreground">{filters.distance_km} km</div>
             </div>
           </div>
 
@@ -210,23 +270,6 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
                 ))}
               </SelectContent>
             </Select>
-          </div>
-
-          {/* Personality Prompts */}
-          <div>
-            <Label className="text-base font-medium">Personality Prompts</Label>
-            <div className="mt-2 space-y-2">
-              {personalityPrompts.map(prompt => (
-                <div key={prompt} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={prompt}
-                    checked={filters.personality_prompts.includes(prompt)}
-                    onCheckedChange={() => toggleArrayItem(filters.personality_prompts, prompt, (newValue) => setFilters(prev => ({ ...prev, personality_prompts: newValue })))}
-                  />
-                  <Label htmlFor={prompt} className="text-sm">{prompt}</Label>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Languages Spoken */}
@@ -276,7 +319,7 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
                 ))}
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {interestOptions.filter(interest => !filters.interests.includes(interest)).map(interest => (
+                {INTEREST_OPTIONS.filter(interest => !filters.interests.includes(interest)).map(interest => (
                   <Button
                     key={interest}
                     variant="outline"
@@ -292,13 +335,23 @@ const ProfileFilters = ({ userProfile, trigger }: { userProfile: ProfileLike | n
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2 mt-6">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Changes'}
-          </Button>
+        {showNextDayNotice && (
+          <div role="status" className="mt-6 flex gap-2 rounded-md border bg-muted/50 p-3 text-sm">
+            <Info className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+            <p>
+              Your {DAILY_MATCH_LIMIT} matches for today are already chosen. These changes will apply from tomorrow's matches.
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-2 mt-6">
+          <span role="status" aria-live="polite" className="text-sm text-muted-foreground">
+            {saveStatus === 'saving' && 'Saving…'}
+            {saveStatus === 'saved' && 'All changes saved'}
+            {saveStatus === 'error' && <span className="text-destructive">Couldn't save. Try changing it again.</span>}
+            {saveStatus === 'idle' && 'Changes save automatically'}
+          </span>
+          <Button onClick={() => handleOpenChange(false)}>Done</Button>
         </div>
       </DialogContent>
     </Dialog>

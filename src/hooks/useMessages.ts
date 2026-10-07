@@ -208,7 +208,7 @@ export const useMessages = (matchId: string, currentUserId: string) => {
           }));
         }
       )
-      .subscribe((status, err) => {
+      .subscribe((_status, err) => {
         if (err) {
           logError(`useMessages:subscription:${matchId}`, err);
         }

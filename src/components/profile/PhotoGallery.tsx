@@ -123,7 +123,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
         /* ── Own profile: unified draggable grid ── */
         <div className="space-y-3">
           {photos.some(p => p.photo_url || p.signedUrl) && (
-            <p className="text-xs text-gray-400 flex items-center gap-1">
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
               <GripVertical className="w-3 h-3" /> Drag photos to reorder
             </p>
           )}
@@ -131,7 +131,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
           <div>
             <div className="flex items-center space-x-2 mb-3">
               <Star className="w-4 h-4 text-yellow-500" />
-              <span className="text-sm font-medium text-gray-600">Photos (drag to reorder)</span>
+              <span className="text-sm font-medium text-muted-foreground">Photos (drag to reorder)</span>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
@@ -155,9 +155,9 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                         onDragStart={() => handleDragStart(photo.photo_slot)}
                         onDragEnd={handleDragEnd}
                         className={[
-                          'relative w-full aspect-square bg-gray-100 rounded-lg border-2 transition-all duration-150 group cursor-grab active:cursor-grabbing select-none',
+                          'relative w-full aspect-square bg-muted rounded-lg border-2 transition-all duration-150 group cursor-grab active:cursor-grabbing select-none',
                           isActive ? 'opacity-40 scale-95 border-primary/60' : '',
-                          isOver ? 'border-primary ring-2 ring-primary/30 scale-105' : (!isActive ? 'border-gray-200 hover:border-primary/40' : ''),
+                          isOver ? 'border-primary ring-2 ring-primary/30 scale-105' : (!isActive ? 'border-border hover:border-primary/40' : ''),
                         ].join(' ')}
                         onClick={() => {
                           if (isDraggingSlot !== null) return;
@@ -240,15 +240,15 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                       /* Empty slot */
                       <div
                         className={[
-                          'relative w-full aspect-square bg-gray-100 rounded-lg border-2 border-dashed transition-all duration-150 group',
-                          isOver ? 'border-primary bg-accent ring-2 ring-primary/30 scale-105' : 'border-gray-300 hover:border-primary/40',
+                          'relative w-full aspect-square bg-muted rounded-lg border-2 border-dashed transition-all duration-150 group',
+                          isOver ? 'border-primary bg-accent ring-2 ring-primary/30 scale-105' : 'border-border hover:border-primary/40',
                         ].join(' ')}
                       >
                         <div className="w-full h-full flex items-center justify-center">
                           {uploading === photo.photo_slot ? (
                             <div className="text-center">
                               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary mx-auto mb-1"></div>
-                              <span className="text-xs text-gray-500">Uploading…</span>
+                              <span className="text-xs text-muted-foreground">Uploading…</span>
                             </div>
                           ) : isOver ? (
                             <div className="text-center">
@@ -256,7 +256,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                               <span className="text-xs text-primary">Drop here</span>
                             </div>
                           ) : (
-                            <Plus className="w-5 h-5 text-gray-400" />
+                            <Plus className="w-5 h-5 text-muted-foreground" />
                           )}
                         </div>
 
@@ -289,7 +289,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
 
                     {/* Social URL input */}
                     {showSocialOptions === photo.photo_slot && (
-                      <div className="absolute top-full left-0 right-0 mt-2 z-30 bg-white p-2 rounded-lg shadow-lg border">
+                      <div className="absolute top-full left-0 right-0 mt-2 z-30 bg-popover p-2 rounded-lg shadow-lg border">
                         <div className="flex flex-col space-y-2">
                           <Input
                             placeholder="Image URL..."
@@ -330,10 +330,10 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
             <div>
               <div className="flex items-center space-x-2 mb-2">
                 <Star className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium text-gray-600">Main Profile Photo</span>
+                <span className="text-sm font-medium text-muted-foreground">Main Profile Photo</span>
               </div>
               <div
-                className="relative w-32 h-32 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-primary/40 transition-colors"
+                className="relative w-32 h-32 bg-muted rounded-lg border-2 border-border cursor-pointer hover:border-primary/40 transition-colors"
                 onClick={() => {
                   if (onPhotoClick) {
                     const idx = photos.findIndex(p => (p.signedUrl || p.photo_url) === mainPhotoUrl);
@@ -352,12 +352,12 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
 
           {otherPhotos.length > 0 && (
             <div>
-              <span className="text-sm font-medium text-gray-600 block mb-2">Additional Photos</span>
+              <span className="text-sm font-medium text-muted-foreground block mb-2">Additional Photos</span>
               <div className="grid grid-cols-3 gap-3">
                 {otherPhotos.map((photo) => (
                   <div
                     key={photo.photo_slot}
-                    className="relative w-20 h-20 bg-gray-100 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-primary/40 transition-colors"
+                    className="relative w-20 h-20 bg-muted rounded-lg border-2 border-border cursor-pointer hover:border-primary/40 transition-colors"
                     onClick={() => {
                       if (onPhotoClick) {
                         const idx = photos.findIndex(p => p.photo_slot === photo.photo_slot);

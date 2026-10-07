@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/errorLogger';
+import { clearSignedPhotoCache, getSignedPhotoUrl } from '@/lib/photoUrls';
 
 export interface SecurePhoto {
   id: string;
@@ -17,87 +18,11 @@ interface UseSecurePhotosProps {
   isOwnProfile?: boolean;
 }
 
-// Cache for signed URLs to avoid redundant requests
-const signedUrlCache = new Map<string, { url: string; expiresAt: number; canViewUnblurred: boolean }>();
-
 export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSecurePhotosProps) => {
   const [photos, setPhotos] = useState<SecurePhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [canViewUnblurred, setCanViewUnblurred] = useState(isOwnProfile);
   const fetchingRef = useRef(false);
-
-  // Extract file path from photo URL
-  const extractFilePath = (photoUrl: string): string | null => {
-    if (!photoUrl) return null;
-    
-    // Handle Supabase storage URLs
-    // Format: https://xxx.supabase.co/storage/v1/object/public/profile-photos/user-id/filename
-    const match = photoUrl.match(/\/profile-photos\/(.+)$/);
-    if (match) {
-      return match[1];
-    }
-    
-    // If it's already a signed URL, extract the path
-    const signedMatch = photoUrl.match(/\/profile-photos\/([^?]+)/);
-    if (signedMatch) {
-      return signedMatch[1];
-    }
-    
-    return null;
-  };
-
-  // Get signed URL for a photo
-  const getSignedUrl = useCallback(async (
-    photoUrl: string, 
-    targetUserId: string, 
-    currentMatchId?: string
-  ): Promise<{ signedUrl: string; canViewUnblurred: boolean } | null> => {
-    const filePath = extractFilePath(photoUrl);
-    if (!filePath) {
-      // Not a Supabase storage URL, return original
-      return { signedUrl: photoUrl, canViewUnblurred: true };
-    }
-
-    // Check cache
-    const cacheKey = `${filePath}-${targetUserId}-${currentMatchId || 'none'}`;
-    const cached = signedUrlCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) {
-      return { signedUrl: cached.url, canViewUnblurred: cached.canViewUnblurred };
-    }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        return null;
-      }
-
-      const response = await supabase.functions.invoke('get-signed-photo-url', {
-        body: {
-          targetUserId,
-          matchId: currentMatchId,
-          photoPath: filePath
-        }
-      });
-
-      if (response.error) {
-        return null;
-      }
-
-      const { signedUrl, canViewUnblurred: canView } = response.data;
-      
-      // Cache for 50 minutes (URLs expire in 60)
-      signedUrlCache.set(cacheKey, {
-        url: signedUrl,
-        expiresAt: Date.now() + 50 * 60 * 1000,
-        canViewUnblurred: canView
-      });
-
-      return { signedUrl, canViewUnblurred: canView };
-    } catch (error) {
-      logError(`useSecurePhotos:getSignedUrl:${targetUserId}`, error);
-      return null;
-    }
-  }, []);
 
   const fetchPhotos = useCallback(async () => {
     if (!userId || fetchingRef.current) {
@@ -133,7 +58,7 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
       for (const photo of photoData) {
         if (!photo.photo_url) continue;
 
-        const result = await getSignedUrl(photo.photo_url, userId, matchId);
+        const result = await getSignedPhotoUrl(photo.photo_url, userId, matchId);
         
         if (result) {
           photosWithSignedUrls.push({
@@ -158,18 +83,9 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
       setLoading(false);
       fetchingRef.current = false;
     }
-  }, [userId, matchId, isOwnProfile, getSignedUrl]);
+  }, [userId, matchId, isOwnProfile]);
 
-  // Clear cache for a user when their photos change
-  const clearCache = useCallback((targetUserId: string) => {
-    const keysToDelete: string[] = [];
-    signedUrlCache.forEach((_, key) => {
-      if (key.includes(targetUserId)) {
-        keysToDelete.push(key);
-      }
-    });
-    keysToDelete.forEach(key => signedUrlCache.delete(key));
-  }, []);
+  const clearCache = useCallback((targetUserId: string) => clearSignedPhotoCache(targetUserId), []);
 
   useEffect(() => {
     fetchPhotos();
