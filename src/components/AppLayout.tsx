@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useOnboardingData } from '@/hooks/useOnboardingData';
@@ -8,10 +8,14 @@ import ProfileSetupScreen from './ProfileSetupScreen';
 import Navigation from './Navigation';
 import GradientShell from './GradientShell';
 import LoadingState from './LoadingState';
+import LocationRequiredScreen from './LocationRequiredScreen';
+import { useDailyLocation } from '@/hooks/useDailyLocation';
 import type { ProfileLike } from '@/types/domain';
 
 export interface AppLayoutContext {
   userProfile: ProfileLike | null;
+  // Merge a saved change into userProfile, so other screens don't show stale values.
+  updateUserProfile: (patch: Partial<ProfileLike>) => void;
   shouldShowOnboarding: boolean;
   onboardingLoading: boolean;
   // The single useOnboardingData instance for the signed-in user. The daily
@@ -92,6 +96,13 @@ const AppLayout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
+  const updateUserProfile = useCallback((patch: Partial<ProfileLike>) => {
+    setUserProfile(prev => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  // Location is required and refreshed once a day; see useDailyLocation.
+  const dailyLocation = useDailyLocation(user?.id, profileComplete, updateUserProfile);
+
   const handleProfileSetupComplete = (profile: ProfileLike) => {
     setUserProfile(profile);
     setProfileComplete(true);
@@ -114,6 +125,10 @@ const AppLayout = () => {
     return <ProfileSetupScreen onComplete={handleProfileSetupComplete} />;
   }
 
+  if (dailyLocation.blocked) {
+    return <LocationRequiredScreen checking={dailyLocation.checking} onRetry={dailyLocation.retry} />;
+  }
+
   // Existing users answer the onboarding flow once a day, and their answer
   // decides that day's matches, so no screen is reachable until it's done.
   if (!onboardingLoading && shouldShowOnboarding && location.pathname !== '/onboarding') {
@@ -128,7 +143,7 @@ const AppLayout = () => {
 
   return (
     <GradientShell withCard>
-      <Outlet context={{ userProfile, shouldShowOnboarding, onboardingLoading, onboarding }} />
+      <Outlet context={{ userProfile, updateUserProfile, shouldShowOnboarding, onboardingLoading, onboarding }} />
       {!hideNavigation && <Navigation />}
     </GradientShell>
   );

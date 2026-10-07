@@ -122,7 +122,7 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
   return (
     <div className="flex flex-col h-screen">
       {/* Header - More compact */}
-      <div className="p-3 bg-white border-b border-border">
+      <div className="p-3 bg-card border-b border-border">
         <ScreenHeader
           onBack={onBackToChats}
           avatar={{ src: matchedUserPhoto ?? undefined, alt: matchedUserName, blurred: !revealed }}
@@ -256,7 +256,7 @@ const ChatScreen = ({ matchId, matchedUserId, matchedUserName, matchedUserVibes,
       </div>
 
       {/* Message Input - anchored to bottom, below the message list */}
-      <div className="p-4 bg-white border-t border-border shadow-sm">
+      <div className="p-4 bg-card border-t border-border shadow-sm">
         {closedReason ? (
           <div className="text-center space-y-3" role="status">
             <div>

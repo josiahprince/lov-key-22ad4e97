@@ -15,8 +15,8 @@ interface VibesStepProps {
 const VibesStep = ({ vibes, selectedMemes, onToggleMeme, onBack, onNext }: VibesStepProps) => (
   <div className="space-y-3 animate-fade-in">
     <div className="text-center space-y-1">
-      <h2 className="text-lg font-bold text-gray-800">Pick your vibes</h2>
-      <p className="text-xs text-gray-600">Choose up to {MAX_SELECTED_VIBES} that represent you today</p>
+      <h2 className="text-lg font-bold text-foreground">Pick your vibes</h2>
+      <p className="text-xs text-muted-foreground">Choose up to {MAX_SELECTED_VIBES} that represent you today</p>
       <p className="text-xs text-primary">{selectedMemes.length}/{MAX_SELECTED_VIBES} selected</p>
     </div>
 
@@ -27,7 +27,7 @@ const VibesStep = ({ vibes, selectedMemes, onToggleMeme, onBack, onNext }: Vibes
           className={`p-2 cursor-pointer transition-all duration-200 hover:scale-105 border-2 ${
             selectedMemes.includes(meme.id)
               ? 'bg-accent border-primary/20 text-accent-foreground'
-              : 'bg-gray-50 hover:bg-gray-100'
+              : 'bg-muted hover:bg-muted'
           }`}
           onClick={() => onToggleMeme(meme.id)}
         >
@@ -35,7 +35,7 @@ const VibesStep = ({ vibes, selectedMemes, onToggleMeme, onBack, onNext }: Vibes
             <div className="text-base">{meme.emoji}</div>
             <div>
               <h3 className="text-xs font-medium">{meme.title}</h3>
-              <p className="text-xs text-gray-600">{meme.description}</p>
+              <p className="text-xs text-muted-foreground">{meme.description}</p>
             </div>
           </div>
         </Card>

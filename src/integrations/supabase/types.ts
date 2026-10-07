@@ -244,6 +244,7 @@ export type Database = {
           last_name: string | null
           latitude: number | null
           location: string | null
+          location_updated_at: string | null
           longitude: number | null
           max_age_preference: number | null
           max_distance_preference: number | null
@@ -278,6 +279,7 @@ export type Database = {
           last_name?: string | null
           latitude?: number | null
           location?: string | null
+          location_updated_at?: string | null
           longitude?: number | null
           max_age_preference?: number | null
           max_distance_preference?: number | null
@@ -312,6 +314,7 @@ export type Database = {
           last_name?: string | null
           latitude?: number | null
           location?: string | null
+          location_updated_at?: string | null
           longitude?: number | null
           max_age_preference?: number | null
           max_distance_preference?: number | null
@@ -575,6 +578,17 @@ export type Database = {
       }
     }
     Functions: {
+      set_my_location: {
+        Args: {
+          p_city: string
+          p_country: string
+          p_latitude: number
+          p_location: string
+          p_longitude: number
+          p_region: string
+        }
+        Returns: undefined
+      }
       block_user: {
         Args: { target_user_id: string }
         Returns: undefined

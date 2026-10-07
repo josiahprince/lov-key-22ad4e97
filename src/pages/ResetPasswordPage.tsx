@@ -75,7 +75,7 @@ const ResetPasswordPage = () => {
 
   return (
     <GradientShell centered>
-      <Card className="w-full max-w-md p-6 bg-white/80 backdrop-blur-sm shadow-xl space-y-4">
+      <Card className="w-full max-w-md p-6 bg-card/80 backdrop-blur-sm shadow-xl space-y-4">
         <div className="text-center">
           <h1 className="font-bold text-primary text-2xl">Reset password</h1>
         </div>

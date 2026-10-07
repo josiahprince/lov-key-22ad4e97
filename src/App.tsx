@@ -2,6 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
@@ -11,22 +13,35 @@ import MatchesPage from "@/pages/MatchesPage";
 import ChatsPage from "@/pages/ChatsPage";
 import ChatPage from "@/pages/ChatPage";
 import ProfilePage from "@/pages/ProfilePage";
-import SettingsPage from "@/pages/SettingsPage";
-import TermsPage from "@/pages/TermsPage";
-import PrivacyPage from "@/pages/PrivacyPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
-import MatchedProfileView from "@/pages/MatchedProfileView";
-import NotFound from "./pages/NotFound";
+import GradientShell from "@/components/GradientShell";
+import LoadingState from "@/components/LoadingState";
+
+// The main screens load up front; pages people visit rarely are fetched on demand.
+const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const TermsPage = lazy(() => import("@/pages/TermsPage"));
+const PrivacyPage = lazy(() => import("@/pages/PrivacyPage"));
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
+const MatchedProfileView = lazy(() => import("@/pages/MatchedProfileView"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
+// Light / Dark / System, chosen in Settings → Appearance and kept per device.
 const App = () => (
+  <ThemeProvider attribute="class" defaultTheme="system" enableSystem storageKey="lovkey-theme" disableTransitionOnChange>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <Suspense
+            fallback={
+              <GradientShell centered>
+                <LoadingState variant="spinner" label="Loading..." />
+              </GradientShell>
+            }
+          >
           <Routes>
             <Route element={<AppLayout />}>
               <Route path="/" element={<HomeRedirect />} />
@@ -52,10 +67,12 @@ const App = () => (
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </Suspense>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

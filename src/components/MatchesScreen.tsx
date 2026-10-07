@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart, X, MessageCircle, Loader2, Send, Check, Clock } from 'lucide-react';
-import { useMatches } from '@/hooks/useMatches';
+import { useMatches, type MatchProfile } from '@/hooks/useMatches';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -15,27 +15,7 @@ import ScreenHeader from '@/components/ScreenHeader';
 import LoadingState from '@/components/LoadingState';
 import EmptyState from '@/components/EmptyState';
 import InitialsAvatar from '@/components/InitialsAvatar';
-interface MatchProfile {
-  id: string;
-  userId: string; // The matched user's ID
-  name: string;
-  age?: number;
-  mood: string;
-  memes: {
-    emoji: string;
-    title: string;
-  }[];
-  promptAnswer: string;
-  promptQuestion: string;
-  compatibility: number;
-  mainPhoto: string | null;
-  city?: string;
-  region?: string;
-  country?: string;
-  chatRequestStatus: string;
-  chatRequestSender?: string;
-  expiresAt?: string;
-}
+import MatchDetails from '@/components/MatchDetails';
 interface MatchesScreenProps {
   userProfile: ProfileLike | null;
   onNavigateToChats?: () => void;
@@ -282,7 +262,7 @@ const MatchesScreen = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 shrink-0">
-                  <InitialsAvatar src={match.mainPhoto} name={match.name} blurred />
+                  <InitialsAvatar src={match.mainPhoto} name={match.name} blurred={!match.photoRevealed} />
                 </div>
                 <div>
                   <h3 className="font-medium text-foreground">{match.name}</h3>
@@ -294,33 +274,7 @@ const MatchesScreen = ({
               </div>
             </div>
 
-            {/* Current Mood */}
-            <div>
-              <h4 className="text-xs font-medium text-foreground/80 mb-1">Current Mood</h4>
-              <div className="flex items-center space-x-2">
-                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
-                <span className="text-sm text-muted-foreground capitalize">{match.mood}</span>
-              </div>
-            </div>
-
-            {/* Vibes Section */}
-            {match.memes.length > 0 && <div>
-                <h4 className="text-xs font-medium text-foreground/80 mb-2">Their Vibes</h4>
-                <div className="flex flex-wrap gap-2">
-                  {match.memes.map((meme, index) => <div key={index} className="flex items-center space-x-1 px-2 py-1 bg-accent border border-primary/20 rounded-lg">
-                      <div className="text-xs">{meme.emoji}</div>
-                      <span className="text-xs font-medium text-accent-foreground">{meme.title}</span>
-                    </div>)}
-                </div>
-              </div>}
-
-            {/* Question of the week answer */}
-            {match.promptAnswer && <div>
-                <h4 className="text-xs font-medium text-foreground/80 mb-1">{match.promptQuestion}</h4>
-                <div className="p-3 bg-muted rounded-lg">
-                  <p className="text-sm text-foreground/80">"{match.promptAnswer}"</p>
-                </div>
-              </div>}
+            <MatchDetails mood={match.mood} vibes={match.memes} promptQuestion={match.promptQuestion} promptAnswer={match.promptAnswer} />
 
             {/* Expiry Timer */}
             {match.expiresAt && <div className="flex items-center space-x-2 text-xs text-muted-foreground">

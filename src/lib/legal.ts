@@ -7,12 +7,12 @@ import {
 
 // Bump TERMS_VERSION whenever the text below changes materially. Sign-up
 // records the version a user agreed to in their auth user_metadata.
-export const TERMS_VERSION = '2026-10-01';
-export const TERMS_LAST_UPDATED = 'October 1, 2026';
+export const TERMS_VERSION = '2026-10-07';
+export const TERMS_LAST_UPDATED = 'October 7, 2026';
 
 // Same rule as TERMS_VERSION, recorded alongside it at sign-up.
-export const PRIVACY_VERSION = '2026-10-01';
-export const PRIVACY_LAST_UPDATED = 'October 1, 2026';
+export const PRIVACY_VERSION = '2026-10-07';
+export const PRIVACY_LAST_UPDATED = 'October 7, 2026';
 
 // TODO(owner): replace these placeholders before launch.
 export const LEGAL_OPERATOR = '[Company Name]';
@@ -68,6 +68,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
       'LovKey is built around slower, more intentional connections. By using it you understand and accept how matching and chats work:',
     ],
     bullets: [
+      'Location: LovKey needs your device location to suggest people near you, and cannot be used with location access turned off. It is checked when you set up your profile and once a day after that, and you cannot type in a different place. Other users see only your city, region, and country.',
       'Daily check-in: once a day, on your first visit after 06:00 local time, you share your mood, pick vibes, and answer the question of the week. Your answers are used to suggest that day’s matches.',
       `Daily matches: suggested matches expire after ${MATCH_EXPIRY_HOURS} hours if no chat is started. Both people are notified, and an expired match is not suggested again for at least 7 days.`,
       `Active chat limit: you can have up to ${MAX_ACTIVE_CHATS} active chats at a time. While you are at the limit you will not receive new matches and cannot start or accept new chats.`,
@@ -181,10 +182,10 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: '2. Information you give us',
     bullets: [
       'Account: your email address and password. Your password is stored only as a secure hash, and we cannot see it.',
-      'Profile: first and last name, nickname, date of birth and age, gender, sexual orientation, who you are interested in, religion, languages, interests, personality prompts, your "about me" description, and optionally a phone number.',
+      'Profile: first and last name, nickname, date of birth and age, gender, sexual orientation, who you are interested in, religion, languages, interests, your "about me" description, and optionally a phone number.',
       'Match preferences: the age range and distance you want matches within.',
       'Photos: up to 6 profile photos.',
-      'Location: your city, region, and country, plus the approximate coordinates used to measure distance to other users. These come from your device location (if you allow it) or from a place you type in.',
+      'Location: your city, region, and country, plus approximate coordinates (rounded to about 1 km) used to measure distance to other users. These come from your device location, which LovKey requires. We check it when you set up your profile, once a day after that, and whenever you tap Update location in Settings. We do not keep a history of past locations; each check replaces the last one.',
       'Daily check-in: your mood, the vibes you pick, and your answer to the question of the week, given once a day.',
       'Messages: everything you send in chats, and your choices when asked whether to reveal photos.',
       'Safety actions: the people you block and the reports you file, including any details you write.',
@@ -211,7 +212,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: 'how-we-use',
     title: '5. How we use your information',
     bullets: [
-      'Suggesting daily matches. Each day we compare your check-in answers (mood and vibes), gender and who you are interested in, age range, distance, interests, languages, and personality prompts with other users’ to choose compatible people. Matching is automated; no person picks your matches.',
+      'Suggesting daily matches. Each day we compare your check-in answers (mood and vibes), gender and who you are interested in, age range, distance, interests, and languages with other users’ to choose compatible people. Matching is automated; no person picks your matches.',
       `Running LovKey’s rules: expiring matches after ${MATCH_EXPIRY_HOURS} hours, limiting you to ${MAX_ACTIVE_CHATS} active chats, closing inactive chats, not repeating recent matches, and keeping photos blurred until you both agree to reveal them.`,
       'Keeping people safe: reviewing reports, enforcing our Community Rules, preventing spam and abuse, and acting on suspected underage use.',
       'Contacting you: in-app notifications about matches and chats, and account emails such as password resets. We do not send marketing emails.',
@@ -226,7 +227,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       'LovKey has no public browsing. Only people you are matched with can see your profile. A match can see:',
     ],
     bullets: [
-      'Your nickname, age, gender, sexual orientation, who you are interested in, religion, city, region and country, languages, interests, personality prompts, and description.',
+      'Your nickname, age, gender, sexual orientation, who you are interested in, religion, city, region and country, languages, interests, and description.',
       'Your daily check-in answers (mood, vibes, and your answer to the question of the week).',
       `Your photos, blurred. They are only revealed if you both choose to reveal them after ${PHOTO_REVEAL_INITIAL_THRESHOLD} messages.`,
       'The messages you send them.',
@@ -245,7 +246,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     paragraphs: ['We share information only with the service providers that help us run LovKey, and only what each one needs:'],
     bullets: [
       'Supabase: hosts our database, sign-in, photo storage, and server functions. All of your account data is stored there.',
-      'OpenStreetMap (Nominatim): when you set your location, our server sends it your coordinates or the place you typed to look up the matching city and country. Your name and account are never sent.',
+      'BigDataCloud: each time your location is checked, your device sends it your coordinates to look up the matching city and country. Like any website you connect to, it also sees your device’s IP address. Your name and account are never sent.',
       'An AI provider: generates each week’s vibe options for a country. It receives only the country name and the week, never anything about you.',
       'Resend: delivers the email alerts our moderation team receives when someone files a report. Those emails include the reason, the details written, and both people’s nicknames.',
     ],
@@ -275,7 +276,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       'Download your data: Settings → Download my data gives you a file containing your account details, profile, photos, preferences, check-in answers, matches, the messages you sent, notifications, blocks, and the reports you filed.',
       'Correct your data: edit your profile and preferences at any time.',
       'Delete your data: Settings → Delete account removes it immediately (see section 10).',
-      'Withdraw consent: remove sensitive details from your profile, turn off location access in your device settings, or delete your account.',
+      'Withdraw consent: remove sensitive details from your profile, or delete your account. You can turn off location access in your device settings, but LovKey cannot be used without it, because matches are based on where you are.',
       `Depending on where you live, you may also have the right to object to or restrict certain uses of your data, and to complain to your local data protection authority. To use any of these rights, email ${SUPPORT_EMAIL}.`,
     ],
   },

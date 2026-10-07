@@ -77,7 +77,7 @@ export const useUserPhotos = (userId: string | undefined) => {
         await removePhoto(slot);
       }
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from(PHOTO_BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -93,7 +93,7 @@ export const useUserPhotos = (userId: string | undefined) => {
         .getPublicUrl(fileName);
 
       // Save to database
-      const { data, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from('user_photos')
         .upsert({
           user_id: userId,
@@ -128,7 +128,7 @@ export const useUserPhotos = (userId: string | undefined) => {
 
     try {
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('user_photos')
         .upsert({
           user_id: userId,

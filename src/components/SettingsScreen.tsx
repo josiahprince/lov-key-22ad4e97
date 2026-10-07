@@ -9,7 +9,9 @@ import ChangePasswordDialog from '@/components/settings/ChangePasswordDialog';
 import DeleteAccountDialog from '@/components/settings/DeleteAccountDialog';
 import DownloadDataButton from '@/components/settings/DownloadDataButton';
 import SafetyTipsSheet from '@/components/settings/SafetyTipsSheet';
-import { supabase } from '@/integrations/supabase/client';
+import ThemeSelector from '@/components/settings/ThemeSelector';
+import LocationSetting from '@/components/settings/LocationSetting';
+import { signOut } from '@/lib/signOut';
 import { useAuth } from '@/hooks/useAuth';
 import { SUPPORT_EMAIL } from '@/lib/legal';
 import type { ProfileLike } from '@/types/domain';
@@ -21,7 +23,13 @@ const SettingsGroup = ({ title, children }: { title: string; children: ReactNode
   </section>
 );
 
-const SettingsScreen = ({ userProfile }: { userProfile: ProfileLike | null }) => {
+const SettingsScreen = ({
+  userProfile,
+  onProfileUpdated,
+}: {
+  userProfile: ProfileLike | null;
+  onProfileUpdated?: (patch: Partial<ProfileLike>) => void;
+}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -38,8 +46,10 @@ const SettingsScreen = ({ userProfile }: { userProfile: ProfileLike | null }) =>
       </SettingsGroup>
 
       <SettingsGroup title="Discovery">
+        <LocationSetting userProfile={userProfile} onProfileUpdated={onProfileUpdated} />
         <ProfileFilters
           userProfile={userProfile}
+          onSaved={onProfileUpdated}
           trigger={
             <Button variant="outline" className="w-full justify-start gap-2">
               <SlidersHorizontal className="h-4 w-4" />
@@ -47,6 +57,10 @@ const SettingsScreen = ({ userProfile }: { userProfile: ProfileLike | null }) =>
             </Button>
           }
         />
+      </SettingsGroup>
+
+      <SettingsGroup title="Appearance">
+        <ThemeSelector />
       </SettingsGroup>
 
       <SettingsGroup title="Privacy & Safety">
@@ -77,7 +91,7 @@ const SettingsScreen = ({ userProfile }: { userProfile: ProfileLike | null }) =>
       </SettingsGroup>
 
       <div className="space-y-3 pt-2">
-        <Button variant="outline" className="w-full justify-start gap-2" onClick={() => supabase.auth.signOut()}>
+        <Button variant="outline" className="w-full justify-start gap-2" onClick={signOut}>
           <LogOut className="h-4 w-4" />
           Sign out
         </Button>

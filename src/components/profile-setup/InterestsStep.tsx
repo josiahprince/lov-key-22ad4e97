@@ -1,13 +1,6 @@
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useProfileSetup } from './ProfileSetupContext';
-
-const INTEREST_OPTIONS = [
-  'Music', 'Travel', 'Memes', 'Pets', 'Sports', 'Photography', 'Cooking', 'Reading',
-  'Movies', 'Gaming', 'Fitness', 'Art', 'Dancing', 'Hiking', 'Technology', 'Fashion',
-  'Food', 'Nature', 'Writing', 'Yoga', 'Coffee', 'Wine', 'Books', 'Concerts',
-  'Beach', 'Mountains', 'Comedy', 'Theater', 'Museums', 'Festivals'
-];
+import { INTEREST_OPTIONS } from '@/lib/profileOptions';
 
 export const MAX_INTERESTS = 5;
 
@@ -30,7 +23,7 @@ const InterestsStep = () => {
         <p className="text-sm text-muted-foreground mt-1">Pick up to {MAX_INTERESTS} - great conversation starters</p>
       </div>
       <div className="flex justify-end">
-        <span className="text-sm text-gray-600">{formData.interests.length}/{MAX_INTERESTS} selected</span>
+        <span className="text-sm text-muted-foreground">{formData.interests.length}/{MAX_INTERESTS} selected</span>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {INTEREST_OPTIONS.map((interest) => {

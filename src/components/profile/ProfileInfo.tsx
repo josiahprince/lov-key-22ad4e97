@@ -39,7 +39,7 @@ const ProfileInfo = ({ userProfile, isMatchedUser = false, matchedUserId }: Prof
   if (!userProfile) {
     return (
       <Card className="p-4">
-        <p className="text-gray-600 text-center">Loading profile information...</p>
+        <p className="text-muted-foreground text-center">Loading profile information...</p>
       </Card>
     );
   }

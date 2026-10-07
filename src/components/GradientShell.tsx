@@ -10,7 +10,7 @@ interface GradientShellProps {
 
 const GradientShell = ({ children, centered = false, withCard = false, className }: GradientShellProps) => {
   const content = withCard ? (
-    <div className="max-w-md mx-auto min-h-screen bg-white/80 backdrop-blur-sm shadow-xl">
+    <div className="max-w-md mx-auto min-h-screen bg-card/80 backdrop-blur-sm shadow-xl">
       {children}
     </div>
   ) : (
@@ -20,7 +20,7 @@ const GradientShell = ({ children, centered = false, withCard = false, className
   return (
     <div
       className={cn(
-        'min-h-screen bg-gradient-to-br from-primary/5 via-orange-50 to-primary/10',
+        'min-h-screen bg-gradient-to-br from-primary/5 via-orange-50 to-primary/10 dark:from-background dark:via-background dark:to-primary/10',
         centered && 'flex items-center justify-center p-4',
         className
       )}

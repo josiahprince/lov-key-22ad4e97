@@ -10,7 +10,7 @@ const Navigation = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
+    <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-card border-t border-border px-6 py-3">
       <div className="flex justify-around items-center">
         {navItems.map((item) => {
           const IconComponent = item.icon;
@@ -29,7 +29,7 @@ const Navigation = () => {
               className={`flex flex-col items-center space-y-1 px-4 py-2 rounded-xl transition-all duration-200 ${
                 isActive
                   ? 'bg-accent text-primary'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <IconComponent className={`w-5 h-5 ${isActive ? 'text-primary' : ''}`} />

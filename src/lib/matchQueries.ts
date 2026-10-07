@@ -1,5 +1,18 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { SelectedMemeDisplay } from '@/types/domain';
+import { getMatchDayStart } from '@/lib/constants';
+import { logError } from '@/lib/errorLogger';
+import { getSignedPhotoUrl } from '@/lib/photoUrls';
+
+// Matches handed out since today's 06:00 local boundary, counted the same way
+// as generate_matches_internal()'s daily cap (anything not expired).
+export const fetchTodayMatchCount = (userId: string) =>
+  supabase
+    .from('matches')
+    .select('id', { count: 'exact', head: true })
+    .or(`user_1.eq.${userId},user_2.eq.${userId}`)
+    .neq('status', 'expired')
+    .gte('matched_on', getMatchDayStart().toISOString());
 
 // Legacy fallback only: rows saved before selected_memes_display existed have
 // no persisted title/emoji, so this static table is the best-effort recovery
@@ -38,17 +51,44 @@ const isSelectedMemeDisplayArray = (value: unknown): value is SelectedMemeDispla
 export const toSelectedMemeDisplay = (value: unknown): SelectedMemeDisplay[] | undefined =>
   isSelectedMemeDisplayArray(value) ? value : undefined;
 
-// Prefers the exact vibe text/emoji persisted at selection time. Falls back to
-// the legacy static map (by id) only for rows saved before that column existed.
+const slugify = (title: string) =>
+  title.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+// Vibe ids are title slugs ("bollywood-buff"), so a title can be rebuilt from
+// one. Old positional ids ("vibe2") and the "pending" placeholder carry no title.
+const titleFromSlug = (id: string) => {
+  if (id === 'pending' || /^(vibe|meme)\d+$/.test(id)) return null;
+  const title = id
+    .split('-')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+  return title || null;
+};
+
+const FALLBACK_VIBE_EMOJI = '✨';
+
+// One entry per vibe the person picked (selected_memes is the source of truth).
+// Each uses the title/emoji saved at selection time when there is one, then the
+// legacy map, then a title rebuilt from the slug id, so a missing or partial
+// selected_memes_display never hides a vibe.
 export const getMemeDisplayInfo = (
   selectedMemes: string[] | null | undefined,
   selectedMemesDisplay?: unknown
-) => {
-  if (isSelectedMemeDisplayArray(selectedMemesDisplay) && selectedMemesDisplay.length > 0) {
-    return selectedMemesDisplay.map(({ emoji, title }) => ({ emoji, title }));
-  }
-  if (!selectedMemes || selectedMemes.length === 0) return [];
-  return selectedMemes.map((meme) => LEGACY_MEME_MAP[meme]).filter(Boolean);
+): { emoji: string; title: string }[] => {
+  const saved = isSelectedMemeDisplayArray(selectedMemesDisplay) ? selectedMemesDisplay : [];
+  const ids = selectedMemes ?? [];
+
+  if (ids.length === 0) return saved.map(({ emoji, title }) => ({ emoji, title }));
+
+  return ids.flatMap((id) => {
+    const match = saved.find((d) => d.id === id) ?? saved.find((d) => slugify(d.title) === id);
+    if (match) return [{ emoji: match.emoji, title: match.title }];
+    const legacy = LEGACY_MEME_MAP[id];
+    if (legacy) return [legacy];
+    const title = titleFromSlug(id);
+    return title ? [{ emoji: FALLBACK_VIBE_EMOJI, title }] : [];
+  });
 };
 
 // Most recent onboarding record for a user, excluding placeholder "pending" rows.
@@ -72,3 +112,27 @@ export const fetchMainPhotoUrl = (userId: string) =>
 
 export const fetchMatchedViewProfile = (userId: string) =>
   supabase.from('profiles_matched_view').select('*').eq('id', userId).maybeSingle();
+
+// Everything a match or chat card shows about the other person, fetched in
+// parallel. `source` only labels error logs. Failures are logged and leave that
+// part null, so a card still renders with what could be loaded. The photo comes
+// back as a signed URL (the bucket is private) plus whether the pair has
+// revealed photos; until then cards show it blurred.
+export const fetchMatchPartner = async (userId: string, source: string, matchId: string) => {
+  const [profileRes, onboardingRes, photoRes] = await Promise.all([
+    fetchMatchedViewProfile(userId),
+    fetchLatestOnboarding(userId),
+    fetchMainPhotoUrl(userId),
+  ]);
+  if (profileRes.error) logError(`${source}:profile:${userId}`, profileRes.error);
+  if (onboardingRes.error) logError(`${source}:onboarding:${userId}`, onboardingRes.error);
+  if (photoRes.error) logError(`${source}:photo:${userId}`, photoRes.error);
+  const storedUrl = photoRes.data?.photo_url;
+  const photo = storedUrl ? await getSignedPhotoUrl(storedUrl, userId, matchId) : null;
+  return {
+    profile: profileRes.data,
+    onboarding: onboardingRes.data,
+    photoUrl: photo?.signedUrl ?? null,
+    photoRevealed: photo?.canViewUnblurred ?? false,
+  };
+};

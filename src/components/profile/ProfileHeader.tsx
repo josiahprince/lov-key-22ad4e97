@@ -36,7 +36,7 @@ const ProfileHeader = ({ userProfile, isMatchedUser = false, canViewPhotos = tru
     <div className="text-center space-y-4">
       <div className="relative mx-auto w-24 h-24">
         <div
-          className={`w-24 h-24 bg-accent rounded-full flex items-center justify-center border-4 border-white shadow-lg overflow-hidden ${
+          className={`w-24 h-24 bg-accent rounded-full flex items-center justify-center border-4 border-background shadow-lg overflow-hidden ${
             displayUrl && onPhotoClick ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''
           }`}
           onClick={() => displayUrl && onPhotoClick?.()}

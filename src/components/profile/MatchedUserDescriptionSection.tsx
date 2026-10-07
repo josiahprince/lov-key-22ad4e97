@@ -81,9 +81,9 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
   if (loading) {
     return (
       <Card className="p-6 space-y-4">
-        <h3 className="font-medium text-gray-700">Description</h3>
+        <h3 className="font-medium text-foreground">Description</h3>
         <div className="animate-pulse">
-          <div className="h-20 bg-gray-200 rounded"></div>
+          <div className="h-20 bg-muted rounded"></div>
         </div>
       </Card>
     );
@@ -91,15 +91,15 @@ const MatchedUserDescriptionSection = ({ userId }: MatchedUserDescriptionSection
 
   return (
     <Card className="p-6 space-y-4">
-      <h3 className="font-medium text-gray-700">Description</h3>
+      <h3 className="font-medium text-foreground">Description</h3>
       
       {description ? (
-        <div className="p-3 bg-gray-50 rounded-lg border">
-          <p className="text-gray-700 whitespace-pre-wrap">{description}</p>
+        <div className="p-3 bg-muted rounded-lg border">
+          <p className="text-foreground whitespace-pre-wrap">{description}</p>
         </div>
       ) : (
-        <div className="p-3 bg-gray-50 rounded-lg border">
-          <p className="text-gray-500 italic">No description available</p>
+        <div className="p-3 bg-muted rounded-lg border">
+          <p className="text-muted-foreground italic">No description available</p>
         </div>
       )}
     </Card>

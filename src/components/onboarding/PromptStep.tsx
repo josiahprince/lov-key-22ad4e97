@@ -21,7 +21,7 @@ const PromptStep = ({
 }: PromptStepProps) => (
   <div className="space-y-4 animate-fade-in">
     <div className="space-y-3">
-      <p className="text-xs font-medium text-center text-gray-500 uppercase tracking-wide">
+      <p className="text-xs font-medium text-center text-muted-foreground uppercase tracking-wide">
         Question of the week
       </p>
       <h3 className="text-lg font-bold text-center bg-gradient-to-r from-primary via-primary/70 to-orange-500 bg-clip-text text-transparent">
@@ -33,7 +33,7 @@ const PromptStep = ({
         onChange={(e) => onChangePromptAnswer(e.target.value)}
         className="min-h-[80px] rounded-xl text-sm"
       />
-      <p className="text-xs text-gray-500 text-center">
+      <p className="text-xs text-muted-foreground text-center">
         Be yourself! There's no wrong answer here.
       </p>
     </div>
