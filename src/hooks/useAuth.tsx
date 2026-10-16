@@ -10,6 +10,10 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const userKey = (user: User | null) => (user
+  ? [user.id, user.email, user.email_confirmed_at, user.new_email, user.phone, user.phone_confirmed_at, user.new_phone].join('|')
+  : '');
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -23,7 +27,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // invalidates any useCallback/useEffect keyed on `user` and causes
     // spurious refetches (visible as loading-state flicker on screens like
     // Matches/Chats). Only swap in a new reference when the actual
-    // identity/token changed.
+    // identity/token changed, or a phone or email was added or confirmed
+    // (AppLayout's verification gate reads those).
     const applySession = (nextSession: Session | null) => {
       setSession((prev) => (
         prev?.access_token === nextSession?.access_token && prev?.user?.id === nextSession?.user?.id
@@ -32,7 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ));
       setUser((prev) => {
         const nextUser = nextSession?.user ?? null;
-        return prev?.id === nextUser?.id ? prev : nextUser;
+        return userKey(prev) === userKey(nextUser) ? prev : nextUser;
       });
       setLoading(false);
     };

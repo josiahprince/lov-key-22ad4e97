@@ -706,6 +706,10 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      verification_required_from: {
+        Args: never
+        Returns: string
+      }
     }
     Enums: {
       gender_type: "male" | "female" | "non_binary" | "other"

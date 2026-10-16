@@ -157,6 +157,8 @@ Deno.serve(async (req) => {
         email: user.email,
         created_at: user.created_at,
         email_confirmed_at: user.email_confirmed_at ?? null,
+        phone: user.phone || null,
+        phone_confirmed_at: user.phone_confirmed_at ?? null,
         last_sign_in_at: user.last_sign_in_at ?? null,
         terms_version: user.user_metadata?.terms_version ?? null,
         privacy_version: user.user_metadata?.privacy_version ?? null,

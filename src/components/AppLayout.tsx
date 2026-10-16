@@ -9,6 +9,8 @@ import Navigation from './Navigation';
 import GradientShell from './GradientShell';
 import LoadingState from './LoadingState';
 import LocationRequiredScreen from './LocationRequiredScreen';
+import VerifyAccountScreen from './VerifyAccountScreen';
+import { pendingVerificationStep } from '@/lib/accountVerification';
 import { useDailyLocation } from '@/hooks/useDailyLocation';
 import type { ProfileLike } from '@/types/domain';
 
@@ -118,7 +120,13 @@ const AppLayout = () => {
   }
 
   if (!user) {
-    return <AuthScreen onAuthSuccess={() => {}} />;
+    return <AuthScreen />;
+  }
+
+  // New accounts confirm a phone and an email before anything else.
+  const verificationStep = pendingVerificationStep(user);
+  if (verificationStep) {
+    return <VerifyAccountScreen user={user} step={verificationStep} />;
   }
 
   if (!profileComplete) {
