@@ -45,6 +45,15 @@ Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY
 - Dev only: `VITE_DEV_IP_LOCATION=true` in `.env.local` (gitignored) falls back to the approximate location of your internet connection when the browser refuses, because the Claude browser pane always refuses. It is compiled out of production builds. It writes that location to the profile, so the signed-in test account moves to wherever your connection appears to be.
 - Location columns (`latitude`, `longitude`, `city`, `region`, `country`, `location`, `location_updated_at`) can only be written through `set_my_location()`. The `guard_profile_location` trigger rejects direct client writes, and the function rejects moves faster than 1000 km/h (`20261007120000_location_guard.sql`). Coordinates are rounded to 2 decimals (about 1 km). It still trusts the city name and coordinates the browser sends, so it stops tampering, not GPS spoofing.
 
+## Sign-up and sign-in (owner decision, 2026-10-16)
+
+- Hinge-style: sign-up starts with a mobile number and an SMS code (`AuthScreen`, `signInWithOtp` with `shouldCreateUser`). Then `VerifyAccountScreen` (shown by `AppLayout` before profile setup) adds an email and password with `updateUser` and confirms the email with a 6-digit code. Supabase treats that as an email change, so the code is `type: 'email_change'` and comes from the "Change email address" template.
+- Sign-in: Phone tab (SMS code, `shouldCreateUser: false` so a typo never creates an account), or Email tab (email and password). "Forgot password?" stays email-based.
+- Only accounts created on or after `VERIFICATION_REQUIRED_FROM` (`src/lib/accountVerification.ts`, 2026-10-16) must verify. Older accounts were auto-confirmed test accounts and are left alone. `pendingVerificationStep()` decides what's still missing.
+- Enforced server-side by the `guard_profile_verification` trigger: a new account can't set `is_profile_complete` until both `phone_confirmed_at` and `email_confirmed_at` are set, so an email-only account made straight through the API never gets matched (`20261016120000_account_verification.sql`, whose `verification_required_from()` must match the client constant).
+- `useAuth` swaps in a new `user` when the phone or email fields change, not only the id, because the gate reads them.
+- Phone numbers are parsed and validated with `libphonenumber-js` (`src/lib/phone.ts`). Supabase stores them without the `+`.
+
 ## Database gotchas
 
 - `matches` has an UPDATE policy with no column restriction. Clients can PATCH any column, so never trust client-writable columns for rules. Enforce them in triggers or SECURITY DEFINER functions.

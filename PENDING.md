@@ -2,17 +2,29 @@
 
 Open work that needs the owner. Claude reminds you of these (see `CLAUDE.md`). Remove an item once it's done.
 
-_Last reviewed: 2026-10-07_
+_Last reviewed: 2026-10-16_
 
 ## Before launch (needs you)
+
+- [ ] **Switch on phone and email verification (code is built, branch `feat/phone-email-verification`).** Until steps 1 and 2 are done, nobody can sign up, because sign-up now starts with an SMS code. Existing accounts are unaffected and still sign in with email and password.
+  1. Apply `supabase/migrations/20261016120000_account_verification.sql` in the SQL editor.
+  2. Supabase → Authentication → Sign In / Providers → **Phone**: turn it on, pick Twilio, and paste the Account SID, Auth Token and Message Service SID from your Twilio account. To test without real texts, add a test number and code under "Test Phone Numbers and OTPs" on the same page.
+  3. Same page → **Email**: turn on **Confirm email**, and keep "Secure email change" on. Existing users were auto-confirmed, so this only affects new sign-ups.
+  4. Authentication → Emails → Templates → **Change email address**: the app asks for a code, so the email must show one. Subject `Your LovKey code`, body `<p>Your LovKey code is <strong>{{ .Token }}</strong>. It expires in 1 hour.</p>`. (New users add their email after the phone, which Supabase counts as an email change.)
+  5. Optional: Authentication → SMS template, e.g. `Your LovKey code is {{ .Code }}`.
+- [ ] **Bot protection on SMS codes (CAPTCHA).** Anyone can ask Supabase to text a code to any number, and bots abuse that to run up SMS bills ("SMS pumping"). Before launch, turn on CAPTCHA (Authentication → Attack Protection, e.g. Cloudflare Turnstile, which is free) and keep the SMS rate limit low (Authentication → Rate Limits). Turnstile also needs a small change in `AuthScreen` to send the CAPTCHA token; ask Claude when you have the site key. In Twilio, limit SMS to the countries you launch in (Messaging → Settings → Geo permissions).
+- [ ] **Photo verification.** Photos users upload need to be verified. Not done yet.
+- [ ] **Age verification.** Users need to be verified so under-age people can't use the app. Not done yet.
 
 - [ ] **Legal placeholders.** Fill in `LEGAL_OPERATOR`, `SUPPORT_EMAIL`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar, and Settings → Contact support emails a dummy address.
 - [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and later your live domain (e.g. `https://yourdomain/**`). Without it, "Forgot password?" emails open the wrong page.
 - [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Set one up in Supabase → Authentication → Emails → SMTP settings.
 - [ ] **Host the app over HTTPS** before launch. Browsers only share location on HTTPS or localhost. Easiest is Lovable → Publish (the repo is already linked); Vercel or Netlify also work. After hosting, add the live address to Supabase → Authentication → URL Configuration (Site URL and Redirect URLs).
-- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
+- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), and the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
 
 ## Still to test end to end (use throwaway accounts)
+
+- [ ] **Phone and email sign-up (after switching it on above):** Sign up → number → SMS code → email and password → emailed code → profile setup. Then sign out and sign in both ways: Phone tab with an SMS code, and Email tab with the password. Also check that closing the app between the SMS and email steps brings you back to the email step, that "Forgot password?" works for the new account, and that an existing (pre-2026-10-16) account still goes straight in.
 
 - [ ] **Remove User:** the chat disappears for both people, the remover's chat count drops by one, and the pair never gets matched again. If the other person has the chat open, it switches to "This chat has ended" within about 15 seconds.
 - [ ] **Skip cooldown:** a skipped person isn't suggested again for 7 days.
