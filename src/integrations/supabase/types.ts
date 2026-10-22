@@ -456,6 +456,10 @@ export type Database = {
           created_at: string | null
           id: string
           is_main: boolean | null
+          moderated_at: string | null
+          moderated_object_id: string | null
+          moderation_reason: string | null
+          moderation_status: string
           photo_slot: number
           photo_url: string
           updated_at: string | null
@@ -465,6 +469,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_main?: boolean | null
+          moderated_at?: string | null
+          moderated_object_id?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
           photo_slot: number
           photo_url: string
           updated_at?: string | null
@@ -474,6 +482,10 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_main?: boolean | null
+          moderated_at?: string | null
+          moderated_object_id?: string | null
+          moderation_reason?: string | null
+          moderation_status?: string
           photo_slot?: number
           photo_url?: string
           updated_at?: string | null
@@ -672,6 +684,18 @@ export type Database = {
       is_after_6am_in_timezone: {
         Args: { user_timezone: string }
         Returns: boolean
+      }
+      photo_is_viewable: {
+        Args: { p_path: string; p_user_id: string }
+        Returns: boolean
+      }
+      photo_object_id: {
+        Args: { p_path: string }
+        Returns: string
+      }
+      photo_storage_path: {
+        Args: { p_photo_url: string }
+        Returns: string
       }
       reset_daily_onboarding_flags: {
         Args: never

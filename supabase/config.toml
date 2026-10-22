@@ -72,3 +72,6 @@ verify_jwt = false
 
 [functions.export-my-data]
 verify_jwt = false
+
+[functions.moderate-photo]
+verify_jwt = false

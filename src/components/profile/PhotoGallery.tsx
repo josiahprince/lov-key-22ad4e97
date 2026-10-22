@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Star, Upload, Link, GripVertical } from 'lucide-react';
+import { Plus, Star, Upload, GripVertical, Loader2, ShieldAlert } from 'lucide-react';
 import type { UseUserPhotosReturn } from '@/hooks/useUserPhotos';
 import { useSecurePhotos } from '@/hooks/useSecurePhotos';
 import { usePhotoSlotDragAndDrop } from '@/hooks/usePhotoSlotDragAndDrop';
 import LoadingState from '@/components/LoadingState';
+import { ALLOWED_IMAGE_TYPES } from '@/lib/photos';
 
 interface PhotoGalleryProps {
   userId?: string;
@@ -18,7 +18,7 @@ interface PhotoGalleryProps {
 }
 
 const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, matchId, onPhotoClick, photosState }: PhotoGalleryProps) => {
-  const { photos: userPhotos, loading: userLoading, uploadPhoto, addPhotoFromUrl, removePhoto, setMainPhoto, swapPhotoSlots } = photosState;
+  const { photos: userPhotos, loading: userLoading, uploadPhoto, removePhoto, setMainPhoto, swapPhotoSlots } = photosState;
   const { photos: securePhotos, loading: secureLoading, canViewUnblurred, refetch: refetchSecurePhotos, clearCache } = useSecurePhotos({
     userId,
     matchId,
@@ -35,8 +35,6 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
   const loading = isMatchedUser ? secureLoading : userLoading;
   const effectiveCanView = isMatchedUser ? (canViewPhotos && canViewUnblurred) : canViewPhotos;
 
-  const [showSocialOptions, setShowSocialOptions] = useState<number | null>(null);
-  const [socialUrl, setSocialUrl] = useState('');
   const [uploading, setUploading] = useState<number | null>(null);
 
   const refreshSecurePhotos = () => {
@@ -74,19 +72,9 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
     if (fileInput) fileInput.click();
   };
 
-  const handleSocialUpload = async (slot: number) => {
-    if (socialUrl.trim()) {
-      try {
-        new URL(socialUrl);
-        await addPhotoFromUrl(socialUrl, slot);
-        setSocialUrl('');
-        setShowSocialOptions(null);
-        refreshSecurePhotos();
-      } catch {
-        alert('Please enter a valid URL');
-      }
-    }
-  };
+  // Own profile only: matches never receive photos that aren't approved.
+  const rejectedPhotos = photos.filter(p => p.moderation_status === 'rejected');
+  const hasPendingPhotos = photos.some(p => p.moderation_status === 'pending');
 
   const mainPhoto = photos.find(p => p.is_main && (p.signedUrl || p.photo_url)) || photos.find(p => p.signedUrl || p.photo_url);
   const mainPhotoUrl = mainPhoto?.signedUrl || mainPhoto?.photo_url;
@@ -113,7 +101,7 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
           key={photo.photo_slot}
           id={`file-input-${photo.photo_slot}`}
           type="file"
-          accept="image/*,.jpg,.jpeg,.png,.gif,.bmp,.webp,.svg,.tiff,.ico"
+          accept={ALLOWED_IMAGE_TYPES.join(",")}
           onChange={(e) => handleFileUpload(photo.photo_slot, e)}
           className="hidden"
         />
@@ -186,6 +174,20 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
                           className="w-full h-full object-cover rounded-lg pointer-events-none"
                           draggable={false}
                         />
+
+                        {/* Photo check status */}
+                        {photo.moderation_status === 'pending' && (
+                          <div className="absolute bottom-1 right-1 z-20 bg-black/70 text-white rounded-full px-1.5 py-0.5 flex items-center gap-1 pointer-events-none">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                            <span className="text-[9px] font-medium">Checking…</span>
+                          </div>
+                        )}
+                        {photo.moderation_status === 'rejected' && (
+                          <div className="absolute inset-0 rounded-lg bg-destructive/70 text-destructive-foreground flex flex-col items-center justify-center gap-1 pointer-events-none">
+                            <ShieldAlert className="w-5 h-5" />
+                            <span className="text-[10px] font-semibold">Not approved</span>
+                          </div>
+                        )}
 
                         {/* Set as main — top left */}
                         {!photo.is_main && (
@@ -262,59 +264,17 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
 
                         {!uploading && !isOver && (
                           <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                            <div className="flex flex-col space-y-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
-                                onClick={() => triggerFileInput(photo.photo_slot)}
-                              >
-                                <Upload className="w-2 h-2 mr-1" />
-                                Upload
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
-                                onClick={() => setShowSocialOptions(photo.photo_slot)}
-                              >
-                                <Link className="w-2 h-2 mr-1" />
-                                URL
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Social URL input */}
-                    {showSocialOptions === photo.photo_slot && (
-                      <div className="absolute top-full left-0 right-0 mt-2 z-30 bg-popover p-2 rounded-lg shadow-lg border">
-                        <div className="flex flex-col space-y-2">
-                          <Input
-                            placeholder="Image URL..."
-                            value={socialUrl}
-                            onChange={(e) => setSocialUrl(e.target.value)}
-                            className="text-xs"
-                          />
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              onClick={() => handleSocialUpload(photo.photo_slot)}
-                              className="text-xs flex-1"
-                            >
-                              Add
-                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setShowSocialOptions(null)}
-                              className="text-xs flex-1"
+                              className="bg-white hover:bg-gray-100 text-black border-gray-300 text-xs px-2"
+                              onClick={() => triggerFileInput(photo.photo_slot)}
                             >
-                              Cancel
+                              <Upload className="w-2 h-2 mr-1" />
+                              Upload
                             </Button>
                           </div>
-                        </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -322,6 +282,23 @@ const PhotoGallery = ({ userId, canViewPhotos = true, isMatchedUser = false, mat
               })}
             </div>
           </div>
+
+          {rejectedPhotos.length > 0 && (
+            <div className="space-y-1 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+              {rejectedPhotos.map((photo) => (
+                <p key={photo.photo_slot}>
+                  <span className="font-semibold">Photo {photo.photo_slot} wasn’t approved.</span>{' '}
+                  {photo.moderation_reason} Replace or remove it.
+                </p>
+              ))}
+            </div>
+          )}
+
+          {hasPendingPhotos && (
+            <p className="text-xs text-muted-foreground">
+              We check every photo before your matches can see it. This usually takes a few seconds.
+            </p>
+          )}
         </div>
       ) : (
         /* ── Matched user: read-only view ── */

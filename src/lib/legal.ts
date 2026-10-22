@@ -7,12 +7,12 @@ import {
 
 // Bump TERMS_VERSION whenever the text below changes materially. Sign-up
 // records the version a user agreed to in their auth user_metadata.
-export const TERMS_VERSION = '2026-10-07';
-export const TERMS_LAST_UPDATED = 'October 7, 2026';
+export const TERMS_VERSION = '2026-10-21';
+export const TERMS_LAST_UPDATED = 'October 21, 2026';
 
 // Same rule as TERMS_VERSION, recorded alongside it at sign-up.
-export const PRIVACY_VERSION = '2026-10-16';
-export const PRIVACY_LAST_UPDATED = 'October 16, 2026';
+export const PRIVACY_VERSION = '2026-10-21';
+export const PRIVACY_LAST_UPDATED = 'October 21, 2026';
 
 // TODO(owner): replace these placeholders before launch.
 export const LEGAL_OPERATOR = '[Company Name]';
@@ -74,6 +74,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
       `Active chat limit: you can have up to ${MAX_ACTIVE_CHATS} active chats at a time. While you are at the limit you will not receive new matches and cannot start or accept new chats.`,
       `Inactive chats: if either person has not sent a message in a chat for ${CHAT_INACTIVITY_HOURS} hours, the chat closes for both people. The conversation cannot be reopened.`,
       `Photo privacy: photos stay blurred to your matches. After ${PHOTO_REVEAL_INITIAL_THRESHOLD} messages, both of you are asked whether to reveal them, and photos are only revealed if you both agree.`,
+      'Photo checks: every photo you add is checked automatically, with the help of an AI service, before your matches can see it. A photo that breaks the Community Rules, features a child, does not show a real person, or includes contact details is not shown, and we tell you why. Automated checks can make mistakes; if you think a photo was wrongly rejected, contact us.',
       'Weekly vibes: the vibe options shown in onboarding are generated automatically, with the help of an AI service, for everyone in your country each week. They are light-hearted suggestions and not statements of fact.',
       'Matches are suggestions based on your preferences and answers. We do not guarantee any number of matches, any particular match, or any outcome.',
     ],
@@ -184,7 +185,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       'Account: your mobile phone number, email address and password. We confirm the phone number and the email with one-time codes when you sign up, and you can sign in with either. Your password is stored only as a secure hash, and we cannot see it.',
       'Profile: first and last name, nickname, date of birth and age, gender, sexual orientation, who you are interested in, religion, languages, interests, and your "about me" description.',
       'Match preferences: the age range and distance you want matches within.',
-      'Photos: up to 6 profile photos.',
+      'Photos: up to 6 profile photos, and the result of the automatic check on each one (approved or not, and the reason).',
       'Location: your city, region, and country, plus approximate coordinates (rounded to about 1 km) used to measure distance to other users. These come from your device location, which LovKey requires. We check it when you set up your profile, once a day after that, and whenever you tap Update location in Settings. We do not keep a history of past locations; each check replaces the last one.',
       'Daily check-in: your mood, the vibes you pick, and your answer to the question of the week, given once a day.',
       'Messages: everything you send in chats, and your choices when asked whether to reveal photos.',
@@ -214,6 +215,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     bullets: [
       'Suggesting daily matches. Each day we compare your check-in answers (mood and vibes), gender and who you are interested in, age range, distance, interests, and languages with other users’ to choose compatible people. Matching is automated; no person picks your matches.',
       `Running LovKey’s rules: expiring matches after ${MATCH_EXPIRY_HOURS} hours, limiting you to ${MAX_ACTIVE_CHATS} active chats, closing inactive chats, not repeating recent matches, and keeping photos blurred until you both agree to reveal them.`,
+      'Checking photos: each photo you add is checked automatically by an AI model before your matches can see it, to keep out nudity, violence, photos of children, contact details, and pictures that do not show a real person. The check only decides whether a photo can be shown. We do not use it to identify you or to create a face template.',
       'Keeping people safe: reviewing reports, enforcing our Community Rules, preventing spam and abuse, and acting on suspected underage use.',
       'Contacting you: in-app notifications about matches and chats, text messages with sign-up and sign-in codes, and account emails such as your sign-up code and password resets. We do not send marketing emails or texts.',
       'Meeting legal obligations and responding to lawful requests.',
@@ -248,7 +250,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       'Supabase: hosts our database, sign-in, photo storage, and server functions. All of your account data is stored there.',
       'Twilio: sends the text messages with your sign-up and sign-in codes. It receives your phone number and the code, and nothing else about you.',
       'BigDataCloud: each time your location is checked, your device sends it your coordinates to look up the matching city and country. Like any website you connect to, it also sees your device’s IP address. Your name and account are never sent.',
-      'An AI provider: generates each week’s vibe options for a country. It receives only the country name and the week, never anything about you.',
+      'An AI provider: generates each week’s vibe options for a country, for which it receives only the country name and the week. It also checks each profile photo you add, for which it receives the photo itself and nothing else about you.',
       'Resend: delivers the email alerts our moderation team receives when someone files a report. Those emails include the reason, the details written, and both people’s nicknames.',
     ],
   },

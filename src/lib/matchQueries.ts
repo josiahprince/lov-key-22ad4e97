@@ -102,12 +102,16 @@ export const fetchLatestOnboarding = (userId: string) =>
     .limit(1)
     .maybeSingle();
 
+// The main photo, or the first other one when it's hidden from matches
+// because it hasn't been approved (RLS only returns approved photos to them).
 export const fetchMainPhotoUrl = (userId: string) =>
   supabase
     .from('user_photos')
     .select('photo_url')
     .eq('user_id', userId)
-    .eq('is_main', true)
+    .order('is_main', { ascending: false, nullsFirst: false })
+    .order('photo_slot')
+    .limit(1)
     .maybeSingle();
 
 export const fetchMatchedViewProfile = (userId: string) =>

@@ -55,6 +55,16 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Uploads live under "<userId>/..." in the bucket, so the path must belong
+    // to the user it's requested for. Otherwise anyone could sign any photo
+    // by passing their own id as targetUserId.
+    if (typeof photoPath !== 'string' || !photoPath.startsWith(`${targetUserId}/`) || photoPath.includes('..')) {
+      return new Response(
+        JSON.stringify({ error: 'Photo does not belong to this user' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Use service role client for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -82,6 +92,26 @@ Deno.serve(async (req) => {
         console.warn('No active match found between users:', { currentUserId, targetUserId });
         return new Response(
           JSON.stringify({ error: 'No active match with this user' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Matches only ever see photos that passed the automatic check
+      // (moderate-photo), and only the exact file that was checked.
+      const { data: viewable, error: viewableError } = await supabaseAdmin
+        .rpc('photo_is_viewable', { p_user_id: targetUserId, p_path: photoPath });
+
+      if (viewableError) {
+        console.error('Error checking photo approval:', viewableError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to verify photo' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      if (!viewable) {
+        return new Response(
+          JSON.stringify({ error: 'Photo not approved' }),
           { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }

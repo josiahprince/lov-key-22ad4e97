@@ -148,6 +148,9 @@ Deno.serve(async (req) => {
         file_name: fileName,
         external_url: fileName ? null : p.photo_url,
         download_url,
+        check_result: p.moderation_status,
+        check_reason: p.moderation_reason,
+        checked_at: p.moderated_at,
       };
     }));
 

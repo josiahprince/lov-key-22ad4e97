@@ -2,7 +2,7 @@
 
 Open work that needs the owner. Claude reminds you of these (see `CLAUDE.md`). Remove an item once it's done.
 
-_Last reviewed: 2026-10-16_
+_Last reviewed: 2026-10-22_
 
 ## Before launch (needs you)
 
@@ -12,19 +12,27 @@ _Last reviewed: 2026-10-16_
   3. Same page → **Email**: turn on **Confirm email**, and keep "Secure email change" on. Existing users were auto-confirmed, so this only affects new sign-ups.
   4. Authentication → Emails → Templates → **Change email address**: the app asks for a code, so the email must show one. Subject `Your LovKey code`, body `<p>Your LovKey code is <strong>{{ .Token }}</strong>. It expires in 1 hour.</p>`. (New users add their email after the phone, which Supabase counts as an email change.)
   5. Optional: Authentication → SMS template, e.g. `Your LovKey code is {{ .Code }}`.
+- [ ] **Cheaper SMS codes (decide before launch).** Twilio costs roughly $0.40 + $0.05 per code to Sri Lanka, against about $0.002 for a WhatsApp authentication message (third-party figures; check the providers' price pages). Until this is sorted, Twilio Verify works, it's just pricier. What we found on 2026-10-21:
+  - How: one Supabase **Send SMS hook** (an edge function). Supabase still creates and checks the code; the hook only delivers it.
+  - Suggested shape: the first code goes by **WhatsApp** (Meta Cloud API, an approved "authentication" template). "Resend" goes by **SMS**: Plivo for most countries, and India via MSG91 *only if you have an Indian company with a PAN* (needed for DLT registration), otherwise Plivo or Twilio Verify.
+  - Ruled out: **Message Central**, because it creates its own codes and can't send Supabase's. Also an **automatic "SMS failed → WhatsApp" fallback**: the hook gets 5 seconds, and delivery failures only arrive later, so the user's Resend has to be the trigger.
+  - Your side: Meta Business verification and template approval (a few days), Plivo sender registration in some countries (e.g. Bangladesh, about 20 days and $25), and DLT if you use MSG91. Claude's side: about a day of code. The app barely changes: the code screen says "on WhatsApp" and the resend button says "Send by text".
 - [ ] **Bot protection on SMS codes (CAPTCHA).** Anyone can ask Supabase to text a code to any number, and bots abuse that to run up SMS bills ("SMS pumping"). Before launch, turn on CAPTCHA (Authentication → Attack Protection, e.g. Cloudflare Turnstile, which is free) and keep the SMS rate limit low (Authentication → Rate Limits). Turnstile also needs a small change in `AuthScreen` to send the CAPTCHA token; ask Claude when you have the site key. In Twilio, limit SMS to the countries you launch in (Messaging → Settings → Geo permissions).
-- [ ] **Photo verification.** Photos users upload need to be verified. Not done yet.
+- [ ] **AI credits for photo checks.** Automatic photo checks are live in Supabase (migration applied and functions deployed 2026-10-22). The app side is still on branch `feat/phone-email-verification`. Make sure the Lovable workspace has AI credits. Without them, every new photo stays on "Checking…" and is never shown to matches.
+- [ ] **Photo verification, step 2: selfie "verified" badge.** Not started. The user takes a live selfie copying a pose, it's compared with their profile photos, and they get a badge. Needs a face-comparison service (e.g. AWS Rekognition, about $0.015 per check), explicit consent for biometric data, and a Privacy Policy update.
 - [ ] **Age verification.** Users need to be verified so under-age people can't use the app. Not done yet.
 
 - [ ] **Legal placeholders.** Fill in `LEGAL_OPERATOR`, `SUPPORT_EMAIL`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar, and Settings → Contact support emails a dummy address.
 - [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and later your live domain (e.g. `https://yourdomain/**`). Without it, "Forgot password?" emails open the wrong page.
 - [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Set one up in Supabase → Authentication → Emails → SMTP settings.
 - [ ] **Host the app over HTTPS** before launch. Browsers only share location on HTTPS or localhost. Easiest is Lovable → Publish (the repo is already linked); Vercel or Netlify also work. After hosting, add the live address to Supabase → Authentication → URL Configuration (Site URL and Redirect URLs).
-- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), and the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
+- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), and both on 2026-10-21 (automatic photo checks), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
 
 ## Still to test end to end (use throwaway accounts)
 
 - [ ] **Phone and email sign-up (after switching it on above):** Sign up → number → SMS code → email and password → emailed code → profile setup. Then sign out and sign in both ways: Phone tab with an SMS code, and Email tab with the password. Also check that closing the app between the SMS and email steps brings you back to the email step, that "Forgot password?" works for the new account, and that an existing (pre-2026-10-16) account still goes straight in.
+
+- [ ] **Photo checks (after switching them on above):** upload a normal photo of a person (shows "Checking…", then a "Photo added" toast), then a landscape or a screenshot (red "Not approved" tile with the reason underneath). Profile setup's Next button stays off until one photo is approved. A match sees only approved photos, and a rejected main photo is replaced on their Matches card by your next approved one.
 
 - [ ] **Remove User:** the chat disappears for both people, the remover's chat count drops by one, and the pair never gets matched again. If the other person has the chat open, it switches to "This chat has ended" within about 15 seconds.
 - [ ] **Skip cooldown:** a skipped person isn't suggested again for 7 days.
@@ -57,4 +65,7 @@ _Last reviewed: 2026-10-16_
 - [ ] `useUserDescription` and `MatchedUserDescriptionSection` fetch the same row in two different ways. Left alone because merging them touches realtime behaviour; worth doing as its own change.
 - [ ] **Photo blur is only visual.** `get-signed-photo-url` hands out the full-resolution photo even before reveal, and the app blurs it with CSS, so anyone who copies the image address sees it clearly. A proper fix is to serve a tiny pre-blurred version until reveal (Supabase image transformations, Pro plan, or a blurred copy made at upload).
 - [ ] Drop `profiles.personality_prompts` and its 5-point scoring term in `generate_matches_internal()` (UI for it was removed 2026-10-06; the column is now inert). Low value, needs a hand-applied migration.
+- [ ] Photos that existed before 2026-10-21 were approved without a check. To check them, run `UPDATE public.user_photos SET moderation_status = 'pending' WHERE moderation_status = 'approved' AND moderated_at IS NULL;`. Each one is then hidden until its owner next opens the app and it passes.
+- [ ] People with no approved photo can still be matched (their card just shows no photo). Decide whether `generate_matches_internal()` should skip them; it changes the matching rules.
+- [ ] Rejected photos are decided by the AI alone. There's no human review queue or appeal button yet; the Terms tell people to contact support.
 - [ ] "Pause my profile" (Bumble Snooze / Hinge Pause). Skipped because it changes the matching rules.

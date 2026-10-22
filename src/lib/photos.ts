@@ -1,8 +1,13 @@
+import type { ModerationStatus } from '@/lib/photoModeration';
+
 export interface UserPhoto {
   id: string;
   photo_url: string;
   photo_slot: number;
   is_main: boolean;
+  // Unset only on the empty placeholder slots from initializePhotoSlots.
+  moderation_status?: ModerationStatus;
+  moderation_reason?: string | null;
   signedUrl?: string;
   canViewUnblurred?: boolean;
 }
@@ -16,17 +21,15 @@ export const PHOTO_SLOT_COUNT = 6;
 
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
-export const ALLOWED_IMAGE_TYPES = [
-  'image/jpeg', 'image/jpg', 'image/png', 'image/gif',
-  'image/bmp', 'image/webp', 'image/svg+xml', 'image/tiff',
-  'image/x-icon', 'image/vnd.microsoft.icon',
-];
+// Formats the photo check (moderate-photo) can read. The bucket only accepts
+// these too (20261021120000_photo_moderation.sql).
+export const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Returns a user-facing message describing why the file is unusable, or null
 // when it passes. Message text is what the upload toast shows verbatim.
 export const validatePhotoFile = (file: File): string | null => {
   if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    return 'Please select a valid image file (JPG, PNG, GIF, BMP, WebP, SVG, TIFF, ICO)';
+    return 'Please select a JPG, PNG or WebP photo';
   }
   if (file.size > MAX_PHOTO_BYTES) {
     return 'File size should be less than 5MB';

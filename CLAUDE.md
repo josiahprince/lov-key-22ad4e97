@@ -54,6 +54,13 @@ Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY
 - `useAuth` swaps in a new `user` when the phone or email fields change, not only the id, because the gate reads them.
 - Phone numbers are parsed and validated with `libphonenumber-js` (`src/lib/phone.ts`). Supabase stores them without the `+`.
 
+## Photo checks (2026-10-21)
+
+- Every `user_photos` row starts `moderation_status = 'pending'`. The `moderate-photo` edge function asks Gemini (Lovable AI gateway) and sets `approved` or `rejected` with a reason the owner sees. If the check can't run, the photo stays pending and the app retries on the next load (`src/lib/photoModeration.ts`).
+- Matches only ever get approved photos: the match SELECT policy filters on it, and `get-signed-photo-url` calls `photo_is_viewable()`, which also checks the stored file is the one that was checked (`moderated_object_id`). Storage has no UPDATE policy, so files can't be overwritten in place.
+- The `guard_user_photo_moderation` trigger resets the result whenever `photo_url` changes and rejects anything outside the user's own bucket folder, so pasted image links are gone (`20261021120000_photo_moderation.sql`).
+- Uploads are JPEG, PNG or WebP only, up to 5 MB, enforced by the bucket too.
+
 ## Database gotchas
 
 - `matches` has an UPDATE policy with no column restriction. Clients can PATCH any column, so never trust client-writable columns for rules. Enforce them in triggers or SECURITY DEFINER functions.

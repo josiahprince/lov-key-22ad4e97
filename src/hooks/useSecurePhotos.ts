@@ -2,15 +2,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { logError } from '@/lib/errorLogger';
 import { clearSignedPhotoCache, getSignedPhotoUrl } from '@/lib/photoUrls';
+import type { UserPhoto } from '@/lib/photos';
 
-export interface SecurePhoto {
-  id: string;
-  photo_url: string;
-  photo_slot: number;
-  is_main: boolean;
-  signedUrl?: string;
-  canViewUnblurred?: boolean;
-}
+// Same shape as a user's own photo rows, including the photo check result.
+export type SecurePhoto = UserPhoto;
 
 interface UseSecurePhotosProps {
   userId: string | undefined;
@@ -55,7 +50,7 @@ export const useSecurePhotos = ({ userId, matchId, isOwnProfile = false }: UseSe
       const photosWithSignedUrls: SecurePhoto[] = [];
       let firstCanViewUnblurred = isOwnProfile;
 
-      for (const photo of photoData) {
+      for (const photo of photoData as UserPhoto[]) {
         if (!photo.photo_url) continue;
 
         const result = await getSignedPhotoUrl(photo.photo_url, userId, matchId);

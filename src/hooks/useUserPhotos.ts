@@ -10,6 +10,7 @@ import {
   validatePhotoFile,
 } from '@/lib/photos';
 import type { UserPhoto } from '@/lib/photos';
+import { checkPendingPhotos, checkPhoto } from '@/lib/photoModeration';
 
 export type { UserPhoto };
 
@@ -45,8 +46,16 @@ export const useUserPhotos = (userId: string | undefined) => {
         return;
       }
 
-      const photoSlots = initializePhotoSlots(data || []);
+      const photoSlots = initializePhotoSlots((data || []) as UserPhoto[]);
       setPhotos(photoSlots);
+
+      // A photo left pending (closed the app mid-check, or the check service
+      // was down) is checked again here. Refetch once it has a result.
+      if (photoSlots.some(p => p.moderation_status === 'pending')) {
+        checkPendingPhotos(userId).then((results) => {
+          if (results.some(r => r.status !== 'pending')) fetchPhotos();
+        });
+      }
     } catch (error) {
       logError("useUserPhotos:fetchPhotos", error);
     } finally {
@@ -77,11 +86,13 @@ export const useUserPhotos = (userId: string | undefined) => {
         await removePhoto(slot);
       }
 
+      // No upsert: files can't be overwritten in place, so a checked photo
+      // can't be swapped for an unchecked one under the same name.
       const { error: uploadError } = await supabase.storage
         .from(PHOTO_BUCKET)
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: false
         });
 
       if (uploadError) {
@@ -92,8 +103,8 @@ export const useUserPhotos = (userId: string | undefined) => {
         .from(PHOTO_BUCKET)
         .getPublicUrl(fileName);
 
-      // Save to database
-      const { error: dbError } = await supabase
+      // Save to database. The row starts 'pending', hidden from matches.
+      const { data: savedPhoto, error: dbError } = await supabase
         .from('user_photos')
         .upsert({
           user_id: userId,
@@ -108,45 +119,26 @@ export const useUserPhotos = (userId: string | undefined) => {
         throw dbError;
       }
 
-      // Refresh photos after successful upload
+      // Show the photo as "Checking…" straight away, then wait for the check.
+      await fetchPhotos();
+      const result = await checkPhoto(userId, savedPhoto.id);
       await fetchPhotos();
 
-      notifySuccess('Photo uploaded successfully');
+      if (result?.status === 'approved') {
+        notifySuccess('Photo added');
+      } else if (result?.status === 'rejected') {
+        toast({ title: 'Photo not approved', description: result.reason, variant: 'destructive' });
+      } else {
+        toast({
+          title: 'Photo uploaded',
+          description: 'We’re still checking it. Your matches will see it once it’s approved.',
+        });
+      }
 
       return publicUrl;
     } catch (error) {
       notifyError('Failed to upload photo. Please try again.');
       return null;
-    }
-  };
-
-  const addPhotoFromUrl = async (url: string, slot: number) => {
-    if (!userId) {
-      notifyError('Please sign in to add photos');
-      return;
-    }
-
-    try {
-      
-      const { error } = await supabase
-        .from('user_photos')
-        .upsert({
-          user_id: userId,
-          photo_url: url,
-          photo_slot: slot,
-          is_main: slot === 1
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Refresh photos after successful addition
-      await fetchPhotos();
-
-      notifySuccess('Photo added successfully');
-    } catch (error) {
-      notifyError('Failed to add photo');
     }
   };
 
@@ -298,7 +290,6 @@ export const useUserPhotos = (userId: string | undefined) => {
     photos,
     loading,
     uploadPhoto,
-    addPhotoFromUrl,
     removePhoto,
     setMainPhoto,
     swapPhotoSlots,
