@@ -52,7 +52,9 @@ const nicknamesFor = async (admin: SupabaseClient, ids: string[]) => {
 //
 // Deliberately left out, to protect other people: messages the other person
 // sent, their profiles, reports filed about the caller, and the message
-// snapshots attached to the caller's own reports.
+// snapshots attached to the caller's own reports. The staff audit log
+// (admin_audit_log) is left out for the same reason as reports about the
+// caller.
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -89,10 +91,11 @@ Deno.serve(async (req) => {
       return data;
     };
 
-    const [profile, description, checkIn] = await Promise.all([
+    const [profile, description, checkIn, staffRole] = await Promise.all([
       single('profile', 'profiles', 'id'),
       single('description', 'user_descriptions', 'user_id'),
       single('check-in', 'user_onboarding', 'user_id'),
+      single('staff role', 'user_roles', 'user_id'),
     ]);
 
     const [photoRows, matches, sent, notifications, blocks, reports] = await Promise.all([
@@ -167,6 +170,7 @@ Deno.serve(async (req) => {
         privacy_version: user.user_metadata?.privacy_version ?? null,
         terms_accepted_at: user.user_metadata?.terms_accepted_at ?? null,
       },
+      staff_role: staffRole ? { role: staffRole.role, granted_at: staffRole.granted_at } : null,
       profile,
       description: description?.description ?? null,
       daily_check_in: checkIn

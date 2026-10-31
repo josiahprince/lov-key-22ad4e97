@@ -22,11 +22,19 @@ _Last reviewed: 2026-10-22_
 - [ ] **Photo verification, step 2: selfie "verified" badge.** Not started. The user takes a live selfie copying a pose, it's compared with their profile photos, and they get a badge. Needs a face-comparison service (e.g. AWS Rekognition, about $0.015 per check), explicit consent for biometric data, and a Privacy Policy update.
 - [ ] **Age verification.** Users need to be verified so under-age people can't use the app. Not done yet.
 
+- [ ] **Admin accounts (solo-founder setup, from your "Dating App Admin Setup Guide" doc).** Your side, no code needed:
+  1. On your own domain, create the mailboxes `admin@`, `breakglass@`, `grievance@` and `privacy@`. Use `grievance@` or `privacy@` as `SUPPORT_EMAIL` in the legal placeholders item below.
+  2. Turn on MFA (an authenticator app or a hardware key) for Supabase, GitHub, Lovable, Twilio, your domain registrar and the email provider. Add `breakglass@` as a second Owner of the Supabase org and the GitHub repo. Print the recovery codes and the break-glass password and keep them offline.
+  3. Keep your current LovKey account as your personal test profile. Don't make it an admin.
+  4. Roles and the audit log are built (database only, not applied yet). Apply `supabase/migrations/20261030120000_staff_roles_and_audit_log.sql` in the SQL editor. Then Authentication → Hooks → **Customize Access Token (JWT) Claims** → Postgres function `public.custom_access_token_hook`. Also check Authentication → Multi-Factor has **TOTP** enabled, because staff powers need MFA.
+  5. Create the two admin logins in Supabase → Authentication → Users → Add user (tick auto-confirm), using `admin@` and `breakglass@`. They never finish profile setup, so they're never matched. Then grant both roles in the SQL editor: `INSERT INTO public.user_roles (user_id, role) SELECT id, 'super_admin' FROM auth.users WHERE email IN ('admin@yourdomain', 'breakglass@yourdomain');`
+  6. Next for Claude: the separate admin app (sign-in with MFA, report queue, warn/suspend/ban with a reason, audit log view). Until then the roles have nothing to unlock.
+  7. Once a month, try the break-glass login.
 - [ ] **Legal placeholders.** Fill in `LEGAL_OPERATOR`, `SUPPORT_EMAIL`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar, and Settings → Contact support emails a dummy address.
 - [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and later your live domain (e.g. `https://yourdomain/**`). Without it, "Forgot password?" emails open the wrong page.
 - [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Set one up in Supabase → Authentication → Emails → SMTP settings.
 - [ ] **Host the app over HTTPS** before launch. Browsers only share location on HTTPS or localhost. Easiest is Lovable → Publish (the repo is already linked); Vercel or Netlify also work. After hosting, add the live address to Supabase → Authentication → URL Configuration (Site URL and Redirect URLs).
-- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), and both on 2026-10-21 (automatic photo checks), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
+- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), and both on 2026-10-21 (automatic photo checks), and the Privacy Policy on 2026-10-30 (moderation records kept after deletion), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
 
 ## Still to test end to end (use throwaway accounts)
 
@@ -50,6 +58,8 @@ _Last reviewed: 2026-10-22_
 - [ ] **Card photos:** blurred photo shows on Matches and Chats cards and in the open chat header; it unblurs after both people choose reveal.
 - [ ] **Location guard (migration applied 2026-10-07):** location still saves at sign-up, on the daily refresh and from Settings; a direct API edit of `city` is rejected; Settings shows the "too far from your last one" message for an impossible jump.
 - [ ] **Photo reveal:** both people choose "reveal" and photos unblur (only the "wait" path has been tested).
+
+- [ ] **Staff roles (after applying the migration above), in the SQL editor:** the bootstrap `INSERT` adds a `role.granted` row to `admin_audit_log`; `UPDATE` and `DELETE` on `admin_audit_log` both fail with `audit_log_is_append_only`; a member's login still works with the hook switched on, and a staff member's token carries `user_role` (decode it at jwt.io).
 
 ## Cleanup in production
 

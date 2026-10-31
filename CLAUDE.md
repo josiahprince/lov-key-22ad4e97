@@ -61,6 +61,15 @@ Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY
 - The `guard_user_photo_moderation` trigger resets the result whenever `photo_url` changes and rejects anything outside the user's own bucket folder, so pasted image links are gone (`20261021120000_photo_moderation.sql`).
 - Uploads are JPEG, PNG or WebP only, up to 5 MB, enforced by the bucket too.
 
+## Staff roles and audit log (2026-10-30)
+
+- Groundwork for a separate admin app (not built yet). Roles are `app_role` (`super_admin`, `admin`, `ts_lead`, `moderator`, `verifier`, `support`, `analyst`). It's one role per person, in `user_roles`. What each role may do is data in `role_permissions` (`app_permission`), so change powers there, not in code (`20261030120000_staff_roles_and_audit_log.sql`).
+- Check access with `authorize(permission)` in RLS policies and SECURITY DEFINER functions. It reads `user_roles` directly, never the token, so a revoke applies at once. It also requires MFA (`aal = 'aal2'`). Staff powers must never be granted to a member-facing table without going through it.
+- `custom_access_token_hook()` adds `user_role` to staff login tokens, for the admin app's UI only. It runs on every sign-in, so a bug there locks everyone out. Keep it trivial.
+- Roles change only through `grant_staff_role()` / `revoke_staff_role()` (they need `roles.manage` and a reason, and refuse to remove the last super admin) or the SQL editor. A trigger logs every change, however it was made.
+- `admin_audit_log` is append-only for everyone, the service role included (trigger). Its ids aren't foreign keys, like `reports`. New admin actions write to it through `record_admin_action()`, which only SQL functions can call. Every action takes a required reason.
+- No existing table has staff policies yet. When building the report queue, remember `reports.message_snapshot` needs `messages.read_reported`, which `admin` doesn't have. Serve it through a function, not a blanket SELECT policy.
+
 ## Database gotchas
 
 - `matches` has an UPDATE policy with no column restriction. Clients can PATCH any column, so never trust client-writable columns for rules. Enforce them in triggers or SECURITY DEFINER functions.

@@ -11,8 +11,8 @@ export const TERMS_VERSION = '2026-10-21';
 export const TERMS_LAST_UPDATED = 'October 21, 2026';
 
 // Same rule as TERMS_VERSION, recorded alongside it at sign-up.
-export const PRIVACY_VERSION = '2026-10-21';
-export const PRIVACY_LAST_UPDATED = 'October 21, 2026';
+export const PRIVACY_VERSION = '2026-10-30';
+export const PRIVACY_LAST_UPDATED = 'October 30, 2026';
 
 // TODO(owner): replace these placeholders before launch.
 export const LEGAL_OPERATOR = '[Company Name]';
@@ -269,6 +269,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       'Expired matches and closed chats disappear from your screen, but they stay stored with your account until you delete it. This lets us prevent repeat matches and review reports.',
       'When you delete your account, we immediately and permanently delete your profile, photos, check-in answers, notifications, matches, and every chat you were part of, for both people.',
       'Reports are the exception. A report you filed, or that was filed about you, including the copy of recent chat messages attached to it, is kept after deletion for safety and legal reasons. It stays linked only to an anonymous account ID, not to your name or email.',
+      'Our moderation team’s records are kept the same way. Every action they take on an account, such as a warning or a ban, is logged with the reason, can’t be edited, and stays linked only to an anonymous account ID after deletion.',
       'Copies may remain in our hosting provider’s backups and security logs for a short period until those are automatically overwritten.',
     ],
   },

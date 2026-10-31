@@ -27,6 +27,8 @@ const json = (body: unknown, status = 200) =>
 // Reports are deliberately left in place: reports.reporter_id/reported_id are
 // not foreign keys (20261001120000_keep_reports_after_account_deletion.sql),
 // so they survive as safety evidence. blocked_users still cascades.
+// admin_audit_log is kept the same way, and is append-only anyway. A staff
+// member's user_roles row cascades from the auth user (and that is logged).
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -85,7 +87,7 @@ Deno.serve(async (req) => {
     const { error: profileError } = await admin.from('profiles').delete().eq('id', userId);
     if (profileError) throw new Error(`profiles: ${profileError.message}`);
 
-    // 4. The auth user. blocked_users and reports rows cascade from it.
+    // 4. The auth user. blocked_users and user_roles rows cascade from it.
     const { error: deleteError } = await admin.auth.admin.deleteUser(userId);
     if (deleteError) throw new Error(`auth user: ${deleteError.message}`);
 

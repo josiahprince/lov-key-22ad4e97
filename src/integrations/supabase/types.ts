@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_role: Database["public"]["Enums"]["app_role"] | null
+          created_at: string
+          details: Json | null
+          id: number
+          reason: string
+          target_id: string | null
+          target_user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_role?: Database["public"]["Enums"]["app_role"] | null
+          created_at?: string
+          details?: Json | null
+          id?: never
+          reason: string
+          target_id?: string | null
+          target_user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_role?: Database["public"]["Enums"]["app_role"] | null
+          created_at?: string
+          details?: Json | null
+          id?: never
+          reason?: string
+          target_id?: string | null
+          target_user_id?: string | null
+        }
+        Relationships: []
+      }
       blocked_users: {
         Row: {
           blocked_id: string
@@ -379,6 +415,21 @@ export type Database = {
           },
         ]
       }
+      role_permissions: {
+        Row: {
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          permission: Database["public"]["Enums"]["app_permission"]
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          permission?: Database["public"]["Enums"]["app_permission"]
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       user_descriptions: {
         Row: {
           created_at: string
@@ -493,6 +544,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          granted_at: string
+          granted_by: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          granted_by?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          granted_by?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       vibe_sets: {
         Row: {
           country: string
@@ -601,6 +673,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      authorize: {
+        Args: { p_permission: Database["public"]["Enums"]["app_permission"] }
+        Returns: boolean
+      }
       block_user: {
         Args: { target_user_id: string }
         Returns: undefined
@@ -673,6 +749,14 @@ export type Database = {
         }[]
       }
       get_date_in_timezone: { Args: { user_timezone: string }; Returns: string }
+      grant_staff_role: {
+        Args: {
+          p_user_id: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_reason: string
+        }
+        Returns: undefined
+      }
       get_photo_reveal_state: {
         Args: { p_match_id: string }
         Returns: {
@@ -703,6 +787,10 @@ export type Database = {
           users_checked: number
           users_reset: number
         }[]
+      }
+      revoke_staff_role: {
+        Args: { p_user_id: string; p_reason: string }
+        Returns: undefined
       }
       should_show_onboarding: {
         Args: { user_id_param: string }
@@ -736,6 +824,35 @@ export type Database = {
       }
     }
     Enums: {
+      app_permission:
+        | "reports.view"
+        | "reports.resolve"
+        | "messages.read_reported"
+        | "photos.review"
+        | "users.view"
+        | "users.view_contact"
+        | "users.warn"
+        | "users.suspend"
+        | "users.ban"
+        | "appeals.decide"
+        | "verification.review"
+        | "support.tickets"
+        | "accounts.request_deletion"
+        | "grievances.handle"
+        | "legal.requests"
+        | "data.export"
+        | "settings.manage"
+        | "metrics.view"
+        | "audit.view"
+        | "roles.manage"
+      app_role:
+        | "super_admin"
+        | "admin"
+        | "ts_lead"
+        | "moderator"
+        | "verifier"
+        | "support"
+        | "analyst"
       gender_type: "male" | "female" | "non_binary" | "other"
       interested_in_type: "men" | "women" | "non_binary" | "everyone"
       orientation_type:
@@ -873,6 +990,37 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_permission: [
+        "reports.view",
+        "reports.resolve",
+        "messages.read_reported",
+        "photos.review",
+        "users.view",
+        "users.view_contact",
+        "users.warn",
+        "users.suspend",
+        "users.ban",
+        "appeals.decide",
+        "verification.review",
+        "support.tickets",
+        "accounts.request_deletion",
+        "grievances.handle",
+        "legal.requests",
+        "data.export",
+        "settings.manage",
+        "metrics.view",
+        "audit.view",
+        "roles.manage",
+      ],
+      app_role: [
+        "super_admin",
+        "admin",
+        "ts_lead",
+        "moderator",
+        "verifier",
+        "support",
+        "analyst",
+      ],
       gender_type: ["male", "female", "non_binary", "other"],
       interested_in_type: ["men", "women", "non_binary", "everyone"],
       orientation_type: [
