@@ -11,8 +11,8 @@ export const TERMS_VERSION = '2026-10-21';
 export const TERMS_LAST_UPDATED = 'October 21, 2026';
 
 // Same rule as TERMS_VERSION, recorded alongside it at sign-up.
-export const PRIVACY_VERSION = '2026-10-30';
-export const PRIVACY_LAST_UPDATED = 'October 30, 2026';
+export const PRIVACY_VERSION = '2026-11-03';
+export const PRIVACY_LAST_UPDATED = 'November 3, 2026';
 
 // TODO(owner): replace these placeholders before launch.
 export const LEGAL_OPERATOR = '[Company Name]';
@@ -277,7 +277,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: 'your-rights',
     title: '11. Your rights and choices',
     bullets: [
-      'Download your data: Settings → Download my data gives you a file containing your account details, profile, photos, preferences, check-in answers, matches, the messages you sent, notifications, blocks, and the reports you filed.',
+      'Download your data: Settings → Download my data gives you a file containing your account details, profile, photos, preferences, check-in answers, matches, the messages you sent, notifications, blocks, the reports you filed, and any warning, suspension or ban on your account.',
       'Correct your data: edit your profile and preferences at any time.',
       'Delete your data: Settings → Delete account removes it immediately (see section 10).',
       'Withdraw consent: remove sensitive details from your profile, or delete your account. You can turn off location access in your device settings, but LovKey cannot be used without it, because matches are based on where you are.',

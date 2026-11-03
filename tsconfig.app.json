@@ -27,6 +27,7 @@
     "useDefineForClassFields": true
   },
   "include": [
-    "src"
+    "src",
+    "admin/src"
   ]
 }

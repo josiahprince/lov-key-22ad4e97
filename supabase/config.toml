@@ -75,3 +75,6 @@ verify_jwt = false
 
 [functions.moderate-photo]
 verify_jwt = false
+
+[functions.admin-action]
+verify_jwt = false

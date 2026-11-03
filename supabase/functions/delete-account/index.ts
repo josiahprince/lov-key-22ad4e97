@@ -27,7 +27,8 @@ const json = (body: unknown, status = 200) =>
 // Reports are deliberately left in place: reports.reporter_id/reported_id are
 // not foreign keys (20261001120000_keep_reports_after_account_deletion.sql),
 // so they survive as safety evidence. blocked_users still cascades.
-// admin_audit_log is kept the same way, and is append-only anyway. A staff
+// admin_audit_log and account_restrictions (warnings, suspensions, bans) are
+// kept the same way; the audit log is append-only anyway. A staff
 // member's user_roles row cascades from the auth user (and that is logged).
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {

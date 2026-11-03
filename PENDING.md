@@ -2,7 +2,7 @@
 
 Open work that needs the owner. Claude reminds you of these (see `CLAUDE.md`). Remove an item once it's done.
 
-_Last reviewed: 2026-10-31_
+_Last reviewed: 2026-11-03_
 
 ## Before launch (needs you)
 
@@ -26,14 +26,13 @@ _Last reviewed: 2026-10-31_
   1. On your own domain, create the mailboxes `admin@`, `breakglass@`, `grievance@` and `privacy@`. Use `grievance@` or `privacy@` as `SUPPORT_EMAIL` in the legal placeholders item below.
   2. Turn on MFA (an authenticator app or a hardware key) for Supabase, GitHub, Lovable, Twilio, your domain registrar and the email provider. Add `breakglass@` as a second Owner of the Supabase org and the GitHub repo. Print the recovery codes and the break-glass password and keep them offline.
   3. Keep your current LovKey account as your personal test profile. Don't make it an admin.
-  4. Create the two admin logins in Supabase → Authentication → Users → Add user (tick auto-confirm), using `admin@` and `breakglass@`. They never finish profile setup, so they're never matched. Then grant both roles in the SQL editor: `INSERT INTO public.user_roles (user_id, role) SELECT id, 'super_admin' FROM auth.users WHERE email IN ('admin@yourdomain', 'breakglass@yourdomain');`
-  5. Next for Claude: the separate admin app (sign-in with MFA, report queue, warn/suspend/ban with a reason, audit log view). Until then the roles have nothing to unlock.
-  6. Once a month, try the break-glass login.
+  4. Done 2026-11-03: two `super_admin` logins exist and both signed in to the admin app (`npm run dev:admin`, http://localhost:8081) with an authenticator code. **For now they use two spare personal email addresses, because there's no domain yet.** Once you have one, change each login's email in Supabase → Authentication → Users to `admin@` / `breakglass@` (the role is tied to the account, not the email), and give break-glass its own mailbox so losing one account doesn't lose both.
+  5. Once a month, try the break-glass login.
 - [ ] **Legal placeholders.** Fill in `LEGAL_OPERATOR`, `SUPPORT_EMAIL`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar, and Settings → Contact support emails a dummy address.
 - [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and later your live domain (e.g. `https://yourdomain/**`). Without it, "Forgot password?" emails open the wrong page.
 - [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Set one up in Supabase → Authentication → Emails → SMTP settings.
 - [ ] **Host the app over HTTPS** before launch. Browsers only share location on HTTPS or localhost. Easiest is Lovable → Publish (the repo is already linked); Vercel or Netlify also work. After hosting, add the live address to Supabase → Authentication → URL Configuration (Site URL and Redirect URLs).
-- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), and both on 2026-10-21 (automatic photo checks), and the Privacy Policy on 2026-10-30 (moderation records kept after deletion), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
+- [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), and both on 2026-10-21 (automatic photo checks), and the Privacy Policy on 2026-10-30 (moderation records kept after deletion) and 2026-11-03 (warnings and bans in Download my data), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
 
 ## Still to test end to end (use throwaway accounts)
 
@@ -59,6 +58,13 @@ _Last reviewed: 2026-10-31_
 - [ ] **Photo reveal:** both people choose "reveal" and photos unblur (only the "wait" path has been tested).
 
 - [ ] **Staff roles, in the SQL editor:** the bootstrap `INSERT` adds a `role.granted` row to `admin_audit_log`; `UPDATE` and `DELETE` on `admin_audit_log` both fail with `audit_log_is_append_only`; a staff member's token carries `user_role` (decode it at jwt.io). Members' sign-in with the hook on was confirmed on 2026-10-31.
+- [ ] **Admin app, with a throwaway member account** (both admin logins and their QR setup worked on 2026-11-03):
+  - A second sign-in asks only for the code. A non-staff email is signed straight out.
+  - Report a throwaway account from another one. The report shows up on the Dashboard and in Reports with its messages, and closing it needs a reason.
+  - **Warn:** the member sees the notification with your message.
+  - **Suspend** for a day: their open chats show "This chat has ended" for the other person, signing in shows the suspended message, and they get no new matches. **Lift** lets them sign in again.
+  - **Ban:** the same, until lifted.
+  - Every step shows up in the Audit log.
 
 ## Cleanup in production
 

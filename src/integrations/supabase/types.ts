@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_restrictions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string | null
+          id: string
+          kind: string
+          lift_reason: string | null
+          lifted_at: string | null
+          lifted_by: string | null
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          kind: string
+          lift_reason?: string | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          reason: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          lift_reason?: string | null
+          lifted_at?: string | null
+          lifted_by?: string | null
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_audit_log: {
         Row: {
           action: string
@@ -672,6 +711,89 @@ export type Database = {
           p_region: string
         }
         Returns: undefined
+      }
+      admin_dashboard_stats: {
+        Args: never
+        Returns: {
+          open_reports: number
+          oldest_open_report_at: string | null
+          bans_this_week: number
+          suspensions_active: number
+        }[]
+      }
+      admin_find_users: {
+        Args: { p_query: string }
+        Returns: {
+          id: string
+          nickname: string | null
+          email_masked: string | null
+          phone_masked: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          profile_complete: boolean
+          restricted: boolean
+        }[]
+      }
+      admin_get_report: {
+        Args: { p_report_id: string }
+        Returns: Json
+      }
+      admin_get_user: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      admin_lift_restriction: {
+        Args: { p_restriction_id: string; p_reason: string }
+        Returns: string
+      }
+      admin_list_audit: {
+        Args: { p_limit?: number; p_before?: number | null }
+        Returns: {
+          id: number
+          created_at: string
+          actor_email: string | null
+          actor_role: Database["public"]["Enums"]["app_role"] | null
+          action: string
+          target_user_id: string | null
+          target_nickname: string | null
+          target_id: string | null
+          reason: string
+          details: Json | null
+        }[]
+      }
+      admin_list_reports: {
+        Args: { p_status?: string }
+        Returns: {
+          id: string
+          reason: string
+          details: string | null
+          status: string
+          created_at: string
+          reviewed_at: string | null
+          reporter_id: string
+          reporter_nickname: string | null
+          reported_id: string
+          reported_nickname: string | null
+          has_messages: boolean
+          reported_open_reports: number
+        }[]
+      }
+      admin_resolve_report: {
+        Args: { p_report_id: string; p_status: string; p_reason: string }
+        Returns: undefined
+      }
+      admin_restrict_account: {
+        Args: { p_user_id: string; p_kind: string; p_ends_at: string | null; p_reason: string }
+        Returns: string
+      }
+      admin_reveal_contact: {
+        Args: { p_user_id: string; p_reason: string }
+        Returns: { email: string | null; phone: string | null }[]
+      }
+      admin_warn_user: {
+        Args: { p_user_id: string; p_reason: string }
+        Returns: string
       }
       authorize: {
         Args: { p_permission: Database["public"]["Enums"]["app_permission"] }

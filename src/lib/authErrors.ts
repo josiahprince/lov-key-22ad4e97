@@ -1,4 +1,5 @@
 import { isAuthError } from '@supabase/supabase-js';
+import { SUPPORT_EMAIL } from '@/lib/legal';
 
 // Supabase's own messages ("Signups not allowed for otp", "Token has expired
 // or is invalid") mean nothing to the people using LovKey.
@@ -17,6 +18,7 @@ const MESSAGES: Partial<Record<string, string>> = {
   email_not_confirmed: "This email hasn't been confirmed yet. Sign in with your phone number to finish setting up your account.",
   weak_password: 'That password is too weak. Choose a longer one that mixes letters and numbers.',
   signup_disabled: 'New sign-ups are paused at the moment. Please try again later.',
+  user_banned: `This account has been suspended for breaking our Community Rules. If you think this is a mistake, email ${SUPPORT_EMAIL}.`,
 };
 
 export const authErrorMessage = (error: unknown): string => {

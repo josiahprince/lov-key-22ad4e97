@@ -68,7 +68,14 @@ Client mirrors live in `src/lib/constants.ts` (`MAX_ACTIVE_CHATS`, `MATCH_EXPIRY
 - `custom_access_token_hook()` adds `user_role` to staff login tokens, for the admin app's UI only. It runs on every sign-in, so a bug there locks everyone out. Keep it trivial.
 - Roles change only through `grant_staff_role()` / `revoke_staff_role()` (they need `roles.manage` and a reason, and refuse to remove the last super admin) or the SQL editor. A trigger logs every change, however it was made.
 - `admin_audit_log` is append-only for everyone, the service role included (trigger). Its ids aren't foreign keys, like `reports`. New admin actions write to it through `record_admin_action()`, which only SQL functions can call. Every action takes a required reason.
-- No existing table has staff policies yet. When building the report queue, remember `reports.message_snapshot` needs `messages.read_reported`, which `admin` doesn't have. Serve it through a function, not a blanket SELECT policy.
+- Staff never read member tables directly. Every admin screen goes through an `admin_*` SECURITY DEFINER function that calls `require_permission()` and logs with `record_admin_action()` (`20261103120000_admin_moderation.sql`). `admin_get_report()` returns `reports.message_snapshot` only with `messages.read_reported`, and logs each read.
+
+## Admin app (2026-11-03)
+
+- A separate site in `admin/` that shares `src/` for UI components, styles and types. Its config is `vite.admin.config.ts`. `npm run dev:admin` serves it on port 8081, and `npm run build:admin` outputs `dist-admin/`. The member build (`vite.config.ts`, Lovable) never includes it. For now it runs locally only (owner decision). Host it at `admin.<domain>` later.
+- It has its own Supabase client (`admin/src/supabase.ts`, storage key `lovkey-admin-auth`) and uses the anon key only. Sign-in order (`useStaff`): password, then the staff role check (non-staff are signed straight out), then a TOTP code (set up on first sign-in). Hiding a screen in the UI isn't security: the database checks every call again.
+- Warn = an `account_warning` notification whose message is the reason. **Suspend/ban** (owner decision 2026-11-03) blocks sign-in, keeps the person out of matching (`is_account_restricted()` in `generate_matches_internal`), and closes their open matches and chats as `unmatched`, which the other person isn't told about. The sign-in block needs Supabase's admin API, so suspend, ban and lift go through the `admin-action` edge function. It calls the SQL function with the staff member's own token first, and then syncs `ban_duration` to the person's active restrictions. Staff can't be restricted until their role is removed.
+- `account_restrictions.user_id` isn't a foreign key, like `reports`, so the record outlives the account.
 
 ## Database gotchas
 

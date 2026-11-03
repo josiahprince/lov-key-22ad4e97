@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
       single('staff role', 'user_roles', 'user_id'),
     ]);
 
-    const [photoRows, matches, sent, notifications, blocks, reports] = await Promise.all([
+    const [photoRows, matches, sent, notifications, blocks, reports, restrictions] = await Promise.all([
       fetchAll('photos', (from, to) =>
         admin.from('user_photos').select('*').eq('user_id', userId).order('photo_slot').range(from, to)),
       fetchAll('matches', (from, to) =>
@@ -113,6 +113,9 @@ Deno.serve(async (req) => {
         admin.from('blocked_users').select('blocked_id, created_at').eq('blocker_id', userId).order('created_at').range(from, to)),
       fetchAll('reports', (from, to) =>
         admin.from('reports').select('reported_id, reason, details, status, created_at, reviewed_at').eq('reporter_id', userId)
+          .order('created_at').range(from, to)),
+      fetchAll('restrictions', (from, to) =>
+        admin.from('account_restrictions').select('kind, reason, created_at, ends_at, lifted_at').eq('user_id', userId)
           .order('created_at').range(from, to)),
     ]);
 
@@ -222,6 +225,13 @@ Deno.serve(async (req) => {
         status: r.status,
         filed_at: r.created_at,
         reviewed_at: r.reviewed_at,
+      })),
+      warnings_suspensions_and_bans: restrictions.map((r) => ({
+        kind: r.kind,
+        reason: r.reason,
+        issued_at: r.created_at,
+        ends_at: r.ends_at,
+        lifted_at: r.lifted_at,
       })),
     };
 
