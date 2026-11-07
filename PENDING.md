@@ -25,7 +25,10 @@ _Last reviewed: 2026-11-07_
 - [ ] **Admin accounts (solo-founder setup, from your "Dating App Admin Setup Guide" doc).** Your side, no code needed:
   1. Done 2026-11-07: the mailboxes exist, and `breakglass@lovkey.app` is its own Workspace user with MFA, offline recovery codes and access to the services that run LovKey.
   2. Keep your current LovKey account as your personal test profile. Don't make it an admin.
-  3. **Move the two admin-app logins off the spare personal emails.** Both `super_admin` logins work (2026-11-03). Change their emails to `breakglass@lovkey.app` and `admin@lovkey.app` through Supabase's admin API: `PUT /auth/v1/admin/users/<id>` with `{"email": "...", "email_confirm": true}` and the service_role key. Do break-glass first and test it before the second. The role, password and authenticator stay with the account.
+  3. **Move the two admin-app logins off the spare personal emails.** On 2026-11-07 one `super_admin` login was changed to `breakglass@lovkey.app` (SQL Editor, role `postgres`, updating `auth.users` and the email identity in `auth.identities`). Still to do:
+     - Sign in to the admin app as `breakglass@lovkey.app` (`npm.cmd run dev:admin`, since PowerShell blocks `npm.ps1`) with the same password and authenticator code, and check the old personal email no longer works.
+     - Then change the other login to `admin@lovkey.app` the same way and test it.
+     Never run `GRANT SELECT ON auth.users TO authenticated`, even if the SQL Editor suggests it: every member could then read every email and phone number.
   4. Once a month, try the break-glass login.
 - [ ] **Legal placeholders.** `SUPPORT_EMAIL` is done (`support@lovkey.app`). Still fill in `LEGAL_OPERATOR`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar.
 - [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and once the app is hosted, `https://lovkey.app/**` (also set Site URL to `https://lovkey.app`). Without it, "Forgot password?" emails open the wrong page.
