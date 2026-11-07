@@ -2,7 +2,7 @@
 
 Open work that needs the owner. Claude reminds you of these (see `CLAUDE.md`). Remove an item once it's done.
 
-_Last reviewed: 2026-11-03_
+_Last reviewed: 2026-11-07_
 
 ## Before launch (needs you)
 
@@ -23,15 +23,15 @@ _Last reviewed: 2026-11-03_
 - [ ] **Age verification.** Users need to be verified so under-age people can't use the app. Not done yet.
 
 - [ ] **Admin accounts (solo-founder setup, from your "Dating App Admin Setup Guide" doc).** Your side, no code needed:
-  1. On your own domain, create the mailboxes `admin@`, `breakglass@`, `grievance@` and `privacy@`. Use `grievance@` or `privacy@` as `SUPPORT_EMAIL` in the legal placeholders item below.
-  2. Turn on MFA (an authenticator app or a hardware key) for Supabase, GitHub, Lovable, Twilio, your domain registrar and the email provider. Add `breakglass@` as a second Owner of the Supabase org and the GitHub repo. Print the recovery codes and the break-glass password and keep them offline.
-  3. Keep your current LovKey account as your personal test profile. Don't make it an admin.
-  4. Done 2026-11-03: two `super_admin` logins exist and both signed in to the admin app (`npm run dev:admin`, http://localhost:8081) with an authenticator code. **For now they use two spare personal email addresses, because there's no domain yet.** Once you have one, change each login's email in Supabase → Authentication → Users to `admin@` / `breakglass@` (the role is tied to the account, not the email), and give break-glass its own mailbox so losing one account doesn't lose both.
-  5. Once a month, try the break-glass login.
-- [ ] **Legal placeholders.** Fill in `LEGAL_OPERATOR`, `SUPPORT_EMAIL`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar, and Settings → Contact support emails a dummy address.
-- [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and later your live domain (e.g. `https://yourdomain/**`). Without it, "Forgot password?" emails open the wrong page.
-- [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Set one up in Supabase → Authentication → Emails → SMTP settings.
-- [ ] **Host the app over HTTPS** before launch. Browsers only share location on HTTPS or localhost. Easiest is Lovable → Publish (the repo is already linked); Vercel or Netlify also work. After hosting, add the live address to Supabase → Authentication → URL Configuration (Site URL and Redirect URLs).
+  1. Done 2026-11-07: the mailboxes exist, and `breakglass@lovkey.app` is its own Workspace user with MFA, offline recovery codes and access to the services that run LovKey.
+  2. Keep your current LovKey account as your personal test profile. Don't make it an admin.
+  3. **Move the two admin-app logins off the spare personal emails.** Both `super_admin` logins work (2026-11-03). Change their emails to `breakglass@lovkey.app` and `admin@lovkey.app` through Supabase's admin API: `PUT /auth/v1/admin/users/<id>` with `{"email": "...", "email_confirm": true}` and the service_role key. Do break-glass first and test it before the second. The role, password and authenticator stay with the account.
+  4. Once a month, try the break-glass login.
+- [ ] **Legal placeholders.** `SUPPORT_EMAIL` is done (`support@lovkey.app`). Still fill in `LEGAL_OPERATOR`, `GOVERNING_COUNTRY` and `HOSTING_REGION` at the top of `src/lib/legal.ts`. Until then the Terms and Privacy Policy show `[Company Name]` and similar.
+- [ ] **Password-reset redirect URL.** In Supabase → Authentication → URL Configuration → Redirect URLs, add `http://localhost:8080/**`, and once the app is hosted, `https://lovkey.app/**` (also set Site URL to `https://lovkey.app`). Without it, "Forgot password?" emails open the wrong page.
+- [ ] **Custom email provider (SMTP).** Supabase's built-in sender only allows a few emails an hour, so reset and sign-up emails will start failing once real users arrive. Verify lovkey.app with a sender like Resend (it adds DNS records in Cloudflare, next to Google's), then set it in Supabase → Authentication → Emails → SMTP settings, sending from e.g. `no-reply@lovkey.app`. Once verified, `notify-report-alert` can send from `reports@lovkey.app` instead of `onboarding@resend.dev`; ask Claude.
+- [ ] **Check the lovkey.app registration.** In Cloudflare → lovkey.app → Domain Registration, make sure auto-renew and the registrar lock are on. Mail setup is done: the domain was bought at Cloudflare Registrar on 2026-11-05, and Google Workspace runs `josiah@lovkey.app` (Google's MX, SPF and DKIM in Cloudflare DNS, plus DMARC `p=none` with reports to `josiah@`). `support@`, `admin@`, `grievance@` and `privacy@` are aliases of `josiah@` (2026-11-07), `breakglass@` is a separate Workspace user, and the app's `SUPPORT_EMAIL` is `support@lovkey.app`. Don't turn on Cloudflare Email Routing: it replaces Google's MX and mail stops arriving.
+- [ ] **Put the web app online over HTTPS** before launch (browsers only share location on HTTPS or localhost). Easiest is Lovable → Publish (the repo is already linked; a custom domain needs a paid plan). Cloudflare Pages, Vercel or Netlify are free but need the three `VITE_SUPABASE_*` values and an SPA fallback so `/reset-password` doesn't 404; ask Claude to set that up. Lovable publishes `main`, and merging `feat/phone-email-verification` makes sign-up require SMS, so switch on phone verification first. Keep the admin app off the public site. After hosting, add the live address to Supabase → Authentication → URL Configuration (Site URL and Redirect URLs).
 - [ ] **Re-accept Terms and Privacy:** both were updated on 2026-10-07 (location rules), the Privacy Policy again on 2026-10-16 (phone numbers, Twilio), and both on 2026-10-21 (automatic photo checks), and the Privacy Policy on 2026-10-30 (moderation records kept after deletion) and 2026-11-03 (warnings and bans in Download my data), so existing users are now behind on `TERMS_VERSION` / `PRIVACY_VERSION`. See the "Ask existing users" item below.
 
 ## Still to test end to end (use throwaway accounts)
@@ -84,3 +84,5 @@ _Last reviewed: 2026-11-03_
 - [ ] People with no approved photo can still be matched (their card just shows no photo). Decide whether `generate_matches_internal()` should skip them; it changes the matching rules.
 - [ ] Rejected photos are decided by the AI alone. There's no human review queue or appeal button yet; the Terms tell people to contact support.
 - [ ] "Pause my profile" (Bumble Snooze / Hinge Pause). Skipped because it changes the matching rules.
+- [ ] Tighten DMARC on lovkey.app from `p=none` to `p=quarantine` after a few weeks of clean reports (Cloudflare DNS, the `_dmarc` TXT record).
+- [ ] **Phone apps (App Store / Google Play), after the web launch.** Plan: wrap the same React code with Capacitor. Your side: Apple Developer ($99/year, a company needs a D-U-N-S number), Google Play ($25 once), a Mac or a cloud build service for iOS, an 18+ rating, the privacy policy URL on your domain, and a demo account for reviewers. Apple rejects plain website wrappers, so the first version adds push notifications for matches and messages, native location and a proper icon and splash screen. About 1–2 weeks of Claude's work; start it as its own task.

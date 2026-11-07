@@ -16,7 +16,8 @@ export const PRIVACY_LAST_UPDATED = 'November 3, 2026';
 
 // TODO(owner): replace these placeholders before launch.
 export const LEGAL_OPERATOR = '[Company Name]';
-export const SUPPORT_EMAIL = '[support@yourdomain.com]';
+// Forwarded by Cloudflare Email Routing on lovkey.app.
+export const SUPPORT_EMAIL = 'support@lovkey.app';
 export const GOVERNING_COUNTRY = '[Country]';
 // Region of the Supabase project (Dashboard → Project Settings → General).
 export const HOSTING_REGION = '[Hosting region]';
